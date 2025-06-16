@@ -24,3 +24,7 @@ class Envs(BaseSettings):
         return (
             env_settings,
         )
+
+    @classmethod
+    def load(cls) -> "Envs":
+        return Envs()  # type: ignore[call-arg]

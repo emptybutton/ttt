@@ -3,8 +3,8 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.sqlalchemy.tables import metadata
-from ttt.infrastructure.typenv.envs import Envs
 
 
 config = context.config
@@ -16,7 +16,7 @@ if config.config_file_name is not None:
 target_metadata = metadata
 
 envs = Envs.load()
-config.set_main_option("sqlalchemy.url", envs.postgres_url)
+config.set_main_option("sqlalchemy.url", str(envs.postgres_url))
 
 
 def run_migrations_offline() -> None:

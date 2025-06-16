@@ -20,3 +20,7 @@ class Secrets(BaseSettings):
         return (
             YamlConfigSettingsSource(settings_cls, "/run/secrets/secrets"),
         )
+
+    @classmethod
+    def load(cls) -> "Secrets":
+        return Secrets()  # type: ignore[call-arg]
