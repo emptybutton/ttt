@@ -1,34 +1,31 @@
-name: app-name-kebab-case
+name: ttt
 
 services:
-  backend:
+  ttt:
     build:
       context: ../../
-      dockerfile: deploy/dev/backend/Dockerfile
+      dockerfile: deploy/dev/ttt/Dockerfile
       tags:
-        - "app-name-kebab-case-backend:dev"
-    container_name: app-name-kebab-case-backend
+        - "ttt:dev"
+    container_name: ttt
     volumes:
       - ../..:/app
       - backend-data:/run/app
-    ports:
-      - 8000:8000
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      JWT_SECRET: super-secret-jwt-secret
-      POSTGRES_URL: postgresql+psycopg://root:root@postgres/root
-    command: app-name-kebab-case-dev
-    healthcheck:
-      test: python3 -c "from urllib.request import urlopen as f; assert f('http://backend:8000/health').status == 204"
-      start_period: 2m
-      start_interval: 0.5s
-      interval: 10s
+      TTT_POSTGRES_URL: postgresql+psycopg://root:root@postgres/root
+      TTT_REDIS_URL: redis://redis:6379/0
+    secrets:
+      - secrets
+    command: ttt-dev
 
   postgres:
     image: postgres:16.3-alpine3.19
-    container_name: app-name-kebab-case-postgres
+    container_name: ttt-postgres
     labels:
       deployment: dev
     volumes:
@@ -43,9 +40,24 @@ services:
       start_interval: 1s
       interval: 5s
 
+  redis:
+    image: redis:7.4.1-alpine3.20
+    container_name: ttt-redis
+    volumes:
+      - redis-data:/data
+      - ./redis:/mnt
+    healthcheck:
+      test: ash /mnt/is-server-ok.sh
+      start_period: 2m
+      start_interval: 0.5s
+      interval: 3s
+    command: ash /mnt/start-server.sh
+
 volumes:
   backend-data: null
+  postgres-data: null
+  redis-data: null
 
-  postgres-data:
-    labels:
-      db: true
+secrets:
+  secrets:
+    file: ttt/secrets.yaml

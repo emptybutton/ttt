@@ -1,13 +1,8 @@
-# app-name-kebab-case
-Что бы начать, замените в названиях и содержаниях всех файлах:
-1. `app-name-kebab-case` - на название вашего приложение в kebab-case
-2. `app_name_snake_case` - на название вашего приложение в snake_case
-2. `app_name_description` - на описание
+# ttt
 
-app_name_description.
+Tic-Tac-Toe Telegram bot.
 
-## Развертывание для разработки
 ```bash
-git clone https://github.com/emptybutton/app-name-kebab-case.git
-docker compose -f app-name-kebab-case/deploy/dev/docker-compose.yaml up
+git clone https://github.com/emptybutton/ttt.git
+docker compose -f ttt/deploy/dev/docker-compose.yaml up
 ```
