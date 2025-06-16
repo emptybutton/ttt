@@ -1,5 +1,5 @@
-from collections.abc import Iterable, Iterator
-from dataclasses import dataclass
+from collections.abc import Iterator
+from dataclasses import dataclass, field
 from itertools import chain
 from typing import Any, Literal, NoReturn, overload
 
@@ -42,37 +42,31 @@ class TrackingError(Exception): ...
 
 @dataclass(frozen=True, unsafe_hash=False)
 class Tracking[T = Any]:
-    _new: list[T]
-    _mutated: list[T]
-    _deleted: list[T]
+    new: list[T] = field(default_factory=list)
+    mutated: list[T] = field(default_factory=list)
+    deleted: list[T] = field(default_factory=list)
 
     def __iter__(self) -> Iterator[T]:
-        return chain(self._new, self._mutated, self._deleted)
+        return chain(self.new, self.mutated, self.deleted)
 
-    def new(self) -> Iterable[T]:
-        return self._new
-
-    def mutated(self) -> Iterable[T]:
-        return self._mutated
-
-    def deleted(self) -> Iterable[T]:
-        return self._deleted
+    def __len__(self) -> int:
+        return sum(map(len, (self.new, self.mutated, self.deleted)))
 
     def register_new(self, it: T) -> None:
-        if it in self._new or it in self._mutated or it in self._deleted:
+        if it in self.new or it in self.mutated or it in self.deleted:
             raise TrackingError
 
-        self._new.append(it)
+        self.new.append(it)
 
     def register_mutated(self, it: T) -> None:
-        if it in self._new or it in self._deleted:
+        if it in self.new or it in self.deleted:
             raise TrackingError
 
-        if it not in self._mutated:
-            self._mutated.append(it)
+        if it not in self.mutated:
+            self.mutated.append(it)
 
     def register_deleted(self, it: T) -> None:
-        if it in self._new or it in self._mutated or it in self._deleted:
+        if it in self.new or it in self.mutated or it in self.deleted:
             raise TrackingError
 
-        self._deleted.append(it)
+        self.deleted.append(it)

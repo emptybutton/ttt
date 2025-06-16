@@ -1,7 +1,7 @@
 from pytest import Item, fixture, mark
 from pytest_asyncio import is_async_test
 
-from ttt.infrastructure.typenv.envs import Envs
+from ttt.infrastructure.pydantic_settings.envs import Envs
 
 
 @fixture(scope="session")

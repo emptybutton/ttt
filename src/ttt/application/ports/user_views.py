@@ -1,15 +1,7 @@
 from abc import ABC, abstractmethod
-from uuid import UUID
-
-from ttt.entities.core.user import User
 
 
-class UserViews[UserViewT, UserWithIDViewT](ABC):
+class UserViews[UserWithIDViewT](ABC):
     @abstractmethod
-    async def view_of_user(self, user: User, /) -> UserViewT: ...
-
-    @abstractmethod
-    async def view_of_user_with_id(
-        self, user_id: UUID | None, /,
-    ) -> UserWithIDViewT:
+    async def view_of_user_with_id(self, user_id: int, /) -> UserWithIDViewT:
         ...

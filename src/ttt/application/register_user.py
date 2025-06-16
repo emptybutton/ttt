@@ -7,9 +7,6 @@ from ttt.application.ports.map import (
     NotUniqueUserNameError,
 )
 from ttt.application.ports.transaction import Transaction
-from ttt.application.ports.user_id_signing import (
-    UserIDSigning,
-)
 from ttt.application.ports.user_views import UserViews
 from ttt.application.ports.users import Users
 from ttt.entities.core.user import (

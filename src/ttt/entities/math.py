@@ -1,3 +1,4 @@
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from typing import Any
 
@@ -19,32 +20,44 @@ class Matrix[T]:
     :raises ttt.entities.math.InconsistentMatrixError:
     """
 
-    _columns: list[list[T]]
+    columns: list[list[T]]
 
     def size(self) -> MatrixSize:
         return self.line_size(), self.column_size()
 
     def line_size(self) -> int:
-        if not self._columns:
+        if not self.columns:
             return 0
 
-        return len(self._columns[0])
+        return len(self.columns[0])
 
     def column_size(self) -> int:
-        return len(self._columns)
+        return len(self.columns)
 
     def __post_init__(self) -> None:
-        x_size = self.line_size()
+        line_size = self.line_size()
 
         assert_(
-            all(len(column) == x_size for column in self._columns),
+            all(len(column) == line_size for column in self.columns),
             else_=InconsistentMatrixError(self),
         )
 
     def __setitem__(self, x_and_y: Vector, value: T) -> None:
         x, y = x_and_y
-        self._columns[y][x] = value
+        self.columns[y][x] = value
 
     def __getitem__(self, x_and_y: Vector) -> T:
         x, y = x_and_y
-        return self._columns[y][x]
+        return self.columns[y][x]
+
+    def __iter__(self) -> Iterator[Iterable[T]]:
+        yield from self.columns
+
+
+def matrix_with_size[T](size: MatrixSize, zero: T) -> Matrix[T]:
+    x, y = size
+
+    line = [zero] * x
+    columns = [line] * y
+
+    return Matrix(columns)
