@@ -11,7 +11,6 @@ classifiers = ["Private :: Do Not Upload"]
 requires-python = "==3.13.*"
 dependencies = [
     "dishka==1.6.0",
-    "effectt==0.2.0",
     "in-memory-db==0.3.0",
     "sqlalchemy==2.0.41",
     "psycopg[binary]==3.2.9",
