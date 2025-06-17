@@ -97,6 +97,19 @@ wheels = [
 ]
 
 [[package]]
+name = "alembic-postgresql-enum"
+version = "1.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "alembic" },
+    { name = "sqlalchemy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f9/45/d3a66a8c7604baba5b498727539539120897fd8f931a6c89aa68ff0d7cb3/alembic_postgresql_enum-1.7.0.tar.gz", hash = "sha256:1a12a2b25f3f49440f419821888530496511573875438b6e9a08cbcb8a6f006f", size = 15637, upload-time = "2025-02-20T08:22:36.285Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7d/9a/05d3f24be838af98f52e2a961f1f78f8575091198542a2add5cff7d62ef8/alembic_postgresql_enum-1.7.0-py3-none-any.whl", hash = "sha256:2a64260f3f1ed96f1bf984f55cb838e5d915693b8478b7b6ffea13cc09184ae0", size = 23516, upload-time = "2025-02-20T08:22:34.239Z" },
+]
+
+[[package]]
 name = "annotated-types"
 version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
@@ -719,6 +732,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiogram" },
     { name = "alembic" },
+    { name = "alembic-postgresql-enum" },
     { name = "dishka" },
     { name = "in-memory-db" },
     { name = "psycopg", extra = ["binary"] },
@@ -742,6 +756,7 @@ dev = [
 requires-dist = [
     { name = "aiogram", specifier = "==3.20.0.post0" },
     { name = "alembic", specifier = "==1.16.1" },
+    { name = "alembic-postgresql-enum", specifier = "==1.7.0" },
     { name = "dishka", specifier = "==1.6.0" },
     { name = "in-memory-db", specifier = "==0.3.0" },
     { name = "psycopg", extras = ["binary"], specifier = "==3.2.9" },

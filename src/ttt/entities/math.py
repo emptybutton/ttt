@@ -1,6 +1,6 @@
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, NamedTuple
 
 from ttt.entities.tools import assert_
 
@@ -11,7 +11,11 @@ class InconsistentMatrixError(Exception):
 
 
 type MatrixSize = tuple[int, int]
-type Vector = tuple[int, int]
+
+
+class Vector(NamedTuple):
+    x: int
+    y: int
 
 
 @dataclass
@@ -20,46 +24,46 @@ class Matrix[T]:
     :raises ttt.entities.math.InconsistentMatrixError:
     """
 
-    columns: list[list[T]]
+    lines: list[list[T]]
 
     def size(self) -> MatrixSize:
-        return self.line_size(), self.column_size()
+        return self.width(), self.height()
 
-    def line_size(self) -> int:
-        if not self.columns:
+    def width(self) -> int:
+        if not self.lines:
             return 0
 
-        return len(self.columns[0])
+        return len(self.lines[0])
 
-    def column_size(self) -> int:
-        return len(self.columns)
+    def height(self) -> int:
+        return len(self.lines)
 
     def __post_init__(self) -> None:
-        line_size = self.line_size()
+        line_size = self.width()
 
         assert_(
-            all(len(column) == line_size for column in self.columns),
+            all(len(column) == line_size for column in self.lines),
             else_=InconsistentMatrixError(self),
         )
 
-    def __setitem__(self, x_and_y: Vector, value: T) -> None:
+    def __setitem__(self, x_and_y: tuple[int, int], value: T) -> None:
         """
         :raises IndexError:
         """
 
         x, y = x_and_y
-        self.columns[y][x] = value
+        self.lines[y][x] = value
 
-    def __getitem__(self, x_and_y: Vector) -> T:
+    def __getitem__(self, x_and_y: tuple[int, int]) -> T:
         """
         :raises IndexError:
         """
 
         x, y = x_and_y
-        return self.columns[y][x]
+        return self.lines[y][x]
 
     def __iter__(self) -> Iterator[Iterable[T]]:
-        yield from self.columns
+        yield from self.lines
 
 
 def matrix_with_size[T](size: MatrixSize, zero: T) -> Matrix[T]:
