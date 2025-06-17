@@ -15,9 +15,9 @@ from ttt.entities.core import (
     NotCurrentPlayerError,
     NotPlayerError,
     NotStandardBoardError,
-    User,
+    Player,
     create_empty_board,
-    create_user,
+    create_player,
 )
 from ttt.entities.math import (
     Matrix,
@@ -31,13 +31,13 @@ def tracking() -> Tracking:
 
 
 @fixture
-def player1(tracking: Tracking) -> User:
-    return User(1, 0, 0, 0, tracking)
+def player1(tracking: Tracking) -> Player:
+    return Player(1, 0, 0, 0, tracking)
 
 
 @fixture
-def player2(tracking: Tracking) -> User:
-    return User(2, 0, 0, 0, tracking)
+def player2(tracking: Tracking) -> Player:
+    return Player(2, 0, 0, 0, tracking)
 
 
 @fixture(params=range(6))
@@ -120,8 +120,8 @@ def standard_board(tracking: Tracking) -> Board:
 @fixture
 def game(
     tracking: Tracking,
-    player1: User,
-    player2: User,
+    player1: Player,
+    player2: Player,
     standard_board: Board,
 ) -> Game:
     return Game(
@@ -143,8 +143,8 @@ def test_not_standard_board(
     with raises(NotStandardBoardError):
         Game(
             UUID(int=0),
-            User(0, 1, 2, 3, tracking),
-            User(1, 1, 2, 3, tracking),
+            Player(0, 1, 2, 3, tracking),
+            Player(1, 1, 2, 3, tracking),
             not_standard_board,
             9,
             None,
@@ -181,8 +181,8 @@ def test_game_with_invalid_cell_order(
     with raises(InvalidCellOrderError):
         Game(
             UUID(int=0),
-            User(0, 1, 2, 3, tracking),
-            User(1, 1, 2, 3, tracking),
+            Player(0, 1, 2, 3, tracking),
+            Player(1, 1, 2, 3, tracking),
             board_with_invalid_cell_order,
             9,
             None,
@@ -227,8 +227,8 @@ def test_create_empty_board_ok(tracking: Tracking, object_: str) -> None:
 
 
 def test_make_move_with_completed_game(
-    player1: User,
-    player2: User,
+    player1: Player,
+    player2: Player,
     standard_board: Board,
     tracking: Tracking,
 ) -> None:
@@ -278,7 +278,7 @@ def test_make_move_with_double_move(game: Game) -> None:
 
 @mark.parametrize("object_", ["result", "player1", "player2", "extra_move"])
 def test_winning_game(
-    object_: str, game: Game, player1: User, player2: User, tracking: Tracking,
+    object_: str, game: Game, player1: Player, player2: Player, tracking: Tracking,
 ) -> None:
     """
     XXX
@@ -298,10 +298,10 @@ def test_winning_game(
         assert result == GameResult(winner_id=1)
 
     if object_ == "player1":
-        assert player1 == User(1, 1, 0, 0, tracking)
+        assert player1 == Player(1, 1, 0, 0, tracking)
 
     if object_ == "player2":
-        assert player2 == User(2, 0, 0, 1, tracking)
+        assert player2 == Player(2, 0, 0, 1, tracking)
 
     if object_ == "extra_move":
         with raises(CompletedGameError):
@@ -310,7 +310,7 @@ def test_winning_game(
 
 @mark.parametrize("object_", ["result", "player1", "player2", "extra_move"])
 def test_drawn_game(
-    object_: str, game: Game, player1: User, player2: User, tracking: Tracking,
+    object_: str, game: Game, player1: Player, player2: Player, tracking: Tracking,
 ) -> None:
     """
     XOX
@@ -336,10 +336,10 @@ def test_drawn_game(
         assert result == GameResult(winner_id=None)
 
     if object_ == "player1":
-        assert player1 == User(1, 0, 1, 0, tracking)
+        assert player1 == Player(1, 0, 1, 0, tracking)
 
     if object_ == "player2":
-        assert player2 == User(2, 0, 1, 0, tracking)
+        assert player2 == Player(2, 0, 1, 0, tracking)
 
     if object_ == "extra_move":
         with raises(CompletedGameError):
@@ -348,7 +348,7 @@ def test_drawn_game(
 
 @mark.parametrize("object_", ["result", "player1", "player2", "extra_move"])
 def test_winning_game_with_filled_board(
-    object_: str, game: Game, player1: User, player2: User, tracking: Tracking,
+    object_: str, game: Game, player1: Player, player2: Player, tracking: Tracking,
 ) -> None:
     """
     XOX
@@ -374,22 +374,22 @@ def test_winning_game_with_filled_board(
         assert result == GameResult(winner_id=1)
 
     if object_ == "player1":
-        assert player1 == User(1, 1, 0, 0, tracking)
+        assert player1 == Player(1, 1, 0, 0, tracking)
 
     if object_ == "player2":
-        assert player2 == User(2, 0, 0, 1, tracking)
+        assert player2 == Player(2, 0, 0, 1, tracking)
 
     if object_ == "extra_move":
         with raises(CompletedGameError):
             game.make_move(2, (2, 1))
 
 
-@mark.parametrize("object_", ["user", "tracking"])
-def test_create_user(tracking: Tracking, object_: str) -> None:
-    user = create_user(42, tracking)
+@mark.parametrize("object_", ["player", "tracking"])
+def test_create_player(tracking: Tracking, object_: str) -> None:
+    player = create_player(42, tracking)
 
-    if object_ == "user":
-        assert user == User(42, 0, 0, 0, tracking)
+    if object_ == "player":
+        assert player == Player(42, 0, 0, 0, tracking)
 
     if object_ == "tracking":
         assert len(tracking) == 1

@@ -11,7 +11,7 @@ from ttt.entities.tools import Tracking, assert_, not_none
 
 
 @dataclass
-class User:
+class Player:
     id: int
     number_of_wins: int
     number_of_draws: int
@@ -31,11 +31,11 @@ class User:
         self.tracking.register_mutated(self)
 
 
-def create_user(id_: int, tracking: Tracking) -> User:
-    user = User(id_, 0, 0, 0, tracking)
-    tracking.register_new(user)
+def create_player(id_: int, tracking: Tracking) -> Player:
+    player = Player(id_, 0, 0, 0, tracking)
+    tracking.register_new(player)
 
-    return user
+    return player
 
 
 class AlreadyFilledCellError(Exception): ...
@@ -142,8 +142,8 @@ class Game:
     """
 
     id: UUID
-    player1: User
-    player2: User
+    player1: Player
+    player2: Player
     board: Board
     number_of_unfilled_cells: int
     result: GameResult | None
@@ -167,7 +167,7 @@ class Game:
         )
 
     def make_move(
-        self, user_id: int, cell_position: Vector,
+        self, player_id: int, cell_position: Vector,
     ) -> GameResult | None:
         """
         :raises ttt.entities.core.CompletedGameError:
@@ -181,12 +181,12 @@ class Game:
         current_player = not_none(current_player, else_=CompletedGameError)
 
         assert_(
-            user_id in {self.player1.id, self.player2.id},
+            player_id in {self.player1.id, self.player2.id},
             else_=NotPlayerError(),
         )
-        assert_(current_player.id == user_id, else_=NotCurrentPlayerError())
+        assert_(current_player.id == player_id, else_=NotCurrentPlayerError())
 
-        self._fill_cell(cell_position, user_id)
+        self._fill_cell(cell_position, player_id)
 
         if self._is_player_winner(current_player, cell_position):
             not_current_player = not_none(self._not_current_player())
@@ -208,7 +208,7 @@ class Game:
         return None
 
     def _fill_cell(
-        self, cell_position: Vector, user_id: int,
+        self, cell_position: Vector, player_id: int,
     ) -> GameResult | None:
         """
         :raises ttt.entities.core.NoCellError:
@@ -220,7 +220,7 @@ class Game:
         except IndexError as error:
             raise NoCellError from error
 
-        cell.fill(user_id)
+        cell.fill(player_id)
         self.number_of_unfilled_cells -= 1
         self.tracking.register_mutated(self)
 
@@ -230,7 +230,7 @@ class Game:
     def _is_board_filled(self) -> bool:
         return self.number_of_unfilled_cells <= 0
 
-    def _is_player_winner(self, player: User, cell_position: Vector) -> bool:
+    def _is_player_winner(self, player: Player, cell_position: Vector) -> bool:
         cell_x, cell_y = cell_position
 
         is_winner = all(
@@ -255,7 +255,7 @@ class Game:
 
         return is_winner
 
-    def _current_player(self) -> User | None:
+    def _current_player(self) -> Player | None:
         match self.state:
             case GameState.wait_player1:
                 return self.player1
@@ -264,7 +264,7 @@ class Game:
             case GameState.completed:
                 return None
 
-    def _not_current_player(self) -> User | None:
+    def _not_current_player(self) -> Player | None:
         match self.state:
             case GameState.wait_player1:
                 return self.player2
@@ -284,7 +284,7 @@ class Game:
 
         self.tracking.register_mutated(self)
 
-    def _complete(self, winner: User | None) -> GameResult:
+    def _complete(self, winner: Player | None) -> GameResult:
         self.result = GameResult(None if winner is None else winner.id)
         self.state = GameState.completed
         self.tracking.register_mutated(self)
@@ -295,8 +295,8 @@ class Game:
 def start_game(
     cell_id_matrix: Matrix[UUID],
     game_id: UUID,
-    player1: User,
-    player2: User,
+    player1: Player,
+    player2: Player,
     tracking: Tracking,
 ) -> Game:
     """

@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 
-from ttt.entities.core import Cell, Game, User
+from ttt.entities.core import Cell, Game, Player
 from ttt.entities.tools import Tracking
 
 
-type MappableEntityLifeCycle = Tracking[User | Cell | Game]
+type MappableEntityLifeCycle = Tracking[Player | Cell | Game]
 
 
 class NotUniqueUserNameError(Exception): ...
