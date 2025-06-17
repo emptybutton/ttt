@@ -108,6 +108,9 @@ class GameResult:
     winner_id: int | None
 
 
+class OnePlayerError(Exception): ...
+
+
 class NotStandardBoardError(Exception): ...
 
 
@@ -136,6 +139,7 @@ def number_of_unfilled_cells(board: Matrix[Cell]) -> int:
 @dataclass
 class Game:
     """
+    :raises ttt.entities.core.OnePlayerError:
     :raises ttt.entities.core.NotStandardBoardError:
     :raises ttt.entities.core.InvalidCellOrderError:
     :raises ttt.entities.core.InvalidNumberOfUnfilledCellsError:
@@ -151,6 +155,7 @@ class Game:
     tracking: Tracking
 
     def __post_init__(self) -> None:
+        assert_(self.player1.id != self.player2.id, else_=OnePlayerError)
         assert_(is_board_standard(self.board), else_=NotStandardBoardError)
 
         is_cell_order_ok = all(

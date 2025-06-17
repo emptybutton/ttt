@@ -15,6 +15,7 @@ from ttt.entities.core import (
     NotCurrentPlayerError,
     NotPlayerError,
     NotStandardBoardError,
+    OnePlayerError,
     Player,
     create_empty_board,
     create_player,
@@ -136,23 +137,6 @@ def game(
     )
 
 
-def test_not_standard_board(
-    tracking: Tracking,
-    not_standard_board: Board,
-) -> None:
-    with raises(NotStandardBoardError):
-        Game(
-            UUID(int=0),
-            Player(0, 1, 2, 3, tracking),
-            Player(1, 1, 2, 3, tracking),
-            not_standard_board,
-            9,
-            None,
-            GameState.wait_player1,
-            tracking,
-        )
-
-
 @fixture
 def board_with_invalid_cell_order(tracking: Tracking) -> Board:
     return Matrix([
@@ -172,6 +156,41 @@ def board_with_invalid_cell_order(tracking: Tracking) -> Board:
             Cell(UUID(int=0), UUID(int=0), (2, 2), None, tracking),
         ],
     ])
+
+
+def test_not_standard_board(
+    tracking: Tracking,
+    not_standard_board: Board,
+) -> None:
+    with raises(NotStandardBoardError):
+        Game(
+            UUID(int=0),
+            Player(0, 1, 2, 3, tracking),
+            Player(1, 1, 2, 3, tracking),
+            not_standard_board,
+            9,
+            None,
+            GameState.wait_player1,
+            tracking,
+        )
+
+
+def test_make_move_with_one_player(
+    player1: Player,
+    standard_board: Board,
+    tracking: Tracking,
+) -> None:
+    with raises(OnePlayerError):
+        Game(
+            UUID(int=1),
+            player1,
+            player1,
+            standard_board,
+            9,
+            GameResult(None),
+            GameState.wait_player1,
+            tracking,
+        )
 
 
 def test_game_with_invalid_cell_order(
