@@ -8,13 +8,13 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.sqlalchemy.tables import metadata
-from ttt.infrastructure.typenv.envs import Envs
 
 
 @fixture(scope="session")
 def engine(envs: Envs) -> AsyncEngine:
-    return create_async_engine(envs.postgres_url, poolclass=NullPool)
+    return create_async_engine(str(envs.postgres_url), poolclass=NullPool)
 
 
 @fixture(scope="session")
