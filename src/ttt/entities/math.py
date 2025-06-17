@@ -43,10 +43,18 @@ class Matrix[T]:
         )
 
     def __setitem__(self, x_and_y: Vector, value: T) -> None:
+        """
+        :raises IndexError:
+        """
+
         x, y = x_and_y
         self.columns[y][x] = value
 
     def __getitem__(self, x_and_y: Vector) -> T:
+        """
+        :raises IndexError:
+        """
+
         x, y = x_and_y
         return self.columns[y][x]
 

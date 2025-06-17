@@ -167,7 +167,7 @@ class Game:
         )
 
     def make_move(
-        self, cell_x: int, cell_y: int, user_id: int,
+        self, user_id: int, cell_position: Vector,
     ) -> GameResult | None:
         """
         :raises ttt.entities.core.CompletedGameError:
@@ -186,9 +186,9 @@ class Game:
         )
         assert_(current_player.id == user_id, else_=NotCurrentPlayerError())
 
-        self._fill_cell(cell_x, cell_y, user_id)
+        self._fill_cell(cell_position, user_id)
 
-        if self._is_player_winner(current_player, cell_x, cell_y):
+        if self._is_player_winner(current_player, cell_position):
             not_current_player = not_none(self._not_current_player())
 
             current_player.win()
@@ -202,13 +202,13 @@ class Game:
             current_player.be_draw()
             not_current_player.be_draw()
 
-            return self._complete(current_player)
+            return self._complete(None)
 
         self._wait_next_move()
         return None
 
     def _fill_cell(
-        self, cell_x: int, cell_y: int, user_id: int,
+        self, cell_position: Vector, user_id: int,
     ) -> GameResult | None:
         """
         :raises ttt.entities.core.NoCellError:
@@ -216,8 +216,8 @@ class Game:
         """
 
         try:
-            cell = self.board[cell_x, cell_y]
-        except KeyError as error:
+            cell = self.board[cell_position]
+        except IndexError as error:
             raise NoCellError from error
 
         cell.fill(user_id)
@@ -225,9 +225,14 @@ class Game:
         self.tracking.register_mutated(self)
 
     def _can_continue(self) -> bool:
-        return self.number_of_unfilled_cells >= 1
+        return not self._is_board_filled()
 
-    def _is_player_winner(self, player: User, cell_x: int, cell_y: int) -> bool:
+    def _is_board_filled(self) -> bool:
+        return self.number_of_unfilled_cells <= 0
+
+    def _is_player_winner(self, player: User, cell_position: Vector) -> bool:
+        cell_x, cell_y = cell_position
+
         is_winner = all(
             self.board[cell_x, y].filler_id == player.id
             for y in range(self.board.column_size())

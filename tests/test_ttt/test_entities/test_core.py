@@ -3,14 +3,21 @@ from uuid import UUID
 from pytest import FixtureRequest, fixture, mark, raises
 
 from ttt.entities.core import (
+    AlreadyFilledCellError,
     Board,
     Cell,
+    CompletedGameError,
     Game,
+    GameResult,
     GameState,
     InvalidCellOrderError,
+    NoCellError,
+    NotCurrentPlayerError,
+    NotPlayerError,
     NotStandardBoardError,
     User,
     create_empty_board,
+    create_user,
 )
 from ttt.entities.math import (
     Matrix,
@@ -21,6 +28,16 @@ from ttt.entities.tools import Tracking
 @fixture
 def tracking() -> Tracking:
     return Tracking()
+
+
+@fixture
+def player1(tracking: Tracking) -> User:
+    return User(1, 0, 0, 0, tracking)
+
+
+@fixture
+def player2(tracking: Tracking) -> User:
+    return User(2, 0, 0, 0, tracking)
 
 
 @fixture(params=range(6))
@@ -56,25 +73,25 @@ def not_standard_board(request: FixtureRequest, tracking: Tracking) -> Board:
 
     if request.param == 5:
         return Matrix([
-        [
-            Cell(UUID(int=0), UUID(int=0), (0, 0), None, tracking),
-            Cell(UUID(int=0), UUID(int=0), (1, 0), None, tracking),
-            Cell(UUID(int=0), UUID(int=0), (2, 0), None, tracking),
-            Cell(UUID(int=0), UUID(int=0), (3, 0), None, tracking),
-        ],
-        [
-            Cell(UUID(int=0), UUID(int=0), (0, 1), None, tracking),
-            Cell(UUID(int=0), UUID(int=0), (1, 1), None, tracking),
-            Cell(UUID(int=0), UUID(int=0), (2, 1), None, tracking),
-            Cell(UUID(int=0), UUID(int=0), (3, 1), None, tracking),
-        ],
-        [
-            Cell(UUID(int=0), UUID(int=0), (0, 2), None, tracking),
-            Cell(UUID(int=0), UUID(int=0), (1, 2), None, tracking),
-            Cell(UUID(int=0), UUID(int=0), (2, 2), None, tracking),
-            Cell(UUID(int=0), UUID(int=0), (3, 2), None, tracking),
-        ],
-    ])
+            [
+                Cell(UUID(int=0), UUID(int=0), (0, 0), None, tracking),
+                Cell(UUID(int=0), UUID(int=0), (1, 0), None, tracking),
+                Cell(UUID(int=0), UUID(int=0), (2, 0), None, tracking),
+                Cell(UUID(int=0), UUID(int=0), (3, 0), None, tracking),
+            ],
+            [
+                Cell(UUID(int=0), UUID(int=0), (0, 1), None, tracking),
+                Cell(UUID(int=0), UUID(int=0), (1, 1), None, tracking),
+                Cell(UUID(int=0), UUID(int=0), (2, 1), None, tracking),
+                Cell(UUID(int=0), UUID(int=0), (3, 1), None, tracking),
+            ],
+            [
+                Cell(UUID(int=0), UUID(int=0), (0, 2), None, tracking),
+                Cell(UUID(int=0), UUID(int=0), (1, 2), None, tracking),
+                Cell(UUID(int=0), UUID(int=0), (2, 2), None, tracking),
+                Cell(UUID(int=0), UUID(int=0), (3, 2), None, tracking),
+            ],
+        ])
 
     raise ValueError(request.param)
 
@@ -98,6 +115,25 @@ def standard_board(tracking: Tracking) -> Board:
             Cell(UUID(int=0), UUID(int=0), (2, 2), None, tracking),
         ],
     ])
+
+
+@fixture
+def game(
+    tracking: Tracking,
+    player1: User,
+    player2: User,
+    standard_board: Board,
+) -> Game:
+    return Game(
+        UUID(int=0),
+        player1,
+        player2,
+        standard_board,
+        9,
+        None,
+        GameState.wait_player1,
+        tracking,
+    )
 
 
 def test_not_standard_board(
@@ -139,7 +175,8 @@ def board_with_invalid_cell_order(tracking: Tracking) -> Board:
 
 
 def test_game_with_invalid_cell_order(
-    tracking: Tracking, board_with_invalid_cell_order: Board,
+    tracking: Tracking,
+    board_with_invalid_cell_order: Board,
 ) -> None:
     with raises(InvalidCellOrderError):
         Game(
@@ -187,3 +224,172 @@ def test_create_empty_board_ok(tracking: Tracking, object_: str) -> None:
 
     if object_ == "tracking":
         assert len(tracking) == 9
+
+
+def test_make_move_with_completed_game(
+    player1: User,
+    player2: User,
+    standard_board: Board,
+    tracking: Tracking,
+) -> None:
+    game = Game(
+        UUID(int=1),
+        player1,
+        player2,
+        standard_board,
+        9,
+        GameResult(None),
+        GameState.completed,
+        tracking,
+    )
+
+    with raises(CompletedGameError):
+        game.make_move(1, (0, 0))
+
+
+def test_make_move_with_not_player(game: Game) -> None:
+    with raises(NotPlayerError):
+        game.make_move(100, (2, 2))
+
+
+def test_make_move_with_not_current_player(game: Game) -> None:
+    with raises(NotCurrentPlayerError):
+        game.make_move(2, (2, 2))
+
+
+def test_make_move_with_no_cell(game: Game) -> None:
+    with raises(NoCellError):
+        game.make_move(1, (3, 1))
+
+
+def test_make_move_with_already_filled_cell(game: Game) -> None:
+    game.make_move(1, (0, 0))
+
+    with raises(AlreadyFilledCellError):
+        game.make_move(2, (0, 0))
+
+
+def test_make_move_with_double_move(game: Game) -> None:
+    game.make_move(1, (0, 0))
+
+    with raises(NotCurrentPlayerError):
+        game.make_move(1, (1, 0))
+
+
+@mark.parametrize("object_", ["result", "player1", "player2", "extra_move"])
+def test_winning_game(
+    object_: str, game: Game, player1: User, player2: User, tracking: Tracking,
+) -> None:
+    """
+    XXX
+    OOE
+    ___
+    """
+
+    game.make_move(1, (0, 0))
+    game.make_move(2, (0, 1))
+
+    game.make_move(1, (1, 0))
+    game.make_move(2, (1, 1))
+
+    result = game.make_move(1, (2, 0))
+
+    if object_ == "result":
+        assert result == GameResult(winner_id=1)
+
+    if object_ == "player1":
+        assert player1 == User(1, 1, 0, 0, tracking)
+
+    if object_ == "player2":
+        assert player2 == User(2, 0, 0, 1, tracking)
+
+    if object_ == "extra_move":
+        with raises(CompletedGameError):
+            game.make_move(2, (2, 1))
+
+
+@mark.parametrize("object_", ["result", "player1", "player2", "extra_move"])
+def test_drawn_game(
+    object_: str, game: Game, player1: User, player2: User, tracking: Tracking,
+) -> None:
+    """
+    XOX
+    XOX
+    OXO
+    """
+
+    game.make_move(1, (0, 0))
+    game.make_move(2, (1, 0))
+
+    game.make_move(1, (2, 0))
+    game.make_move(2, (1, 1))
+
+    game.make_move(1, (0, 1))
+    game.make_move(2, (0, 2))
+
+    game.make_move(1, (2, 1))
+    game.make_move(2, (2, 2))
+
+    result = game.make_move(1, (1, 2))
+
+    if object_ == "result":
+        assert result == GameResult(winner_id=None)
+
+    if object_ == "player1":
+        assert player1 == User(1, 0, 1, 0, tracking)
+
+    if object_ == "player2":
+        assert player2 == User(2, 0, 1, 0, tracking)
+
+    if object_ == "extra_move":
+        with raises(CompletedGameError):
+            game.make_move(2, (2, 1))
+
+
+@mark.parametrize("object_", ["result", "player1", "player2", "extra_move"])
+def test_winning_game_with_filled_board(
+    object_: str, game: Game, player1: User, player2: User, tracking: Tracking,
+) -> None:
+    """
+    XOX
+    OXO
+    XXO
+    """
+
+    game.make_move(1, (0, 0))
+    game.make_move(2, (1, 0))
+
+    game.make_move(1, (2, 0))
+    game.make_move(2, (0, 1))
+
+    game.make_move(1, (1, 1))
+    game.make_move(2, (2, 1))
+
+    game.make_move(1, (1, 2))
+    game.make_move(2, (2, 2))
+
+    result = game.make_move(1, (0, 2))
+
+    if object_ == "result":
+        assert result == GameResult(winner_id=1)
+
+    if object_ == "player1":
+        assert player1 == User(1, 1, 0, 0, tracking)
+
+    if object_ == "player2":
+        assert player2 == User(2, 0, 0, 1, tracking)
+
+    if object_ == "extra_move":
+        with raises(CompletedGameError):
+            game.make_move(2, (2, 1))
+
+
+@mark.parametrize("object_", ["user", "tracking"])
+def test_create_user(tracking: Tracking, object_: str) -> None:
+    user = create_user(42, tracking)
+
+    if object_ == "user":
+        assert user == User(42, 0, 0, 0, tracking)
+
+    if object_ == "tracking":
+        assert len(tracking) == 1
