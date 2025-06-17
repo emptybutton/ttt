@@ -166,7 +166,7 @@ class Game:
             else_=InvalidNumberOfUnfilledCellsError,
         )
 
-    def fill_cell(
+    def make_move(
         self, cell_x: int, cell_y: int, user_id: int,
     ) -> GameResult | None:
         """
@@ -186,14 +186,7 @@ class Game:
         )
         assert_(current_player.id == user_id, else_=NotCurrentPlayerError())
 
-        try:
-            cell = self.board[cell_x, cell_y]
-        except KeyError as error:
-            raise NoCellError from error
-
-        cell.fill(user_id)
-        self.number_of_unfilled_cells -= 1
-        self.tracking.register_mutated(self)
+        self._fill_cell(cell_x, cell_y, user_id)
 
         if self._is_player_winner(current_player, cell_x, cell_y):
             not_current_player = not_none(self._not_current_player())
@@ -213,6 +206,23 @@ class Game:
 
         self._wait_next_move()
         return None
+
+    def _fill_cell(
+        self, cell_x: int, cell_y: int, user_id: int,
+    ) -> GameResult | None:
+        """
+        :raises ttt.entities.core.NoCellError:
+        :raises ttt.entities.core.AlreadyFilledCellError:
+        """
+
+        try:
+            cell = self.board[cell_x, cell_y]
+        except KeyError as error:
+            raise NoCellError from error
+
+        cell.fill(user_id)
+        self.number_of_unfilled_cells -= 1
+        self.tracking.register_mutated(self)
 
     def _can_continue(self) -> bool:
         return self.number_of_unfilled_cells >= 1
