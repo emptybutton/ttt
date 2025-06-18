@@ -1,7 +1,5 @@
-from abc import abstractmethod
-from asyncio import gather
 from collections.abc import Iterable
-from enum import Enum, IntEnum, StrEnum, auto
+from enum import StrEnum
 from itertools import groupby
 from uuid import UUID
 
@@ -19,7 +17,7 @@ from ttt.entities.core.game.game import (
 )
 from ttt.entities.core.player import Player
 from ttt.entities.math.matrix import Matrix
-from ttt.infrastructure.sqlalchemy.loading import Loading
+from ttt.infrastructure.loading import Loading
 
 
 class Base(DeclarativeBase):
@@ -41,7 +39,7 @@ class PlayerTableModel(Base):
         self.number_of_defeats = it.number_of_defeats
         self.current_game_id = it.current_game_id
 
-    async def __entity__(self, _: object) -> Player:
+    def __entity__(self, _: object) -> Player:
         return Player(
             self.id,
             self.number_of_wins,
@@ -58,11 +56,11 @@ class GameResultTableModel(Base):
     game_id: Mapped[UUID] = mapped_column(ForeignKey("games.id"), unique=True)
     winner_id: Mapped[int | None] = mapped_column(ForeignKey("players.id"))
 
-    def map(self, it: Cell) -> None:
+    def map(self, it: GameResult) -> None:
         self.game_id = it.game_id
         self.winner_id = it.winner_id
 
-    async def __entity__(self, _: object) -> GameResult:
+    def __entity__(self, _: object) -> GameResult:
         return GameResult(
             self.id,
             self.game_id,
@@ -85,7 +83,7 @@ class CellTableModel(Base):
         self.board_position_y = it.board_position[1]
         self.filler_id = it.filler_id
 
-    async def __entity__(self, _: object) -> Cell:
+    def __entity__(self, _: object) -> Cell:
         return Cell(
             self.id,
             self.game_id,
@@ -99,7 +97,7 @@ class TableGameState(StrEnum):
     wait_player2 = "wait_player2"
     completed = "completed"
 
-    def entity(self) -> GameState:
+    def __entity__(self) -> GameState:
         match self:
             case TableGameState.wait_player1:
                 return GameState.wait_player1
@@ -150,13 +148,10 @@ class GameTableModel(Base):
         self.player2_id = it.player2.id
         self.state = TableGameState.of(it.state)
 
-    async def __entity__(self, loading: Loading) -> Game:
-        cells, player1, player2 = await gather(
-            gather(*map(loading.load, self.cells)),
-            loading.load(self.player1),
-            loading.load(self.player2),
-        )
-        board = self._board(cells)
+    def __entity__(self, loading: Loading) -> Game:
+        board = self._board(map(loading.load, self.cells))
+        player1 = loading.load(self.player1)
+        player2 = loading.load(self.player2)
 
         return Game(
             self.id,
@@ -164,8 +159,8 @@ class GameTableModel(Base):
             player2,
             board,
             number_of_unfilled_cells(board),
-            await loading.load(self.result),
-            self.state.entity(),
+            loading.load(self.result),
+            self.state.__entity__(),
         )
 
     def _board(self, cells: Iterable[Cell]) -> Board:
@@ -178,3 +173,12 @@ class GameTableModel(Base):
         ]
 
         return Matrix(lines)
+
+
+TableModel = (
+    PlayerTableModel
+    | GameResultTableModel
+    | CellTableModel
+    | TableGameState
+    | GameTableModel
+)

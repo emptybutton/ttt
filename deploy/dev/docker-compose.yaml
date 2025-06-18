@@ -41,17 +41,17 @@ services:
       interval: 5s
 
   redis:
-    image: redis:7.4.1-alpine3.20
+    image: redis:8.0.2-bookworm
     container_name: ttt-redis
     volumes:
       - redis-data:/data
       - ./redis:/mnt
     healthcheck:
-      test: ash /mnt/is-server-ok.sh
+      test: bash /mnt/is-server-ok.sh
       start_period: 2m
       start_interval: 0.5s
       interval: 3s
-    command: ash /mnt/start-server.sh
+    command: bash /mnt/start-server.sh
 
 volumes:
   backend-data: null

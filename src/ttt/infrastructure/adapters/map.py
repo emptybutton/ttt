@@ -4,36 +4,47 @@ from psycopg.errors import UniqueViolation
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ttt.application.ports.map import (
+from ttt.application.common.ports.map import (
     Map,
-    MappableEntityLifeCycle,
-    NotUniqueUserNameError,
+    MappableTracking,
+    NotUniquePlayerIdError,
 )
+from ttt.infrastructure.loading import Loading
+from ttt.infrastructure.sqlalchemy.tables import TableModel
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)
 class MapToPostgres(Map):
-    session: AsyncSession
+    _session: AsyncSession
+    _loading: Loading
 
     async def __call__(
         self,
-        effect: MappableEntityLifeCycle,
+        tracking: MappableTracking,
     ) -> None:
-        """
-        :raises ttt.application.ports.map.NotUniqueUserNameError:
-        """  # noqa: E501
+        for entity in tracking.new:
+            model = self._loading.loadable(entity)
+            if not isinstance(model, TableModel):
+                raise TypeError(model)
 
-        self.session.add_all(effect.new_values)
-        self.session.add_all(effect.translated_values)
+            self._session.add(model)
 
-        for mutated_value in effect.mutated_values:
-            await self.session.merge(mutated_value, load=False)
+        for entity in tracking.mutated:
+            model = self._loading.loadable(entity)
+            if not isinstance(model, TableModel):
+                raise TypeError(model)
 
-        for dead_value in effect.dead_values:
-            await self.session.delete(dead_value)
+            model.map(entity)  # type: ignore[arg-type]
+
+        for entity in tracking.deleted:
+            model = self._loading.loadable(entity)
+            if not isinstance(model, TableModel):
+                raise TypeError(model)
+
+            await self._session.delete(model)
 
         try:
-            await self.session.flush()
+            await self._session.flush()
         except IntegrityError as error:
             self._handle_integrity_error(error)
 
@@ -42,7 +53,7 @@ class MapToPostgres(Map):
             case UniqueViolation() as unique_error:
                 constraint_name = unique_error.diag.constraint_name
 
-                if constraint_name == "users_name_unique":
-                    raise NotUniqueUserNameError from error
+                if constraint_name == "players_pkey":
+                    raise NotUniquePlayerIdError from error
             case _:
                 raise error from error

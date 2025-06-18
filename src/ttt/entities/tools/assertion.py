@@ -14,20 +14,27 @@ def not_none[ValueT](
 @overload
 def assert_(
     assertion: Literal[False],
-    else_: Exception | type[Exception],
+    else_: Exception | type[Exception] = ValueError,
 ) -> NoReturn: ...
 
 
 @overload
 def assert_(
     assertion: Literal[True],
-    else_: Exception | type[Exception],
+    else_: Exception | type[Exception] = ValueError,
+) -> None: ...
+
+
+@overload
+def assert_(
+    assertion: bool,  # noqa: FBT001
+    else_: Exception | type[Exception] = ValueError,
 ) -> None: ...
 
 
 def assert_(
     assertion: bool,  # noqa: FBT001
-    else_: Exception | type[Exception],
+    else_: Exception | type[Exception] = ValueError,
 ) -> None:
     if not assertion:
         raise else_

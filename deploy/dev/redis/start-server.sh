@@ -1,3 +1,3 @@
-#!/bin/ash
+#!/bin/bash
 
 redis-server /mnt/redis.conf

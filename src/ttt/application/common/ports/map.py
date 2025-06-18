@@ -9,14 +9,14 @@ from ttt.entities.tools.tracking import Tracking
 class NotUniquePlayerIdError(Exception): ...
 
 
-type MappableEntityLifeCycle = Tracking[Player | Game | Cell]
+type MappableTracking = Tracking[Player | Game | Cell]
 
 
 class Map(ABC):
     @abstractmethod
     async def __call__(
         self,
-        effect: MappableEntityLifeCycle,
+        tracking: MappableTracking,
         /,
     ) -> None:
         """
