@@ -4,7 +4,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from ttt.infrastructure.pydantic_settings.envs import Envs
-from ttt.infrastructure.sqlalchemy.tables import metadata
+from ttt.infrastructure.sqlalchemy.tables import Base
 
 
 config = context.config
@@ -13,7 +13,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = metadata
+target_metadata = Base.metadata
 
 envs = Envs.load()
 config.set_main_option("sqlalchemy.url", str(envs.postgres_url))

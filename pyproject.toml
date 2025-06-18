@@ -68,6 +68,9 @@ indent-width = 4
 [tool.ruff.lint.isort]
 lines-after-imports = 2
 
+[tool.ruff.lint.pylint]
+allow-dunder-method-names = ["__entity__"]
+
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
