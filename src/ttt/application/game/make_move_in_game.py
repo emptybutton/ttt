@@ -5,11 +5,9 @@ from ttt.application.common.ports.players import Players
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.ports.games import Games
-from ttt.entities.core import (
-    GameResult,
-)
-from ttt.entities.math import Vector
-from ttt.entities.tools import Tracking
+from ttt.entities.core.game.game import GameResult
+from ttt.entities.math.vector import Vector
+from ttt.entities.tools.tracking import Tracking
 
 
 @dataclass(frozen=True, unsafe_hash=False)
@@ -28,10 +26,10 @@ class MakeMoveInGame:
         """
         :raises ttt.application.common.ports.players.NoPlayerError:
         :raises ttt.application.game.ports.games.NoGameError:
-        :raises ttt.entities.core.CompletedGameError:
-        :raises ttt.entities.core.NotCurrentPlayerError:
-        :raises ttt.entities.core.NoCellError:
-        :raises ttt.entities.core.AlreadyFilledCellError:
+        :raises ttt.entities.core.game.game.CompletedGameError:
+        :raises ttt.entities.core.game.game.NotCurrentPlayerError:
+        :raises ttt.entities.core.game.game.NoCellError:
+        :raises ttt.entities.core.game.cell.AlreadyFilledCellError:
         """
 
         player = await self.players.player_with_id(player_id)

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from ttt.entities.core import Game
+from ttt.entities.core.game.game import Game
 
 
 class NoGameError(Exception): ...

@@ -3,109 +3,23 @@ from enum import Enum, auto
 from itertools import chain
 from uuid import UUID
 
-from ttt.entities.math import (
-    Matrix,
-    Vector,
+from ttt.entities.core.game.board import (
+    Board,
+    create_empty_board,
+    is_board_standard,
 )
-from ttt.entities.tools import Tracking, assert_, not_none
-
-
-@dataclass
-class Player:
-    id: int
-    number_of_wins: int
-    number_of_draws: int
-    number_of_defeats: int
-    current_game_id: UUID | None
-
-    def be_in_game(self, game_id: UUID) -> None:
-        self.current_game_id = game_id
-
-    def lose(self, tracking: Tracking) -> None:
-        self.current_game_id = None
-        self.number_of_defeats += 1
-        tracking.register_mutated(self)
-
-    def win(self, tracking: Tracking) -> None:
-        self.current_game_id = None
-        self.number_of_wins += 1
-        tracking.register_mutated(self)
-
-    def be_draw(self, tracking: Tracking) -> None:
-        self.current_game_id = None
-        self.number_of_draws += 1
-        tracking.register_mutated(self)
-
-
-def create_player(id_: int, tracking: Tracking) -> Player:
-    player = Player(id_, 0, 0, 0, None)
-    tracking.register_new(player)
-
-    return player
-
-
-class AlreadyFilledCellError(Exception): ...
-
-
-@dataclass
-class Cell:
-    id: UUID
-    game_id: UUID
-    board_position: Vector
-    filler_id: int | None
-
-    def is_filled(self) -> bool:
-        return self.filler_id is not None
-
-    def fill(self, filler_id: int, tracking: Tracking) -> None:
-        """
-        :raises ttt.entities.core.AlreadyFilledCellError:
-        """
-
-        assert_(not self.is_filled(), else_=AlreadyFilledCellError)
-        self.filler_id = filler_id
-        tracking.register_mutated(self)
+from ttt.entities.core.game.cell import Cell
+from ttt.entities.core.player import Player
+from ttt.entities.math.matrix import Matrix
+from ttt.entities.math.vector import Vector
+from ttt.entities.tools.assertion import assert_, not_none
+from ttt.entities.tools.tracking import Tracking
 
 
 class GameState(Enum):
     wait_player1 = auto()
     wait_player2 = auto()
     completed = auto()
-
-
-type Board = Matrix[Cell]
-
-
-def is_board_standard(board: Board) -> bool:
-    return board.width() == board.height() == 3  # noqa: PLR2004
-
-
-class InvalidCellIDMatrixError(Exception): ...
-
-
-def create_empty_board(
-    cell_id_matrix: Matrix[UUID],
-    game_id: UUID,
-    tracking: Tracking,
-) -> Board:
-    """
-    :raises ttt.entities.core.InvalidCellIDMatrixError:
-    """
-
-    assert_(cell_id_matrix.size() == (3, 3), else_=InvalidCellIDMatrixError)
-
-    board = Matrix([
-        [
-            Cell(cell_id_matrix[x, y], game_id, (x, y), None)
-            for x in range(3)
-        ]
-        for y in range(3)
-    ])
-
-    for cell in chain.from_iterable(board):
-        tracking.register_new(cell)
-
-    return board
 
 
 @dataclass(frozen=True)
@@ -148,10 +62,10 @@ def number_of_unfilled_cells(board: Matrix[Cell]) -> int:
 @dataclass
 class Game:
     """
-    :raises ttt.entities.core.OnePlayerError:
-    :raises ttt.entities.core.NotStandardBoardError:
-    :raises ttt.entities.core.InvalidCellOrderError:
-    :raises ttt.entities.core.InvalidNumberOfUnfilledCellsError:
+    :raises ttt.entities.core.game.game.OnePlayerError:
+    :raises ttt.entities.core.game.game.NotStandardBoardError:
+    :raises ttt.entities.core.game.game.InvalidCellOrderError:
+    :raises ttt.entities.core.game.game.InvalidNumberOfUnfilledCellsError:
     """
 
     id: UUID
@@ -187,11 +101,11 @@ class Game:
         tracking: Tracking,
     ) -> GameResult | None:
         """
-        :raises ttt.entities.core.CompletedGameError:
-        :raises ttt.entities.core.NotPlayerError:
-        :raises ttt.entities.core.NotCurrentPlayerError:
-        :raises ttt.entities.core.NoCellError:
-        :raises ttt.entities.core.AlreadyFilledCellError:
+        :raises ttt.entities.core.game.game.CompletedGameError:
+        :raises ttt.entities.core.game.game.NotPlayerError:
+        :raises ttt.entities.core.game.game.NotCurrentPlayerError:
+        :raises ttt.entities.core.game.game.NoCellError:
+        :raises ttt.entities.core.game.cell.AlreadyFilledCellError:
         """
 
         current_player = self._current_player()
@@ -230,8 +144,8 @@ class Game:
         self, cell_position: Vector, player_id: int, tracking: Tracking,
     ) -> GameResult | None:
         """
-        :raises ttt.entities.core.NoCellError:
-        :raises ttt.entities.core.AlreadyFilledCellError:
+        :raises ttt.entities.core.game.game.NoCellError:
+        :raises ttt.entities.core.game.cell.AlreadyFilledCellError:
         """
 
         try:
@@ -329,8 +243,8 @@ def start_game(
 ) -> Game:
     """
     :raises ttt.entities.core.PlayerAlreadyInGameError:
-    :raises ttt.entities.core.InvalidCellIDMatrixError:
-    :raises ttt.entities.core.OnePlayerError:
+    :raises ttt.entities.core.game.board.InvalidCellIDMatrixError:
+    :raises ttt.entities.core.game.game.OnePlayerError:
     """
 
     players_in_game = tuple(

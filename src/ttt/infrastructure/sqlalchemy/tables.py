@@ -8,16 +8,11 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from ttt.entities.core import (
-    Board,
-    Cell,
-    Game,
-    GameResult,
-    GameState,
-    Player,
-    number_of_unfilled_cells,
-)
-from ttt.entities.math import Matrix
+from ttt.entities.core.game.board import Board
+from ttt.entities.core.game.cell import Cell
+from ttt.entities.core.game.game import Game, GameResult, GameState, number_of_unfilled_cells
+from ttt.entities.core.player import Player
+from ttt.entities.math.matrix import Matrix
 from ttt.infrastructure.sqlalchemy.loading import Loading
 
 

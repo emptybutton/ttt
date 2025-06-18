@@ -1,40 +1,7 @@
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from itertools import chain
-from typing import Any, Literal, NoReturn, overload
-
-
-def not_none[ValueT](
-    value: ValueT | None,
-    else_: Exception | type[Exception] = ValueError,
-) -> ValueT:
-    if value is not None:
-        return value
-
-    raise else_
-
-
-@overload
-def assert_(
-    assertion: Literal[False],
-    else_: Exception | type[Exception],
-) -> NoReturn: ...
-
-
-@overload
-def assert_(
-    assertion: Literal[True],
-    else_: Exception | type[Exception],
-) -> None: ...
-
-
-@overload
-def assert_(assertion: bool, else_: Exception | type[Exception]) -> None: ...  # noqa: FBT001
-
-
-def assert_(assertion: bool, else_: Exception | type[Exception]) -> None:  # noqa: FBT001
-    if not assertion:
-        raise else_
+from typing import Any
 
 
 class TrackingError(Exception): ...

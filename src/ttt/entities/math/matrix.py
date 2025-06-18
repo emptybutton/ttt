@@ -2,7 +2,7 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from typing import Any
 
-from ttt.entities.tools import assert_
+from ttt.entities.tools.assertion import assert_
 
 
 @dataclass(frozen=True)
@@ -11,7 +11,6 @@ class InconsistentMatrixError(Exception):
 
 
 type MatrixSize = tuple[int, int]
-type Vector = tuple[int, int]
 
 
 @dataclass

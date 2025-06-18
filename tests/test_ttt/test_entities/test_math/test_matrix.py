@@ -1,12 +1,12 @@
 from pytest import mark, raises
 
-from ttt.entities.math import (
+from ttt.entities.math.matrix import (
     InconsistentMatrixError,
     Matrix,
     MatrixSize,
-    Vector,
     matrix_with_size,
 )
+from ttt.entities.math.vector import Vector
 
 
 @mark.parametrize(

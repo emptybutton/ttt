@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from ttt.entities.core import Player
+from ttt.entities.core.player import Player
 
 
 @dataclass(frozen=True)

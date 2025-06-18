@@ -14,7 +14,7 @@ from ttt.application.game.ports.game_waiting_channel import (
 from ttt.application.game.ports.waiting_player_id_pairs import (
     WaitingPlayerIdPairs,
 )
-from ttt.entities.tools import not_none
+from ttt.entities.tools.assertion import not_none
 
 
 @dataclass(frozen=True, unsafe_hash=False)

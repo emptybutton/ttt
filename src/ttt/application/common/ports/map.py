@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 
-from ttt.entities.core import Cell, Game, Player
-from ttt.entities.tools import Tracking
+from ttt.entities.core.game.cell import Cell
+from ttt.entities.core.game.game import Game
+from ttt.entities.core.player import Player
+from ttt.entities.tools.tracking import Tracking
 
 
 class NotUniquePlayerIdError(Exception): ...

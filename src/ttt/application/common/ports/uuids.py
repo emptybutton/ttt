@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from ttt.entities.math import Matrix, MatrixSize
+from ttt.entities.math.matrix import Matrix, MatrixSize
 
 
 class UUIDs(ABC):

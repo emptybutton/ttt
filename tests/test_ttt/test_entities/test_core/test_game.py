@@ -2,10 +2,9 @@ from uuid import UUID
 
 from pytest import FixtureRequest, fixture, mark, raises
 
-from ttt.entities.core import (
-    AlreadyFilledCellError,
-    Board,
-    Cell,
+from ttt.entities.core.game.board import Board, create_empty_board
+from ttt.entities.core.game.cell import AlreadyFilledCellError, Cell
+from ttt.entities.core.game.game import (
     CompletedGameError,
     Game,
     GameResult,
@@ -16,29 +15,10 @@ from ttt.entities.core import (
     NotPlayerError,
     NotStandardBoardError,
     OnePlayerError,
-    Player,
-    create_empty_board,
-    create_player,
 )
-from ttt.entities.math import (
-    Matrix,
-)
-from ttt.entities.tools import Tracking
-
-
-@fixture
-def tracking() -> Tracking:
-    return Tracking()
-
-
-@fixture
-def player1(tracking: Tracking) -> Player:
-    return Player(1, 0, 0, 0, UUID(int=0))
-
-
-@fixture
-def player2(tracking: Tracking) -> Player:
-    return Player(2, 0, 0, 0, UUID(int=0))
+from ttt.entities.core.player import Player
+from ttt.entities.math.matrix import Matrix
+from ttt.entities.tools.tracking import Tracking
 
 
 @fixture(params=range(6))
@@ -395,14 +375,3 @@ def test_winning_game_with_filled_board(
     if object_ == "extra_move":
         with raises(CompletedGameError):
             game.make_move(2, (2, 1), UUID(int=8), tracking)
-
-
-@mark.parametrize("object_", ["player", "tracking"])
-def test_create_player(tracking: Tracking, object_: str) -> None:
-    player = create_player(42, tracking)
-
-    if object_ == "player":
-        assert player == Player(42, 0, 0, 0, None)
-
-    if object_ == "tracking":
-        assert len(tracking) == 1

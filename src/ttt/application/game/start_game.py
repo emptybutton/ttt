@@ -15,11 +15,8 @@ from ttt.application.game.ports.games import Games
 from ttt.application.game.ports.waiting_player_id_pairs import (
     WaitingPlayerIdPairs,
 )
-from ttt.entities.core import (
-    PlayerAlreadyInGameError,
-    start_game,
-)
-from ttt.entities.tools import Tracking
+from ttt.entities.core.game.game import PlayerAlreadyInGameError, start_game
+from ttt.entities.tools.tracking import Tracking
 
 
 @dataclass(frozen=True, unsafe_hash=False)

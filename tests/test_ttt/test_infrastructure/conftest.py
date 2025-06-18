@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from ttt.infrastructure.pydantic_settings.envs import Envs
-from ttt.infrastructure.sqlalchemy.tables import metadata
+from ttt.infrastructure.sqlalchemy.tables import Base
 
 
 @fixture(scope="session")
@@ -41,5 +41,5 @@ async def session(
 
 
 async def _clear_db(session: AsyncSession) -> None:
-    for table in reversed(metadata.sorted_tables):
+    for table in reversed(Base.metadata.sorted_tables):
         await session.execute(delete(table))
