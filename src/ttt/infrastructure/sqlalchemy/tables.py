@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from asyncio import gather
 from collections.abc import Iterable
+from enum import Enum, IntEnum, StrEnum, auto
 from itertools import groupby
 from uuid import UUID
 
@@ -10,27 +11,22 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from ttt.entities.core.game.board import Board
 from ttt.entities.core.game.cell import Cell
-from ttt.entities.core.game.game import Game, GameResult, GameState, number_of_unfilled_cells
+from ttt.entities.core.game.game import (
+    Game,
+    GameResult,
+    GameState,
+    number_of_unfilled_cells,
+)
 from ttt.entities.core.player import Player
 from ttt.entities.math.matrix import Matrix
 from ttt.infrastructure.sqlalchemy.loading import Loading
-
-
-game_state = postgresql.ENUM(GameState, name="game_state")
 
 
 class Base(DeclarativeBase):
     ...
 
 
-class LodableTableModel[T](DeclarativeBase):
-    __abtrsact__ = True
-
-    @abstractmethod
-    async def __entity__(self, loading: "Loading") -> T: ...
-
-
-class PlayerTableModel(LodableTableModel[Player]):
+class PlayerTableModel(Base):
     __tablename__ = "players"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -55,7 +51,7 @@ class PlayerTableModel(LodableTableModel[Player]):
         )
 
 
-class GameResultTableModel(LodableTableModel[GameResult]):
+class GameResultTableModel(Base):
     __tablename__ = "game_results"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -74,7 +70,7 @@ class GameResultTableModel(LodableTableModel[GameResult]):
         )
 
 
-class CellTableModel(LodableTableModel[Cell]):
+class CellTableModel(Base):
     __tablename__ = "cells"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -98,13 +94,45 @@ class CellTableModel(LodableTableModel[Cell]):
         )
 
 
-class GameTableModel(LodableTableModel[Game]):
+class TableGameState(StrEnum):
+    wait_player1 = "wait_player1"
+    wait_player2 = "wait_player2"
+    completed = "completed"
+
+    def entity(self) -> GameState:
+        match self:
+            case TableGameState.wait_player1:
+                return GameState.wait_player1
+
+            case TableGameState.wait_player2:
+                return GameState.wait_player2
+
+            case TableGameState.completed:
+                return GameState.completed
+
+    @classmethod
+    def of(cls, it: GameState) -> "TableGameState":
+        match it:
+            case GameState.wait_player1:
+                return TableGameState.wait_player1
+
+            case GameState.wait_player2:
+                return TableGameState.wait_player2
+
+            case GameState.completed:
+                return TableGameState.completed
+
+
+game_state = postgresql.ENUM(TableGameState, name="game_state")
+
+
+class GameTableModel(Base):
     __tablename__ = "games"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     player1_id: Mapped[int] = mapped_column(ForeignKey("players.id"))
     player2_id: Mapped[int] = mapped_column(ForeignKey("players.id"))
-    state: Mapped[GameState] = mapped_column(game_state)
+    state: Mapped[TableGameState] = mapped_column(game_state)
 
     cells: Mapped[list["CellTableModel"]] = relationship()
     result: Mapped["GameResultTableModel | None"] = relationship(lazy="joined")
@@ -120,7 +148,7 @@ class GameTableModel(LodableTableModel[Game]):
     def map(self, it: Game) -> None:
         self.player1_id = it.player1.id
         self.player2_id = it.player2.id
-        self.state = it.state
+        self.state = TableGameState.of(it.state)
 
     async def __entity__(self, loading: Loading) -> Game:
         cells, player1, player2 = await gather(
@@ -137,7 +165,7 @@ class GameTableModel(LodableTableModel[Game]):
             board,
             number_of_unfilled_cells(board),
             await loading.load(self.result),
-            self.state,
+            self.state.entity(),
         )
 
     def _board(self, cells: Iterable[Cell]) -> Board:
