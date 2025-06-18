@@ -22,7 +22,7 @@ from ttt.entities.tools.tracking import Tracking
 
 
 @fixture(params=range(6))
-def not_standard_board(request: FixtureRequest, tracking: Tracking) -> Board:
+def not_standard_board(request: FixtureRequest) -> Board:
     if request.param == 0:
         return Matrix([])
 
@@ -78,7 +78,7 @@ def not_standard_board(request: FixtureRequest, tracking: Tracking) -> Board:
 
 
 @fixture
-def standard_board(tracking: Tracking) -> Board:
+def standard_board() -> Board:
     return Matrix([
         [
             Cell(UUID(int=0), UUID(int=0), (0, 0), None),
@@ -100,7 +100,6 @@ def standard_board(tracking: Tracking) -> Board:
 
 @fixture
 def game(
-    tracking: Tracking,
     player1: Player,
     player2: Player,
     standard_board: Board,
@@ -117,7 +116,7 @@ def game(
 
 
 @fixture
-def board_with_invalid_cell_order(tracking: Tracking) -> Board:
+def board_with_invalid_cell_order() -> Board:
     return Matrix([
         [
             Cell(UUID(int=0), UUID(int=0), (0, 0), None),
@@ -138,7 +137,6 @@ def board_with_invalid_cell_order(tracking: Tracking) -> Board:
 
 
 def test_not_standard_board(
-    tracking: Tracking,
     not_standard_board: Board,
 ) -> None:
     with raises(NotStandardBoardError):
@@ -156,7 +154,6 @@ def test_not_standard_board(
 def test_make_move_with_one_player(
     player1: Player,
     standard_board: Board,
-    tracking: Tracking,
 ) -> None:
     with raises(OnePlayerError):
         Game(
@@ -245,7 +242,10 @@ def test_make_move_with_not_player(game: Game, tracking: Tracking) -> None:
         game.make_move(100, (2, 2), UUID(int=8), tracking)
 
 
-def test_make_move_with_not_current_player(game: Game, tracking: Tracking) -> None:
+def test_make_move_with_not_current_player(
+    game: Game,
+    tracking: Tracking,
+) -> None:
     with raises(NotCurrentPlayerError):
         game.make_move(2, (2, 2), UUID(int=8), tracking)
 
@@ -255,7 +255,10 @@ def test_make_move_with_no_cell(game: Game, tracking: Tracking) -> None:
         game.make_move(1, (3, 1), UUID(int=8), tracking)
 
 
-def test_make_move_with_already_filled_cell(game: Game, tracking: Tracking) -> None:
+def test_make_move_with_already_filled_cell(
+    game: Game,
+    tracking: Tracking,
+) -> None:
     game.make_move(1, (0, 0), UUID(int=8), tracking)
 
     with raises(AlreadyFilledCellError):
@@ -271,7 +274,11 @@ def test_make_move_with_double_move(game: Game, tracking: Tracking) -> None:
 
 @mark.parametrize("object_", ["result", "player1", "player2", "extra_move"])
 def test_winning_game(
-    object_: str, game: Game, player1: Player, player2: Player, tracking: Tracking,
+    object_: str,
+    game: Game,
+    player1: Player,
+    player2: Player,
+    tracking: Tracking,
 ) -> None:
     """
     XXX
@@ -303,7 +310,11 @@ def test_winning_game(
 
 @mark.parametrize("object_", ["result", "player1", "player2", "extra_move"])
 def test_drawn_game(
-    object_: str, game: Game, player1: Player, player2: Player, tracking: Tracking,
+    object_: str,
+    game: Game,
+    player1: Player,
+    player2: Player,
+    tracking: Tracking,
 ) -> None:
     """
     XOX
@@ -341,7 +352,11 @@ def test_drawn_game(
 
 @mark.parametrize("object_", ["result", "player1", "player2", "extra_move"])
 def test_winning_game_with_filled_board(
-    object_: str, game: Game, player1: Player, player2: Player, tracking: Tracking,
+    object_: str,
+    game: Game,
+    player1: Player,
+    player2: Player,
+    tracking: Tracking,
 ) -> None:
     """
     XOX

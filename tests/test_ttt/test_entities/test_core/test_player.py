@@ -1,4 +1,3 @@
-
 from pytest import mark
 
 from ttt.entities.core.player import Player, create_player

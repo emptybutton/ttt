@@ -12,10 +12,10 @@ def tracking() -> Tracking:
 
 
 @fixture
-def player1(tracking: Tracking) -> Player:
+def player1() -> Player:
     return Player(1, 0, 0, 0, UUID(int=0))
 
 
 @fixture
-def player2(tracking: Tracking) -> Player:
+def player2() -> Player:
     return Player(2, 0, 0, 0, UUID(int=0))

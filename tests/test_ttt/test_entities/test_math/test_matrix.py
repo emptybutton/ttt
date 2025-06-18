@@ -23,7 +23,8 @@ from ttt.entities.math.vector import Vector
     ],
 )
 def test_matrix_with_size(
-    input_size: MatrixSize, expected_size: MatrixSize,
+    input_size: MatrixSize,
+    expected_size: MatrixSize,
 ) -> None:
     matrix = matrix_with_size(input_size, None)
 
