@@ -9,41 +9,25 @@ from ttt.application.common.ports.map import (
     MappableTracking,
     NotUniquePlayerIdError,
 )
-from ttt.infrastructure.loading import Loading
-from ttt.infrastructure.sqlalchemy.tables import TableModel
+from ttt.infrastructure.sqlalchemy.tables import table_entity
 
 
 @dataclass(frozen=True, unsafe_hash=True)
 class MapToPostgres(Map):
     _session: AsyncSession
-    _loading: Loading
 
     async def __call__(
         self,
         tracking: MappableTracking,
     ) -> None:
-        # assert False, self._loading
-
         for entity in tracking.new:
-            model = self._loading.loadable(entity)
-            if not isinstance(model, TableModel):
-                raise TypeError(model)
-
-            self._session.add(model)
+            self._session.add(table_entity(entity))
 
         for entity in tracking.mutated:
-            model = self._loading.loadable(entity)
-            if not isinstance(model, TableModel):
-                raise TypeError(model)
-
-            model.map(entity)  # type: ignore[arg-type]
+            await self._session.merge(table_entity(entity), load=False)
 
         for entity in tracking.unused:
-            model = self._loading.loadable(entity)
-            if not isinstance(model, TableModel):
-                raise TypeError(model)
-
-            await self._session.delete(model)
+            await self._session.delete(table_entity(entity))
 
         try:
             await self._session.flush()

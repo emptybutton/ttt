@@ -80,6 +80,9 @@ class Player:
         tracking.register_mutated(self)
 
 
+type PlayerAggregate = Player
+
+
 def register_player(
     player_id: int,
     tracking: Tracking,

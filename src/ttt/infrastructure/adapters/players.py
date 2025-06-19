@@ -8,29 +8,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.common.ports.players import NoPlayerWithIDError, Players
 from ttt.entities.core.player.player import Player
-from ttt.infrastructure.loading import Loading
-from ttt.infrastructure.sqlalchemy.tables import PlayerTableModel
+from ttt.infrastructure.sqlalchemy.tables import TablePlayer
 
 
 @dataclass(frozen=True, unsafe_hash=False)
 class InPostgresPlayers(Players):
-    _loading: Loading
     _session: AsyncSession
 
     async def contains_player_with_id(
         self, id_: int, /,
     ) -> bool:
-        stmt = select(exists(1) .where(PlayerTableModel.id == id_))
+        stmt = select(exists(1) .where(TablePlayer.id == id_))
 
         return bool(await self._session.execute(stmt))
 
     async def player_with_id(self, id_: int, /) -> Player:
-        table_player = await self._session.get(PlayerTableModel, id_)
+        table_player = await self._session.get(TablePlayer, id_)
 
         if table_player is None:
             raise NoPlayerWithIDError(id_)
 
-        return self._loading.load(table_player)
+        return table_player.entity()
 
     @overload
     async def players_with_ids(

@@ -229,6 +229,9 @@ class Game:
         return self.result
 
 
+type GameAggregate = Game | GameResult | Cell
+
+
 @dataclass(frozen=True)
 class PlayersAlreadyInGameError(Exception):
     players: tuple[Player, ...]

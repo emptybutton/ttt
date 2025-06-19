@@ -30,11 +30,9 @@ from ttt.infrastructure.adapters.waiting_locations import (
     InRedisFixedBatchesWaitingLocations,
 )
 from ttt.infrastructure.background_tasks import BackgroundTasks
-from ttt.infrastructure.loading import Loading
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.infrastructure.redis.batches import InRedisFixedBatches
-from ttt.infrastructure.sequence_map import SequenceMap
 from ttt.presentation.adapters.player_message_sending import (
     AiogramPlayerMessageSending,
 )
@@ -95,10 +93,6 @@ class CommonProvider(Provider):
     ) -> AsyncIterator[Redis]:
         async with Redis(connection_pool=pool) as redis:
             yield redis
-
-    @provide(scope=Scope.REQUEST)
-    def provide_loading(self) -> Loading:
-        return Loading(SequenceMap([]))
 
     @provide(scope=Scope.REQUEST)
     def provide_transaction(
