@@ -1,5 +1,3 @@
-from aiogram import md
-from aiogram.enums import ParseMode
 from aiogram.methods import SendMessage
 from aiogram.types.message import Message
 from aiogram.utils.formatting import (
