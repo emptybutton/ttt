@@ -11,10 +11,7 @@ class NoPlayerError(Exception):
 
 class Players(ABC):
     @abstractmethod
-    async def assert_contains_player_with_id(self, id_: int, /) -> None:
-        """
-        :raises ttt.application.common.ports.players.NoPlayerError:
-        """
+    async def contains_player_with_id(self, id_: int, /) -> bool: ...
 
     @abstractmethod
     async def player_with_id(self, id_: int, /) -> Player:

@@ -6,35 +6,31 @@ from typing import ClassVar, cast
 from pydantic import TypeAdapter
 from redis.asyncio import Redis
 
-from ttt.application.game.ports.game_waiting_channel import (
-    GameWaitingChannelMessage,
-    GameWaitingChannelTimeoutError,
-)
+from ttt.application.game.ports.game_channel import GameChannelTimeoutError
+from ttt.application.game.view_models.game_message import GameMessage
 from ttt.entities.tools.assertion import assert_
-from ttt.infrastructure.pydantic.game_waiting_channel_message import (
-    EncodableGameWaitingChannelMessage,
-    encodable_game_waiting_channel_message,
+from ttt.infrastructure.pydantic.view_models.game_message import (
+    EncodableGameMessage,
+    encodable_game_message,
 )
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class InRedisGameWaitingChannel:
+class InRedisGameChannel:
     _redis: Redis
     _hash_name: str
     _message_ttl_ms: int
     _number_retries_to_wait: int
     _waiting_delay_seconds: float
 
-    _adapter: ClassVar = TypeAdapter(
-        EncodableGameWaitingChannelMessage,
-    )
+    _adapter: ClassVar = TypeAdapter(EncodableGameMessage)
 
     def __post_init__(self) -> None:
         assert_(self._number_retries_to_wait >= 1)
         assert_(self._waiting_delay_seconds > 0)
 
     async def publish_many(
-        self, messages: tuple[GameWaitingChannelMessage, ...],
+        self, messages: tuple[GameMessage, ...],
     ) -> None:
         mapping = {
             str(message.player_id): self._message_json(message)
@@ -45,7 +41,7 @@ class InRedisGameWaitingChannel:
         ))
 
     async def wait(self, player_id: int) -> (
-        GameWaitingChannelMessage | GameWaitingChannelTimeoutError
+        GameMessage | GameChannelTimeoutError
     ):
         for _ in range(self._number_retries_to_wait):
             await sleep(self._waiting_delay_seconds)
@@ -58,11 +54,11 @@ class InRedisGameWaitingChannel:
 
             encodable_message = self._adapter.validate_json(message_json)
             encodable_message = cast(
-                EncodableGameWaitingChannelMessage, encodable_message,
+                EncodableGameMessage, encodable_message,
             )
             return encodable_message.entity()
 
-        return GameWaitingChannelTimeoutError()
+        return GameChannelTimeoutError()
 
-    def _message_json(self, message: GameWaitingChannelMessage) -> str:
-        return encodable_game_waiting_channel_message(message).model_dump_json()
+    def _message_json(self, message: GameMessage) -> str:
+        return encodable_game_message(message).model_dump_json()

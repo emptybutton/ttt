@@ -1,9 +1,11 @@
+from asyncio import gather
 from dataclasses import dataclass
 
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.players import Players
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
+from ttt.application.game.ports.game_views import GameViews
 from ttt.application.game.ports.games import Games
 from ttt.entities.core.game.game import GameResult
 from ttt.entities.math.vector import Vector
@@ -11,9 +13,10 @@ from ttt.entities.tools.tracking import Tracking
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class MakeMoveInGame:
+class MakeMoveInGame[GameViewT]:
     map_: Map
     games: Games
+    game_views: GameViews[GameViewT]
     players: Players
     uuids: UUIDs
     transaction: Transaction
@@ -42,6 +45,11 @@ class MakeMoveInGame:
         )
 
         async with self.transaction:
-            await self.map_(tracking)
+            await gather(
+                self.map_(tracking),
+                self.game_views.render_game_view_for_players_with_ids(
+                    (game.player1.id, game.player2.id), game,
+                ),
+            )
 
         return game_result
