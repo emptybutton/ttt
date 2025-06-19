@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.player.ports.player_views import PlayerViews
-from ttt.infrastructure.sqlalchemy.tables import PlayerTableModel
+from ttt.infrastructure.sqlalchemy.tables import TablePlayer
 from ttt.presentation.aiogram.messages.command import need_to_start_message
 from ttt.presentation.aiogram.messages.player import player_info_message
 
@@ -20,12 +20,12 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews[SendMessage]):
         self, player_id: int, /,
     ) -> SendMessage:
         stmt = select(
-            PlayerTableModel.number_of_wins,
-            PlayerTableModel.number_of_draws,
-            PlayerTableModel.number_of_defeats,
-            PlayerTableModel.game_location_game_id.is_not(None).label("is_in_game"),
+            TablePlayer.number_of_wins,
+            TablePlayer.number_of_draws,
+            TablePlayer.number_of_defeats,
+            TablePlayer.game_location_game_id.is_not(None).label("is_in_game"),
         ).where(
-            PlayerTableModel.id == player_id,
+            TablePlayer.id == player_id,
         ).limit(1)
 
         result = await self._session.execute(stmt)

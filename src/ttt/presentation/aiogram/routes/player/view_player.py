@@ -11,7 +11,7 @@ from ttt.presentation.aiogram.messages.common import anons_are_rohibited_message
 view_player_router = Router(name=__name__)
 
 
-@view_player_router.message(Command("start"))
+@view_player_router.message(Command("info"))
 @inject
 async def _(
     message: Message, view_player: FromDishka[ViewPlayer[SendMessage]],
