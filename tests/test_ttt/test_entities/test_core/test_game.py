@@ -16,7 +16,8 @@ from ttt.entities.core.game.game import (
     NotStandardBoardError,
     OnePlayerError,
 )
-from ttt.entities.core.player import Player
+from ttt.entities.core.player.location import GameLocation
+from ttt.entities.core.player.player import Player
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.tools.tracking import Tracking
 
@@ -142,8 +143,8 @@ def test_not_standard_board(
     with raises(NotStandardBoardError):
         Game(
             UUID(int=0),
-            Player(0, 1, 2, 3, UUID(int=0)),
-            Player(1, 1, 2, 3, UUID(int=0)),
+            Player(0, 1, 2, 3, GameLocation(0, 64, UUID(int=0))),
+            Player(1, 1, 2, 3, GameLocation(1, 64, UUID(int=0))),
             not_standard_board,
             9,
             None,
@@ -173,8 +174,8 @@ def test_game_with_invalid_cell_order(
     with raises(InvalidCellOrderError):
         Game(
             UUID(int=0),
-            Player(0, 1, 2, 3, UUID(int=0)),
-            Player(1, 1, 2, 3, UUID(int=0)),
+            Player(0, 1, 2, 3, GameLocation(0, 64, UUID(int=0))),
+            Player(1, 1, 2, 3, GameLocation(1, 64, UUID(int=0))),
             board_with_invalid_cell_order,
             9,
             None,

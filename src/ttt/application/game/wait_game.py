@@ -1,47 +1,38 @@
-from asyncio import gather
 from dataclasses import dataclass
 
-from ttt.application.common.ports.player_message_views import PlayerMessageViews
-from ttt.application.common.ports.players import Players
-from ttt.application.common.ports.transaction import Transaction
-from ttt.application.common.view_models.player_message import (
+from ttt.application.common.dto.player_message import (
     PlayerIsNotRegisteredMessage,
 )
-from ttt.application.game.ports.game_channel import (
-    GameChannel,
-    GameChannelTimeoutError,
+from ttt.application.common.ports.player_message_sending import (
+    PlayerMessageSending,
 )
-from ttt.application.game.ports.game_message_views import GameMessageViews
-from ttt.application.game.ports.waiting_player_id_pairs import (
-    WaitingPlayerIdPairs,
-)
-from ttt.application.game.view_models.game_message import NoGameMessage
+from ttt.application.common.ports.players import Players
+from ttt.application.common.ports.transaction import Transaction
+from ttt.application.game.dto.game_message import WaitingForGameMessage
+from ttt.application.game.ports.game_message_sending import GameMessageSending
+from ttt.application.game.ports.waiting_locations import WaitingLocations
+from ttt.entities.core.player.location import JustLocation
 
 
 @dataclass(frozen=True, unsafe_hash=False)
 class WaitGame:
     players: Players
-    waiting_player_id_pairs: WaitingPlayerIdPairs
-    game_channel: GameChannel
-    game_message_views: GameMessageViews
-    player_message_views: PlayerMessageViews
+    waiting_locations: WaitingLocations
+    player_message_sending: PlayerMessageSending
+    game_message_sending: GameMessageSending
     transaction: Transaction
 
-    async def __call__(self, player_id: int) -> None:
+    async def __call__(self, location: JustLocation) -> None:
         async with self.transaction:
-            if not await self.players.contains_player_with_id(player_id):
-                await self.player_message_views.render_message_for_one_player(
-                    PlayerIsNotRegisteredMessage(player_id),
+            if not await self.players.contains_player_with_id(
+                location.player_id,
+            ):
+                await self.player_message_sending.send_message(
+                    PlayerIsNotRegisteredMessage(location),
                 )
                 return
 
-            message, _, = await gather(
-                self.game_channel.wait(player_id),
-                self.waiting_player_id_pairs.push(player_id),
+            await self.game_message_sending.send_message(
+                WaitingForGameMessage(location),
             )
-            if isinstance(message, GameChannelTimeoutError):
-                message = NoGameMessage(player_id)
-
-            await self.game_message_views.render_message_for_one_player(
-                message,
-            )
+            await self.waiting_locations.push(location)

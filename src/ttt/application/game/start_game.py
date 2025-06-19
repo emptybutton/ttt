@@ -5,17 +5,19 @@ from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.players import Players
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
-from ttt.application.game.ports.game_channel import GameChannel
-from ttt.application.game.ports.games import Games
-from ttt.application.game.ports.waiting_player_id_pairs import (
-    WaitingPlayerIdPairs,
-)
-from ttt.application.game.view_models.game_message import (
+from ttt.application.game.dto.game_message import (
     GameStartedMessage,
     NoGameMessage,
-    PlayerInGameMessage,
+    PlayerAlreadyInGameMessage,
 )
-from ttt.entities.core.game.game import PlayerAlreadyInGameError, start_game
+from ttt.application.game.ports.game_message_sending import GameMessageSending
+from ttt.application.game.ports.games import Games
+from ttt.application.game.ports.waiting_locations import WaitingLocations
+from ttt.entities.core.game.game import (
+    PlayersAlreadyInGameError,
+    start_game,
+)
+from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
 
 
@@ -25,15 +27,15 @@ class StartGame:
     uuids: UUIDs
     players: Players
     games: Games
-    waiting_player_id_pairs: WaitingPlayerIdPairs
-    game_channel: GameChannel
+    game_message_sending: GameMessageSending
+    waiting_locations: WaitingLocations
     transaction: Transaction
 
     async def __call__(self) -> None:
-        async for player1_id, player2_id in self.waiting_player_id_pairs:
+        async for player1_location, player2_location in self.waiting_locations:
             async with self.transaction:
-                player1, player2 = await self.players.players_with_id(
-                    player1_id, player2_id,
+                player1, player2 = await self.players.players_with_ids(
+                    (player1_location.player_id, player2_location.player_id),
                 )
                 game_id, cell_id_matrix = await gather(
                     self.uuids.random_uuid(),
@@ -42,21 +44,30 @@ class StartGame:
 
                 tracking = Tracking()
                 try:
-                    game = start_game(
-                        cell_id_matrix, game_id, player1, player2, tracking,
+                    start_game(
+                        cell_id_matrix,
+                        game_id,
+                        player1,
+                        player1_location.chat_id,
+                        player2,
+                        player2_location.chat_id,
+                        tracking,
                     )
-                except PlayerAlreadyInGameError as error:
-                    await self.game_channel.publish_many(tuple(
-                        PlayerInGameMessage(player.id)
+                except PlayersAlreadyInGameError as error:
+                    players_and_locations = (
+                        (player1, player1_location),
+                        (player2, player2_location),
+                    )
+                    await self.game_message_sending.send_messages(tuple(
+                        PlayerAlreadyInGameMessage(location)
                         if player in error.players
-                        else NoGameMessage(player.id)
-                        for player in (player1, player2)
+                        else NoGameMessage(location)
+                        for player, location in players_and_locations
                     ))
+                    continue
                 else:
-                    await gather(
-                        self.map_(tracking),
-                        self.game_channel.publish_many((
-                            GameStartedMessage(player1.id, game.id),
-                            GameStartedMessage(player1.id, game.id),
-                        )),
-                    )
+                    await self.map_(tracking)
+                    await self.game_message_sending.send_messages((
+                        GameStartedMessage(not_none(player1.game_location)),
+                        GameStartedMessage(not_none(player1.game_location)),
+                    ))

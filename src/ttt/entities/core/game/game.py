@@ -9,7 +9,7 @@ from ttt.entities.core.game.board import (
     is_board_standard,
 )
 from ttt.entities.core.game.cell import Cell
-from ttt.entities.core.player import Player
+from ttt.entities.core.player.player import Player, PlayerAlreadyInGameError
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.math.vector import Vector
 from ttt.entities.tools.assertion import assert_, not_none
@@ -142,7 +142,7 @@ class Game:
 
     def _fill_cell(
         self, cell_position: Vector, player_id: int, tracking: Tracking,
-    ) -> GameResult | None:
+    ) -> None:
         """
         :raises ttt.entities.core.game.game.NoCellError:
         :raises ttt.entities.core.game.cell.AlreadyFilledCellError:
@@ -230,32 +230,24 @@ class Game:
 
 
 @dataclass(frozen=True)
-class PlayerAlreadyInGameError(Exception):
+class PlayersAlreadyInGameError(Exception):
     players: tuple[Player, ...]
 
 
-def start_game(
+def start_game(  # noqa: PLR0913, PLR0917
     cell_id_matrix: Matrix[UUID],
     game_id: UUID,
     player1: Player,
+    player1_chat_id: int,
     player2: Player,
+    player2_chat_id: int,
     tracking: Tracking,
 ) -> Game:
     """
-    :raises ttt.entities.core.PlayerAlreadyInGameError:
+    :raises ttt.entities.core.game.game.PlayersAlreadyInGameError:
     :raises ttt.entities.core.game.board.InvalidCellIDMatrixError:
     :raises ttt.entities.core.game.game.OnePlayerError:
     """
-
-    players_in_game = tuple(
-        player
-        for player in (player1, player2)
-        if player.current_game_id is not None
-    )
-    assert_(
-        not players_in_game,
-        else_=PlayerAlreadyInGameError(players_in_game),
-    )
 
     board = create_empty_board(cell_id_matrix, game_id, tracking)
 
@@ -270,7 +262,17 @@ def start_game(
     )
     tracking.register_new(game)
 
-    player1.be_in_game(game_id)
-    player2.be_in_game(game_id)
+    try:
+        player1.be_in_game(game_id, player1_chat_id, tracking)
+    except PlayerAlreadyInGameError as error_:
+        error1 = error_
+
+    try:
+        player2.be_in_game(game_id, player2_chat_id, tracking)
+    except PlayerAlreadyInGameError as error_:
+        error2 = error_
+
+    if error1 or error2:
+        raise ExceptionGroup("", [error1, error2])
 
     return game

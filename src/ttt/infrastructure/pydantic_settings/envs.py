@@ -1,4 +1,4 @@
-from pydantic import PostgresDsn, RedisDsn
+from pydantic import PositiveInt, PostgresDsn, RedisDsn
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -10,7 +10,12 @@ class Envs(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="TTT_")
 
     postgres_url: PostgresDsn
+
     redis_url: RedisDsn
+    redis_pool_size: PositiveInt
+
+    game_waiting_queue_pulling_timeout_min_ms: int
+    game_waiting_queue_pulling_timeout_salt_ms: int
 
     @classmethod
     def settings_customise_sources(

@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -6,7 +7,7 @@ from pydantic_settings import (
 
 
 class Secrets(BaseSettings):
-    bot_token: str
+    bot_token: str = Field(repr=False)
 
     @classmethod
     def settings_customise_sources(

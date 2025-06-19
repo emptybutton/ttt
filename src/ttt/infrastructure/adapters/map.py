@@ -13,7 +13,7 @@ from ttt.infrastructure.loading import Loading
 from ttt.infrastructure.sqlalchemy.tables import TableModel
 
 
-@dataclass(kw_only=True, frozen=True, slots=True)
+@dataclass(frozen=True, unsafe_hash=True)
 class MapToPostgres(Map):
     _session: AsyncSession
     _loading: Loading
@@ -22,6 +22,8 @@ class MapToPostgres(Map):
         self,
         tracking: MappableTracking,
     ) -> None:
+        # assert False, self._loading
+
         for entity in tracking.new:
             model = self._loading.loadable(entity)
             if not isinstance(model, TableModel):
@@ -36,7 +38,7 @@ class MapToPostgres(Map):
 
             model.map(entity)  # type: ignore[arg-type]
 
-        for entity in tracking.deleted:
+        for entity in tracking.unused:
             model = self._loading.loadable(entity)
             if not isinstance(model, TableModel):
                 raise TypeError(model)

@@ -1,88 +1,76 @@
 from typing import Literal
-from uuid import UUID
 
 from pydantic import BaseModel
 
-from ttt.application.game.view_models.game_message import (
-    GameMessage,
+from ttt.application.game.dto.game_message import (
     GameStartedMessage,
+    GameStartMessage,
     NoGameMessage,
-    PlayerInGameMessage,
+    PlayerAlreadyInGameMessage,
 )
+from ttt.entities.core.player.location import GameLocation, JustLocation
 
 
 class EncodableGameStartedMessage(BaseModel):
     type: Literal["ok"] = "ok"
-    player_id: int
-    game_id: UUID
+    location: GameLocation
 
     def entity(self) -> GameStartedMessage:
-        return GameStartedMessage(
-            player_id=self.player_id,
-            game_id=self.game_id,
-        )
+        return GameStartedMessage(location=self.location)
 
     @classmethod
     def of(
-        cls, it: GameStartedMessage,
+        cls,
+        it: GameStartedMessage,
     ) -> "EncodableGameStartedMessage":
-        return EncodableGameStartedMessage(
-            player_id=it.player_id,
-            game_id=it.game_id,
-        )
+        return EncodableGameStartedMessage(location=it.location)
 
 
 class EncodablePlayerInGameMessage(BaseModel):
     type: Literal["player_in_game"] = "player_in_game"
-    player_id: int
+    location: JustLocation
 
-    def entity(self) -> PlayerInGameMessage:
-        return PlayerInGameMessage(
-            player_id=self.player_id,
-        )
+    def entity(self) -> PlayerAlreadyInGameMessage:
+        return PlayerAlreadyInGameMessage(location=self.location)
 
     @classmethod
     def of(
-        cls, it: PlayerInGameMessage,
+        cls,
+        it: PlayerAlreadyInGameMessage,
     ) -> "EncodablePlayerInGameMessage":
-        return EncodablePlayerInGameMessage(
-            player_id=it.player_id,
-        )
+        return EncodablePlayerInGameMessage(location=it.location)
 
 
 class EncodableNoGameMessage(BaseModel):
     type: Literal["no_game"] = "no_game"
-    player_id: int
+    location: JustLocation
 
     def entity(self) -> NoGameMessage:
-        return NoGameMessage(
-            player_id=self.player_id,
-        )
+        return NoGameMessage(location=self.location)
 
     @classmethod
     def of(
-        cls, it: NoGameMessage,
+        cls,
+        it: NoGameMessage,
     ) -> "EncodableNoGameMessage":
-        return EncodableNoGameMessage(
-            player_id=it.player_id,
-        )
+        return EncodableNoGameMessage(location=it.location)
 
 
-EncodableGameMessage = (
+EncodableGameStartMessage = (
     EncodableGameStartedMessage
     | EncodablePlayerInGameMessage
     | EncodableNoGameMessage
 )
 
 
-def encodable_game_message(
-    it: GameMessage,
-) -> EncodableGameMessage:
+def encodable_game_start_message(
+    it: GameStartMessage,
+) -> EncodableGameStartMessage:
     match it:
         case GameStartedMessage():
             return EncodableGameStartedMessage.of(it)
 
-        case PlayerInGameMessage():
+        case PlayerAlreadyInGameMessage():
             return EncodablePlayerInGameMessage.of(it)
 
         case NoGameMessage():

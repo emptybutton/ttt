@@ -1,6 +1,7 @@
 from asyncio import sleep
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
+from secrets import randbelow
 from typing import Literal, overload
 
 from redis.asyncio import Redis
@@ -9,10 +10,11 @@ from ttt.entities.tools.assertion import assert_
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class InRedisBatches:
+class InRedisFixedBatches:
     _redis: Redis
     _list_name: str
-    _pulling_delay_seconds: int | float
+    _pulling_timeout_min_ms: int
+    _pulling_timeout_salt_ms: int
 
     async def push(self, value: bytes, /) -> None:
         self._redis.rpush(self._list_name, value)
@@ -29,13 +31,19 @@ class InRedisBatches:
         batch_len: Literal[3],
     ) -> AsyncIterator[tuple[bytes, bytes, bytes]]: ...
 
+    @overload
+    def with_len(
+        self,
+        batch_len: int,
+    ) -> AsyncIterator[tuple[bytes, ...]]: ...
+
     async def with_len(
         self, batch_len: int,
     ) -> AsyncIterator[tuple[bytes, ...]]:
-        assert_(batch_len > 1)
+        assert_(batch_len >= 1)
 
         while True:
-            await sleep(self._pulling_delay_seconds)
+            await self._sleep()
 
             result = await self._redis.lmpop(  # type: ignore[misc]
                 1,
@@ -52,3 +60,11 @@ class InRedisBatches:
                 await self._redis.lpush(self._list_name, *batch)  # type: ignore[misc]
 
             yield tuple(batch)
+
+    async def _sleep(self) -> None:
+        sleep_ms = (
+            self._pulling_timeout_min_ms
+            + randbelow(self._pulling_timeout_salt_ms)
+        )
+
+        await sleep(sleep_ms / 1000)

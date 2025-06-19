@@ -16,7 +16,7 @@ dependencies = [
     "psycopg[binary]==3.2.9",
     "alembic==1.16.1",
     "alembic-postgresql-enum==1.7.0",
-    "redis==6.2.0",
+    "redis[hiredis]==6.2.0",
     "pydantic==2.10.6",
     "pydantic-settings[yaml]==2.9.1",
     "aiogram==3.20.0.post0",
@@ -30,6 +30,7 @@ dev = [
     "pytest-cov==6.1.1",
     "pytest-asyncio==1.0.0",
     "dirty-equals==0.9.0",
+    "watchfiles==1.1.0",
 ]
 
 [project.urls]
@@ -43,7 +44,8 @@ build-backend = "hatchling.build"
 packages = ["src/ttt"]
 
 [project.scripts]
-ttt-dev = "ttt.main.fastapi.__main__:main"
+ttt = "ttt.main.aiogram_slim.__main__:main"
+ttt-dev = "ttt.main.aiogram_dev.__main__:main"
 
 [tool.uv]
 add-bounds = "exact"
@@ -100,9 +102,11 @@ ignore = [
     "TC002",
     "TC003",
     "TC006",
+    "EM101",
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"src/ttt/presentation/aiogram/messages/*" = ["RUF001"]
 "tests/*" = ["S101", "PT013", "PLR2004", "D400", "D415"]
 "tests/test_tgdb/test_entities/test_horizon.py" = ["D400", "D415"]
 

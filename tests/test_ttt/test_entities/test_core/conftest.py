@@ -2,7 +2,8 @@ from uuid import UUID
 
 from pytest import fixture
 
-from ttt.entities.core.player import Player
+from ttt.entities.core.player.location import GameLocation
+from ttt.entities.core.player.player import Player
 from ttt.entities.tools.tracking import Tracking
 
 
@@ -13,9 +14,9 @@ def tracking() -> Tracking:
 
 @fixture
 def player1() -> Player:
-    return Player(1, 0, 0, 0, UUID(int=0))
+    return Player(1, 0, 0, 0, GameLocation(1, 64, UUID(int=0)))
 
 
 @fixture
 def player2() -> Player:
-    return Player(2, 0, 0, 0, UUID(int=0))
+    return Player(2, 0, 0, 0, GameLocation(2, 64, UUID(int=0)))

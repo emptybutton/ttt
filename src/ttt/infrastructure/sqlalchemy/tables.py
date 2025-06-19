@@ -15,7 +15,8 @@ from ttt.entities.core.game.game import (
     GameState,
     number_of_unfilled_cells,
 )
-from ttt.entities.core.player import Player
+from ttt.entities.core.player.location import GameLocation
+from ttt.entities.core.player.player import Player
 from ttt.entities.math.matrix import Matrix
 from ttt.infrastructure.loading import Loading
 
@@ -31,21 +32,46 @@ class PlayerTableModel(Base):
     number_of_wins: Mapped[int]
     number_of_draws: Mapped[int]
     number_of_defeats: Mapped[int]
-    current_game_id: Mapped[UUID | None] = mapped_column(ForeignKey("games.id"))
-
-    def map(self, it: Player) -> None:
-        self.number_of_wins = it.number_of_wins
-        self.number_of_draws = it.number_of_draws
-        self.number_of_defeats = it.number_of_defeats
-        self.current_game_id = it.current_game_id
+    game_location_game_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("games.id"),
+    )
+    game_location_chat_id: Mapped[int | None]
 
     def __entity__(self, _: object) -> Player:
+        if (
+            self.game_location_game_id is not None
+            and self.game_location_chat_id is not None
+        ):
+            location = GameLocation(
+                self.id, self.game_location_chat_id, self.game_location_game_id,
+            )
+        else:
+            location = None
+
         return Player(
             self.id,
             self.number_of_wins,
             self.number_of_draws,
             self.number_of_defeats,
-            self.current_game_id,
+            location,
+        )
+
+    @classmethod
+    def of(cls, it: Player) -> "PlayerTableModel":
+        if it.game_location is None:
+            game_location_game_id = None
+            game_location_chat_id = None
+        else:
+            game_location_game_id = it.game_location.game_id
+            game_location_chat_id = it.game_location.chat_id
+
+        return PlayerTableModel(
+            id=it.id,
+            number_of_wins=it.number_of_wins,
+            number_of_draws=it.number_of_draws,
+            number_of_defeats=it.number_of_defeats,
+            game_location_game_id=game_location_game_id,
+            game_location_chat_id=game_location_chat_id,
         )
 
 
@@ -56,15 +82,19 @@ class GameResultTableModel(Base):
     game_id: Mapped[UUID] = mapped_column(ForeignKey("games.id"), unique=True)
     winner_id: Mapped[int | None] = mapped_column(ForeignKey("players.id"))
 
-    def map(self, it: GameResult) -> None:
-        self.game_id = it.game_id
-        self.winner_id = it.winner_id
-
     def __entity__(self, _: object) -> GameResult:
         return GameResult(
             self.id,
             self.game_id,
             self.winner_id,
+        )
+
+    @classmethod
+    def of(cls, it: GameResult) -> "GameResult":
+        return GameResult(
+            it.id,
+            it.game_id,
+            it.winner_id,
         )
 
 

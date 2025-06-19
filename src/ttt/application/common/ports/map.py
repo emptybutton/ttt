@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from ttt.entities.core.game.cell import Cell
 from ttt.entities.core.game.game import Game
-from ttt.entities.core.player import Player
+from ttt.entities.core.player.player import Player
 from ttt.entities.tools.tracking import Tracking
 
 
