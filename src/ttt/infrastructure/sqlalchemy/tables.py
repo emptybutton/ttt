@@ -121,6 +121,16 @@ class CellTableModel(Base):
             self.filler_id,
         )
 
+    @classmethod
+    def of(cls, it: Cell) -> "CellTableModel":
+        return CellTableModel(
+            it.id,
+            it.game_id,
+            it.board_position[0],
+            it.board_position[1],
+            it.filler_id,
+        )
+
 
 class TableGameState(StrEnum):
     wait_player1 = "wait_player1"
@@ -203,6 +213,15 @@ class GameTableModel(Base):
         ]
 
         return Matrix(lines)
+
+    @classmethod
+    def of(cls, it: Game) -> "GameTableModel":
+        return GameTableModel(
+            id=it.id,
+            player1_id=it.player1.id,
+            player2_id=it.player2.id,
+            state=TableGameState.of(it.state),
+        )
 
 
 TableModel = (
