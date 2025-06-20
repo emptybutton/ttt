@@ -50,10 +50,10 @@ class MakeMoveInGame:
             )
 
             locations = tuple(
-                not_none(player.game_location).just()
+                not_none(player.game_location)
                 for player in (game.player1, game.player2)
             )
             await self.map_(tracking)
-            await self.game_views.render_game_view_for_players_with_locations(
+            await self.game_views.render_game_view_with_locations(
                 locations, game,
             )

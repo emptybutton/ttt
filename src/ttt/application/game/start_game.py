@@ -1,6 +1,7 @@
 from asyncio import gather
 from dataclasses import dataclass
 
+from ttt.application.common.ports.emojis import Emojis
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.players import Players
 from ttt.application.common.ports.transaction import Transaction
@@ -25,6 +26,7 @@ from ttt.entities.tools.tracking import Tracking
 class StartGame:
     map_: Map
     uuids: UUIDs
+    emojis: Emojis
     players: Players
     games: Games
     game_message_sending: GameMessageSending
@@ -37,9 +39,20 @@ class StartGame:
                 player1, player2 = await self.players.players_with_ids(
                     (player1_location.player_id, player2_location.player_id),
                 )
-                game_id, cell_id_matrix = await gather(
-                    self.uuids.random_uuid(),
-                    self.uuids.random_uuid_matrix((3, 3)),
+                game_id, cell_id_matrix, player1_emoji, player2_emoji = (
+                    await gather(
+                        self.uuids.random_uuid(),
+                        self.uuids.random_uuid_matrix((3, 3)),
+                        self.emojis.random_emoji(),
+                        self.emojis.random_emoji(),
+                    )
+                )
+
+                player1_location_message_id, player2_location_message_id = (
+                    await self.game_message_sending.send_messages((
+                        GameStartedMessage(not_none(player1.game_location)),
+                        GameStartedMessage(not_none(player1.game_location)),
+                    ))
                 )
 
                 tracking = Tracking()
@@ -48,9 +61,11 @@ class StartGame:
                         cell_id_matrix,
                         game_id,
                         player1,
-                        player1_location.chat_id,
+                        player1_emoji,
+                        player1_location_message_id,
                         player2,
-                        player2_location.chat_id,
+                        player2_emoji,
+                        player2_location_message_id,
                         tracking,
                     )
                 except PlayersAlreadyInGameError as error:
@@ -67,7 +82,3 @@ class StartGame:
                     continue
                 else:
                     await self.map_(tracking)
-                    await self.game_message_sending.send_messages((
-                        GameStartedMessage(not_none(player1.game_location)),
-                        GameStartedMessage(not_none(player1.game_location)),
-                    ))

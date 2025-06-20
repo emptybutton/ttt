@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from ttt.application.common.ports.emojis import Emojis
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.player_message_sending import (
     PlayerMessageSending,
@@ -33,6 +34,7 @@ from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.infrastructure.redis.batches import InRedisFixedBatches
+from ttt.presentation.adapters.emojis import AllEmojis
 from ttt.presentation.adapters.player_message_sending import (
     AiogramPlayerMessageSending,
 )
@@ -122,6 +124,12 @@ class CommonProvider(Provider):
         UUIDv4s,
         provides=UUIDs,
         scope=Scope.APP,
+    )
+
+    provide_emoji = provide(
+        AllEmojis,
+        provides=Emojis,
+        scope=Scope.REQUEST,
     )
 
     @provide(scope=Scope.REQUEST)

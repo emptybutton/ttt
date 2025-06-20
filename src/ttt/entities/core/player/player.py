@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from ttt.entities.core.player.location import GameLocation
+from ttt.entities.telegram.message import MessageGlobalID
 from ttt.entities.tools.assertion import assert_
 from ttt.entities.tools.tracking import Tracking
 
@@ -28,7 +29,10 @@ class Player:
         return self.game_location is not None
 
     def be_in_game(
-        self, game_id: UUID, chat_id: int, tracking: Tracking,
+        self,
+        game_id: UUID,
+        game_location_message_global_id: MessageGlobalID,
+        tracking: Tracking,
     ) -> None:
         """
         :raises ttt.entities.core.player.player.PlayerAlreadyInGameError:
@@ -36,7 +40,9 @@ class Player:
 
         assert_(not self.is_in_game(), else_=PlayerAlreadyInGameError(self))
 
-        self.game_location = GameLocation(self.id, chat_id, game_id)
+        self.game_location = GameLocation(
+            self.id, game_id, game_location_message_global_id,
+        )
         tracking.register_mutated(self)
 
     def lose(self, tracking: Tracking) -> None:

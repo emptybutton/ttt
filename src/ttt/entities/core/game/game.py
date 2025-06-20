@@ -8,10 +8,12 @@ from ttt.entities.core.game.board import (
     create_empty_board,
     is_board_standard,
 )
-from ttt.entities.core.game.cell import Cell
+from ttt.entities.core.game.cell import AlreadyFilledCellError, Cell
 from ttt.entities.core.player.player import Player, PlayerAlreadyInGameError
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.math.vector import Vector
+from ttt.entities.telegram.emoji import Emoji
+from ttt.entities.telegram.message import MessageGlobalID
 from ttt.entities.tools.assertion import assert_, not_none
 from ttt.entities.tools.tracking import Tracking
 
@@ -55,13 +57,20 @@ class NotPlayerError(Exception): ...
 class NotCurrentPlayerError(Exception): ...
 
 
+class OneEmojiError(Exception): ...
+
+
 def number_of_unfilled_cells(board: Matrix[Cell]) -> int:
     return sum(int(not cell.is_filled()) for cell in chain.from_iterable(board))
+
+
+type FilledCellPosition = None
 
 
 @dataclass
 class Game:
     """
+    :raises ttt.entities.core.game.game.OneEmojiError:
     :raises ttt.entities.core.game.game.OnePlayerError:
     :raises ttt.entities.core.game.game.NotStandardBoardError:
     :raises ttt.entities.core.game.game.InvalidCellOrderError:
@@ -70,7 +79,9 @@ class Game:
 
     id: UUID
     player1: Player
+    player1_emoji: Emoji
     player2: Player
+    player2_emoji: Emoji
     board: Board
     number_of_unfilled_cells: int
     result: GameResult | None
@@ -78,6 +89,7 @@ class Game:
 
     def __post_init__(self) -> None:
         assert_(self.player1.id != self.player2.id, else_=OnePlayerError)
+        assert_(self.player1_emoji != self.player2_emoji, else_=OneEmojiError)
         assert_(is_board_standard(self.board), else_=NotStandardBoardError)
 
         is_cell_order_ok = all(
@@ -96,7 +108,7 @@ class Game:
     def make_move(
         self,
         player_id: int,
-        cell_position: Vector,
+        cell_position: Vector | FilledCellPosition,
         game_result_id: UUID,
         tracking: Tracking,
     ) -> GameResult | None:
@@ -118,6 +130,9 @@ class Game:
             else_=NotPlayerError(),
         )
         assert_(current_player.id == player_id, else_=NotCurrentPlayerError())
+
+        if cell_position is None:
+            raise AlreadyFilledCellError
 
         self._fill_cell(cell_position, player_id, tracking)
 
@@ -241,15 +256,18 @@ def start_game(  # noqa: PLR0913, PLR0917
     cell_id_matrix: Matrix[UUID],
     game_id: UUID,
     player1: Player,
-    player1_chat_id: int,
+    player1_emoji: Emoji,
+    player1_game_location_message_global_id: MessageGlobalID,
     player2: Player,
-    player2_chat_id: int,
+    player2_emoji: Emoji,
+    player2_game_location_message_global_id: MessageGlobalID,
     tracking: Tracking,
 ) -> Game:
     """
+    :raises ttt.entities.core.game.game.OneEmojiError:
+    :raises ttt.entities.core.game.game.OnePlayerError:
     :raises ttt.entities.core.game.game.PlayersAlreadyInGameError:
     :raises ttt.entities.core.game.board.InvalidCellIDMatrixError:
-    :raises ttt.entities.core.game.game.OnePlayerError:
     """
 
     board = create_empty_board(cell_id_matrix, game_id, tracking)
@@ -257,7 +275,9 @@ def start_game(  # noqa: PLR0913, PLR0917
     game = Game(
         game_id,
         player1,
+        player1_emoji,
         player2,
+        player2_emoji,
         board,
         number_of_unfilled_cells(board),
         None,
@@ -266,12 +286,16 @@ def start_game(  # noqa: PLR0913, PLR0917
     tracking.register_new(game)
 
     try:
-        player1.be_in_game(game_id, player1_chat_id, tracking)
+        player1.be_in_game(
+            game_id, player1_game_location_message_global_id, tracking,
+        )
     except PlayerAlreadyInGameError as error_:
         error1 = error_
 
     try:
-        player2.be_in_game(game_id, player2_chat_id, tracking)
+        player2.be_in_game(
+            game_id, player2_game_location_message_global_id, tracking,
+        )
     except PlayerAlreadyInGameError as error_:
         error2 = error_
 
