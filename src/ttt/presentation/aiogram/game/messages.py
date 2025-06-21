@@ -97,6 +97,10 @@ async def waiting_for_game_message(bot: Bot, chat_id: int) -> None:
     await bot.send_message(chat_id, "👥 Поиск игры начат")
 
 
+async def double_waiting_for_game_message(bot: Bot, chat_id: int) -> None:
+    await bot.send_message(chat_id, "👥 Поиск игры уже начат")
+
+
 async def invalid_board_position_message(bot: Bot, chat_id: int) -> None:
     await bot.send_message(
         chat_id,

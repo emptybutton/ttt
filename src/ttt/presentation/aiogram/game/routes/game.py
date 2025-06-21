@@ -22,6 +22,7 @@ from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 from ttt.presentation.aiogram.game.messages import (
     already_completed_game_message,
     already_filled_cell_message,
+    double_waiting_for_game_message,
     invalid_board_position_message,
     no_cell_message,
     not_current_player_message,
@@ -49,6 +50,18 @@ async def wait_game_route(
 
     await wait_game(PlayerLocation(message.from_user.id, message.chat.id))
     await state.set_state(GameViewState.waiting_game)
+
+
+@game_router.message(StateFilter(GameViewState.waiting_game), Command("game"))
+@inject
+async def doube_wait_game_route(message: Message) -> None:
+    if message.from_user is None:
+        await anons_are_rohibited_message(message)
+        return
+
+    await double_waiting_for_game_message(
+        not_none(message.bot), message.chat.id,
+    )
 
 
 @game_router.message(StateFilter(GameViewState.waiting_move))
