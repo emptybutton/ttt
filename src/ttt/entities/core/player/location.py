@@ -1,23 +1,18 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from ttt.entities.telegram.message import MessageGlobalID
-
 
 @dataclass
-class JustLocation:
+class PlayerLocation:
     player_id: int
     chat_id: int
 
+    def game(self, game_id: UUID) -> "PlayerGameLocation":
+        return PlayerGameLocation(self.player_id, self.chat_id, game_id)
+
 
 @dataclass
-class GameLocation:
+class PlayerGameLocation:
     player_id: int
+    chat_id: int
     game_id: UUID
-    message_id: MessageGlobalID
-
-    def just(self) -> JustLocation:
-        return JustLocation(self.player_id, self.message_id.chat_id)
-
-
-type Location = GameLocation | JustLocation

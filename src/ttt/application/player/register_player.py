@@ -9,7 +9,7 @@ from ttt.application.common.ports.player_message_sending import (
     PlayerMessageSending,
 )
 from ttt.application.common.ports.transaction import Transaction
-from ttt.entities.core.player.location import JustLocation
+from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.core.player.player import register_player
 from ttt.entities.tools.tracking import Tracking
 
@@ -21,7 +21,7 @@ class RegisterPlayer:
     map: Map
 
     async def __call__(self, player_id: int, player_chat_id: int) -> None:
-        location = JustLocation(player_id, player_chat_id)
+        location = PlayerLocation(player_id, player_chat_id)
 
         tracking = Tracking()
         register_player(player_id, tracking)

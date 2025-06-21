@@ -17,7 +17,7 @@ class InRedisFixedBatches:
     _pulling_timeout_salt_ms: int
 
     async def push(self, value: bytes, /) -> None:
-        self._redis.rpush(self._list_name, value)
+        await self._redis.rpush(self._list_name, value)  # type: ignore[misc]
 
     @overload
     def with_len(

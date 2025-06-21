@@ -12,8 +12,7 @@ from ttt.entities.core.game.cell import AlreadyFilledCellError, Cell
 from ttt.entities.core.player.player import Player, PlayerAlreadyInGameError
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.math.vector import Vector
-from ttt.entities.telegram.emoji import Emoji
-from ttt.entities.telegram.message import MessageGlobalID
+from ttt.entities.text.emoji import Emoji
 from ttt.entities.tools.assertion import assert_, not_none
 from ttt.entities.tools.tracking import Tracking
 
@@ -257,10 +256,10 @@ def start_game(  # noqa: PLR0913, PLR0917
     game_id: UUID,
     player1: Player,
     player1_emoji: Emoji,
-    player1_game_location_message_global_id: MessageGlobalID,
+    player1_chat_id: int,
     player2: Player,
     player2_emoji: Emoji,
-    player2_game_location_message_global_id: MessageGlobalID,
+    player2_chat_id: int,
     tracking: Tracking,
 ) -> Game:
     """
@@ -286,16 +285,12 @@ def start_game(  # noqa: PLR0913, PLR0917
     tracking.register_new(game)
 
     try:
-        player1.be_in_game(
-            game_id, player1_game_location_message_global_id, tracking,
-        )
+        player1.be_in_game(game_id, player1_chat_id, tracking)
     except PlayerAlreadyInGameError as error_:
         error1 = error_
 
     try:
-        player2.be_in_game(
-            game_id, player2_game_location_message_global_id, tracking,
-        )
+        player2.be_in_game(game_id, player2_chat_id, tracking)
     except PlayerAlreadyInGameError as error_:
         error2 = error_
 

@@ -1,34 +1,16 @@
 from dataclasses import dataclass
 
-from ttt.entities.core.player.location import (
-    GameLocation,
-    JustLocation,
-)
-
-
-@dataclass(frozen=True)
-class GameStartedMessage:
-    location: GameLocation
+from ttt.entities.core.player.location import PlayerLocation
 
 
 @dataclass(frozen=True)
 class PlayerAlreadyInGameMessage:
-    location: JustLocation
-
-
-@dataclass(frozen=True)
-class NoGameMessage:
-    location: JustLocation
-
-
-type GameStartMessage = (
-    GameStartedMessage | PlayerAlreadyInGameMessage | NoGameMessage
-)
+    location: PlayerLocation
 
 
 @dataclass(frozen=True)
 class WaitingForGameMessage:
-    location: JustLocation
+    location: PlayerLocation
 
 
-type GameMessage = GameStartMessage | WaitingForGameMessage
+type GameMessage = PlayerAlreadyInGameMessage | WaitingForGameMessage

@@ -1,6 +1,7 @@
+from collections.abc import Awaitable
 from dataclasses import dataclass
+from typing import Any
 
-from aiogram.methods import SendMessage
 from aiogram.types.message import Message
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,13 +13,13 @@ from ttt.presentation.aiogram.messages.player import player_info_message
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews[SendMessage]):
+class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews[Awaitable[Any]]):
     _message: Message
     _session: AsyncSession
 
     async def view_of_player_with_id(
         self, player_id: int, /,
-    ) -> SendMessage:
+    ) -> Awaitable[Any]:
         stmt = select(
             TablePlayer.number_of_wins,
             TablePlayer.number_of_draws,

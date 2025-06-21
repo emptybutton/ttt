@@ -3,7 +3,7 @@ from enum import StrEnum
 from itertools import groupby
 from uuid import UUID
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import CHAR, BigInteger, ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -16,9 +16,10 @@ from ttt.entities.core.game.game import (
     GameState,
     number_of_unfilled_cells,
 )
-from ttt.entities.core.player.location import GameLocation
+from ttt.entities.core.player.location import PlayerGameLocation
 from ttt.entities.core.player.player import Player
 from ttt.entities.math.matrix import Matrix
+from ttt.entities.text.emoji import Emoji
 
 
 class Base(DeclarativeBase):
@@ -28,7 +29,7 @@ class Base(DeclarativeBase):
 class TablePlayer(Base):
     __tablename__ = "players"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger(), primary_key=True)
     number_of_wins: Mapped[int]
     number_of_draws: Mapped[int]
     number_of_defeats: Mapped[int]
@@ -42,7 +43,7 @@ class TablePlayer(Base):
             self.game_location_game_id is not None
             and self.game_location_chat_id is not None
         ):
-            location = GameLocation(
+            location = PlayerGameLocation(
                 self.id, self.game_location_chat_id, self.game_location_game_id,
             )
         else:
@@ -172,15 +173,12 @@ class TableGame(Base):
         lazy="joined",
         foreign_keys=[player1_id],
     )
+    player1_emoji_char: Mapped[str] = mapped_column(server_default="❌")
     player2: Mapped["TablePlayer"] = relationship(
         lazy="joined",
         foreign_keys=[player2_id],
     )
-
-    def map(self, it: Game) -> None:
-        self.player1_id = it.player1.id
-        self.player2_id = it.player2.id
-        self.state = TableGameState.of(it.state)
+    player2_emoji_char: Mapped[str] = mapped_column(server_default="⭕️")
 
     def entity(self) -> Game:
         board = self._board(it.entity() for it in self.cells)
@@ -190,7 +188,9 @@ class TableGame(Base):
         return Game(
             self.id,
             player1,
+            Emoji(self.player1_emoji_char),
             player2,
+            Emoji(self.player2_emoji_char),
             board,
             number_of_unfilled_cells(board),
             None if self.result is None else self.result.entity(),

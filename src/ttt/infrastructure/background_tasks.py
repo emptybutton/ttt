@@ -24,7 +24,11 @@ class BackgroundTasks:
         for task in self._tasks:
             task.cancel()
 
-        await asyncio.gather(*self._tasks)
+        errors = await asyncio.gather(*self._tasks, return_exceptions=True)
+        errors = [error for error in errors if isinstance(error, Exception)]
+
+        if errors:
+            raise ExceptionGroup("unhandled errors", errors)  # noqa: TRY003
 
     def create_task[T](self, coro: Coroutine[Any, Any, T]) -> asyncio.Task[T]:
         task = self._loop.create_task(coro)

@@ -6,7 +6,8 @@ from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.ports.game_views import GameViews
 from ttt.application.game.ports.games import Games
-from ttt.entities.core.player.location import JustLocation
+from ttt.entities.core.game.game import GameResult
+from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.math.vector import Vector
 from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
@@ -23,12 +24,11 @@ class MakeMoveInGame:
 
     async def __call__(
         self,
-        location: JustLocation,
+        location: PlayerLocation,
         cell_position: Vector,
-    ) -> None:
+    ) -> GameResult | None:
         """
-        :raises ttt.application.common.ports.players.NoPlayerWithLocationError:
-        :raises ttt.application.game.ports.games.NoGameError:
+        :raises ttt.application.common.ports.players.NoPlayerWithIDError:
         :raises ttt.entities.core.game.game.CompletedGameError:
         :raises ttt.entities.core.game.game.NotCurrentPlayerError:
         :raises ttt.entities.core.game.game.NoCellError:
@@ -45,7 +45,7 @@ class MakeMoveInGame:
             game_result_id = await self.uuids.random_uuid()
 
             tracking = Tracking()
-            game.make_move(
+            result = game.make_move(
                 player.id, cell_position, game_result_id, tracking,
             )
 
@@ -57,3 +57,4 @@ class MakeMoveInGame:
             await self.game_views.render_game_view_with_locations(
                 locations, game,
             )
+            return result

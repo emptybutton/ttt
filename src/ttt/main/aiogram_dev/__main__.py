@@ -1,29 +1,17 @@
 import asyncio
-import logging
 
-from aiogram import Bot, Dispatcher
-from dishka.integrations.aiogram import setup_dishka
 from watchfiles import run_process
 
 from ttt.main.aiogram.di import container
+from ttt.main.aiogram.start_aiogram import start_aiogram
 
 
-async def amain() -> None:
-    dp = await container.get(Dispatcher)
-    setup_dishka(container, dp)
-
-    logging.basicConfig(level=logging.INFO)
-
-    bot = await container.get(Bot)
-    await dp.start_polling(bot)
-
-
-def run_amain() -> None:
-    asyncio.run(amain())
+def run_aiogram() -> None:
+    asyncio.run(start_aiogram(container))
 
 
 def main() -> None:
-    run_process("./src", target=run_amain)
+    run_process("./src", target=run_aiogram)
 
 
 if __name__ == "__main__":

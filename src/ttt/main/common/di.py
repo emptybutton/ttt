@@ -1,6 +1,5 @@
 from collections.abc import AsyncIterator
 
-from aiogram.methods import SendMessage
 from dishka import Provider, Scope, provide
 from redis.asyncio import ConnectionPool, Redis
 from sqlalchemy.ext.asyncio import (
@@ -9,19 +8,16 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from ttt.application.common.ports.emojis import Emojis
 from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.player_message_sending import (
-    PlayerMessageSending,
-)
 from ttt.application.common.ports.players import Players
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
+from ttt.application.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.ports.games import Games
 from ttt.application.game.ports.waiting_locations import WaitingLocations
-from ttt.application.player.ports.player_views import PlayerViews
+from ttt.application.game.start_game import StartGame
+from ttt.application.game.wait_game import WaitGame
 from ttt.application.player.register_player import RegisterPlayer
-from ttt.application.player.view_player import ViewPlayer
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
 from ttt.infrastructure.adapters.players import InPostgresPlayers
@@ -34,13 +30,6 @@ from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.infrastructure.redis.batches import InRedisFixedBatches
-from ttt.presentation.adapters.emojis import AllEmojis
-from ttt.presentation.adapters.player_message_sending import (
-    AiogramPlayerMessageSending,
-)
-from ttt.presentation.adapters.player_views import (
-    AiogramMessagesFromPostgresAsPlayerViews,
-)
 from ttt.presentation.unkillable_tasks import UnkillableTasks
 
 
@@ -51,11 +40,6 @@ class CommonProvider(Provider):
     @provide(scope=Scope.APP)
     async def provide_background_tasks(self) -> AsyncIterator[BackgroundTasks]:
         async with BackgroundTasks() as tasks:
-            yield tasks
-
-    @provide(scope=Scope.APP)
-    async def provide_unkillable_tasks(self) -> AsyncIterator[UnkillableTasks]:
-        async with UnkillableTasks() as tasks:
             yield tasks
 
     @provide(scope=Scope.APP)
@@ -90,10 +74,15 @@ class CommonProvider(Provider):
             await pool.aclose()
 
     @provide(scope=Scope.REQUEST)
-    async def provide_redis(
+    async def provide_request_redis(
         self, pool: ConnectionPool,
     ) -> AsyncIterator[Redis]:
         async with Redis(connection_pool=pool) as redis:
+            yield redis
+
+    @provide(scope=Scope.APP)
+    async def provide_app_redis(self, envs: Envs) -> AsyncIterator[Redis]:
+        async with Redis.from_url(str(envs.redis_url)) as redis:
             yield redis
 
     @provide(scope=Scope.REQUEST)
@@ -126,12 +115,6 @@ class CommonProvider(Provider):
         scope=Scope.APP,
     )
 
-    provide_emoji = provide(
-        AllEmojis,
-        provides=Emojis,
-        scope=Scope.REQUEST,
-    )
-
     @provide(scope=Scope.REQUEST)
     def provide_waiting_locations(
         self, redis: Redis, envs: Envs,
@@ -143,20 +126,8 @@ class CommonProvider(Provider):
             envs.game_waiting_queue_pulling_timeout_salt_ms,
         ))
 
-    provide_player_views = provide(
-        AiogramMessagesFromPostgresAsPlayerViews,
-        provides=PlayerViews[SendMessage],
-        scope=Scope.REQUEST,
-    )
-
-    provide_player_message_sending = provide(
-        AiogramPlayerMessageSending,
-        provides=PlayerMessageSending,
-        scope=Scope.REQUEST,
-    )
-
     provide_register_player = provide(RegisterPlayer, scope=Scope.REQUEST)
 
-    provide_view_player = provide(
-        ViewPlayer[SendMessage], scope=Scope.REQUEST,
-    )
+    provide_start_game = provide(StartGame, scope=Scope.REQUEST)
+    provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
+    provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)

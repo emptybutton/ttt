@@ -1,15 +1,14 @@
-from aiogram.methods import SendMessage
 from aiogram.types.message import Message
 from aiogram.utils.formatting import as_key_value, as_list
 
 
-def player_info_message(
+async def player_info_message(
     message: Message,
     number_of_wins: int,
     number_of_draws: int,
     number_of_defeats: int,
     is_in_game: bool,  # noqa: FBT001
-) -> SendMessage:
+) -> None:
     total = number_of_wins + number_of_defeats + number_of_draws
 
     if total > 0:
@@ -30,4 +29,4 @@ def player_info_message(
         "",
         "⚔️ Сейчас в матче." if is_in_game else "💤 Сейчас не в матче",
     )
-    return message.answer(**content.as_kwargs())
+    await message.answer(**content.as_kwargs())

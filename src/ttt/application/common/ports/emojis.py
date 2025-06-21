@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
+from contextlib import AbstractAsyncContextManager
 
-from ttt.entities.telegram.emoji import Emoji
+from ttt.entities.text.emoji import Emoji
 
 
-class Emojis(ABC):
+class Emojis(AbstractAsyncContextManager["Emojis"], ABC):
     @abstractmethod
     async def random_emoji(self) -> Emoji: ...

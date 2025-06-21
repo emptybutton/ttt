@@ -1,4 +1,3 @@
-from aiogram.methods import SendMessage
 from aiogram.types.message import Message
 from aiogram.utils.formatting import (
     Bold,
@@ -8,11 +7,11 @@ from aiogram.utils.formatting import (
 )
 
 
-def need_to_start_message(message: Message) -> SendMessage:
-    return message.answer("❌ Для начала необходимо начать: /start")
+async def need_to_start_message(message: Message) -> None:
+    await message.answer("❌ Для начала необходимо начать: /start")
 
 
-def help_message(message: Message) -> SendMessage:
+async def help_message(message: Message) -> None:
     description = Text(
         Bold("ttt!"),
         " — многопользовательские онлайн-крестики-нолики в Telegram.",
@@ -29,4 +28,4 @@ def help_message(message: Message) -> SendMessage:
         ),
         sep="\n\n",
     )
-    return message.answer(**content.as_kwargs())
+    await message.answer(**content.as_kwargs())

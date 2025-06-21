@@ -14,12 +14,13 @@ from ttt.entities.core.game.game import (
     NotCurrentPlayerError,
     NotPlayerError,
     NotStandardBoardError,
+    OneEmojiError,
     OnePlayerError,
 )
-from ttt.entities.core.player.location import GameLocation
+from ttt.entities.core.player.location import PlayerGameLocation
 from ttt.entities.core.player.player import Player
 from ttt.entities.math.matrix import Matrix
-from ttt.entities.telegram.message import MessageGlobalID
+from ttt.entities.text.emoji import Emoji
 from ttt.entities.tools.tracking import Tracking
 
 
@@ -104,12 +105,16 @@ def standard_board() -> Board:
 def game(
     player1: Player,
     player2: Player,
+    emoji1: Emoji,
+    emoji2: Emoji,
     standard_board: Board,
 ) -> Game:
     return Game(
         UUID(int=0),
         player1,
+        emoji1,
         player2,
+        emoji2,
         standard_board,
         9,
         None,
@@ -140,12 +145,16 @@ def board_with_invalid_cell_order() -> Board:
 
 def test_not_standard_board(
     not_standard_board: Board,
+    emoji1: Emoji,
+    emoji2: Emoji,
 ) -> None:
     with raises(NotStandardBoardError):
         Game(
             UUID(int=0),
-            Player(0, 1, 2, 3, GameLocation(0, UUID(int=0), MessageGlobalID(4, 64))),
-            Player(1, 1, 2, 3, GameLocation(1, UUID(int=0), MessageGlobalID(4, 64))),
+            Player(0, 1, 2, 3, PlayerGameLocation(0, 64, UUID(int=0))),
+            emoji1,
+            Player(1, 1, 2, 3, PlayerGameLocation(1, 64, UUID(int=0))),
+            emoji2,
             not_standard_board,
             9,
             None,
@@ -153,15 +162,39 @@ def test_not_standard_board(
         )
 
 
-def test_make_move_with_one_player(
+def test_one_player(
     player1: Player,
+    emoji1: Emoji,
+    emoji2: Emoji,
     standard_board: Board,
 ) -> None:
     with raises(OnePlayerError):
         Game(
             UUID(int=1),
             player1,
+            emoji1,
             player1,
+            emoji2,
+            standard_board,
+            9,
+            GameResult(UUID(int=8), UUID(int=0), winner_id=None),
+            GameState.wait_player1,
+        )
+
+
+def test_one_emoji(
+    player1: Player,
+    player2: Player,
+    emoji1: Emoji,
+    standard_board: Board,
+) -> None:
+    with raises(OneEmojiError):
+        Game(
+            UUID(int=1),
+            player1,
+            emoji1,
+            player2,
+            emoji1,
             standard_board,
             9,
             GameResult(UUID(int=8), UUID(int=0), winner_id=None),
@@ -171,12 +204,16 @@ def test_make_move_with_one_player(
 
 def test_game_with_invalid_cell_order(
     board_with_invalid_cell_order: Board,
+    emoji1: Emoji,
+    emoji2: Emoji,
 ) -> None:
     with raises(InvalidCellOrderError):
         Game(
             UUID(int=0),
-            Player(0, 1, 2, 3, GameLocation(0, UUID(int=0), MessageGlobalID(4, 64))),
-            Player(1, 1, 2, 3, GameLocation(1, UUID(int=0), MessageGlobalID(4, 64))),
+            Player(0, 1, 2, 3, PlayerGameLocation(0, 64, UUID(int=0))),
+            emoji1,
+            Player(1, 1, 2, 3, PlayerGameLocation(1, 64, UUID(int=0))),
+            emoji2,
             board_with_invalid_cell_order,
             9,
             None,
@@ -219,16 +256,20 @@ def test_create_empty_board_ok(tracking: Tracking, object_: str) -> None:
         assert len(tracking) == 9
 
 
-def test_make_move_with_completed_game(
+def test_make_move_with_completed_game(  # noqa: PLR0913, PLR0917
     player1: Player,
     player2: Player,
+    emoji1: Emoji,
+    emoji2: Emoji,
     standard_board: Board,
     tracking: Tracking,
 ) -> None:
     game = Game(
         UUID(int=1),
         player1,
+        emoji1,
         player2,
+        emoji2,
         standard_board,
         9,
         GameResult(UUID(int=8), UUID(int=0), winner_id=None),

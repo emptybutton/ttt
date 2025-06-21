@@ -1,21 +1,21 @@
 from dataclasses import dataclass
 
-from ttt.entities.core.player.location import JustLocation
+from ttt.entities.core.player.location import PlayerLocation
 
 
 @dataclass(frozen=True)
 class PlayerIsNotRegisteredMessage:
-    location: JustLocation
+    location: PlayerLocation
 
 
 @dataclass(frozen=True)
 class PlayerAlreadyRegisteredMessage:
-    location: JustLocation
+    location: PlayerLocation
 
 
 @dataclass(frozen=True)
 class PlayerRegisteredMessage:
-    location: JustLocation
+    location: PlayerLocation
 
 
 type PlayerMessage = (

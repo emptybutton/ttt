@@ -1,6 +1,7 @@
 import asyncio
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
+from traceback import print_exception
 from types import TracebackType
 from typing import Any, Self
 
@@ -24,7 +25,13 @@ class UnkillableTasks:
         for task in self._tasks:
             task.cancel()
 
-        await asyncio.gather(*self._tasks)
+        errors = await asyncio.gather(*self._tasks, return_exceptions=True)
+        errors.append(error)
+
+        errors = [error for error in errors if isinstance(error, Exception)]
+
+        if errors:
+            raise ExceptionGroup("unhandled errors", errors)  # noqa: TRY003
 
     def add(
         self,
@@ -40,9 +47,9 @@ class UnkillableTasks:
         async def decorated_func() -> None:
             try:
                 await func()
-            except Exception as error:
+            except Exception as error:  # noqa: BLE001
                 self._create_task(decorated_func())
-                raise error from error
+                print_exception(type(error), error, error.__traceback__)
 
         return decorated_func
 

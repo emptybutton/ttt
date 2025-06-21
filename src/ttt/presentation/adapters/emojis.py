@@ -1,27 +1,31 @@
 from dataclasses import dataclass, field
+from types import TracebackType
 
-from random_unicode_emoji import random_emoji
+from random_unicode_emoji.random_unicode_emoji import random_emoji
 
 from ttt.application.common.ports.emojis import Emojis
-from ttt.entities.telegram.emoji import Emoji
-from ttt.entities.tools.assertion import not_none
+from ttt.entities.text.emoji import Emoji
 
 
 @dataclass
 class AllEmojis(Emojis):
-    _avaiable_random_emojis: list[Emoji] = field(init=False)
+    _selected_emojis: set[Emoji] = field(init=False, default_factory=set)
 
-    _selected_chars: set[str] = field(init=False, default_factory=set)
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        self._selected_emojis = set()
 
     async def random_emoji(self) -> Emoji:
-        char: str | None = None
-        was_char_selected = True
+        char, *_ = random_emoji()
+        emoji = Emoji(char)
 
-        while not was_char_selected:
+        while emoji not in self._selected_emojis:
             char, *_ = random_emoji()
-            was_char_selected = char in self._selected_chars
+            emoji = Emoji(char)
 
-        char = not_none(char)
-
-        self._selected_chars.add(char)
-        return Emoji(char)
+        self._selected_emojis.add(emoji)
+        return emoji
