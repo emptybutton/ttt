@@ -38,7 +38,9 @@ from ttt.presentation.adapters.player_message_sending import (
 from ttt.presentation.adapters.player_views import (
     AiogramMessagesFromPostgresAsPlayerViews,
 )
-from ttt.presentation.aiogram.routes.all import all_routers
+from ttt.presentation.aiogram.common.routes.all import common_routers
+from ttt.presentation.aiogram.game.routes.all import game_routers
+from ttt.presentation.aiogram.player.routes.all import player_routers
 from ttt.presentation.unkillable_tasks import UnkillableTasks
 
 
@@ -55,7 +57,11 @@ class AiogramProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_dp(self, storage: BaseStorage) -> Dispatcher:
         dp = Dispatcher(name="main", storage=storage)
-        dp.include_routers(*all_routers)
+        dp.include_routers(
+            *common_routers,
+            *player_routers,
+            *game_routers,
+        )
 
         return dp
 

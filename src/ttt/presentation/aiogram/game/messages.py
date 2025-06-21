@@ -4,8 +4,8 @@ from aiogram.utils.formatting import as_list
 
 from ttt.entities.core.game.game import Game, GameState
 from ttt.entities.tools.assertion import not_none
-from ttt.presentation.aiogram.keyboards.game import game_keyboard
-from ttt.presentation.aiogram.text.game import game_cell, winner_emoji
+from ttt.presentation.aiogram.game.keyboards import game_keyboard
+from ttt.presentation.aiogram.game.texts import game_cell, winner_emoji
 
 
 async def started_game_message(

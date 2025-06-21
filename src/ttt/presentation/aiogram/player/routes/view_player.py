@@ -2,13 +2,13 @@ from collections.abc import Awaitable
 from typing import Any
 
 from aiogram import Router
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import Command
 from aiogram.fsm.state import any_state
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.player.view_player import ViewPlayer
-from ttt.presentation.aiogram.messages.common import anons_are_rohibited_message
+from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
 
 view_player_router = Router(name=__name__)

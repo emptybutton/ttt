@@ -9,12 +9,12 @@ from ttt.application.game.ports.game_views import GameViews
 from ttt.entities.core.game.game import Game, GameResult
 from ttt.entities.core.player.location import PlayerGameLocation
 from ttt.infrastructure.background_tasks import BackgroundTasks
-from ttt.presentation.aiogram.messages.game import (
+from ttt.presentation.aiogram.game.messages import (
     completed_game_message,
     maked_move_message,
     started_game_message,
 )
-from ttt.presentation.aiogram.routes.game.game import GameViewState
+from ttt.presentation.aiogram.game.routes.game import GameViewState
 
 
 @dataclass(frozen=True, unsafe_hash=False)

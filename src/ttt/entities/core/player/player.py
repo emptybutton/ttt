@@ -22,7 +22,7 @@ class Player:
     number_of_wins: int
     number_of_draws: int
     number_of_defeats: int
-    game_location: PlayerGameLocation | None
+    game_location: PlayerGameLocation | None 
 
     def is_in_game(self) -> bool:
         return self.game_location is not None

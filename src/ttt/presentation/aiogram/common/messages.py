@@ -7,6 +7,10 @@ from aiogram.utils.formatting import (
 )
 
 
+async def anons_are_rohibited_message(message: Message) -> None:
+    await message.answer("❌ Анонимам вход запрещён.")
+
+
 async def need_to_start_message(message: Message) -> None:
     await message.answer("❌ Для начала необходимо начать: /start")
 

@@ -12,7 +12,7 @@ from ttt.application.game.dto.game_message import (
 from ttt.application.game.ports.game_message_sending import GameMessageSending
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.infrastructure.background_tasks import BackgroundTasks
-from ttt.presentation.aiogram.messages.game import (
+from ttt.presentation.aiogram.game.messages import (
     player_already_in_game_message,
     waiting_for_game_message,
 )

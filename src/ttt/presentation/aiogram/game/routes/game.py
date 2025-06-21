@@ -18,8 +18,8 @@ from ttt.entities.core.game.game import (
 )
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.tools.assertion import not_none
-from ttt.presentation.aiogram.messages.common import anons_are_rohibited_message
-from ttt.presentation.aiogram.messages.game import (
+from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
+from ttt.presentation.aiogram.game.messages import (
     already_completed_game_message,
     already_filled_cell_message,
     invalid_board_position_message,
