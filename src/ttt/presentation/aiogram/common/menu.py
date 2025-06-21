@@ -7,6 +7,6 @@ async def set_menu(bot: Bot) -> None:
         BotCommand(command="start", description="Запустить бота"),
         BotCommand(command="game", description="Начать поиск игры"),
         BotCommand(
-            command="info", description="Показать информацию о пользователе"),  # noqa: RUF001
+            command="info", description="Показать информацию о пользователе"),
         BotCommand(command="help", description="Справка"),
     ])
