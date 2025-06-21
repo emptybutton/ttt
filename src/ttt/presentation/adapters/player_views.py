@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.player.ports.player_views import PlayerViews
 from ttt.infrastructure.sqlalchemy.tables import TablePlayer
-from ttt.presentation.aiogram.messages.command import need_to_start_message
-from ttt.presentation.aiogram.messages.player import player_info_message
+from ttt.presentation.aiogram.common.messages import need_to_start_message
+from ttt.presentation.aiogram.player.messages import player_info_message
 
 
 @dataclass(frozen=True, unsafe_hash=False)

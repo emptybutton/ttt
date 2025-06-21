@@ -11,7 +11,7 @@ from ttt.application.common.dto.player_message import (
 from ttt.application.common.ports.player_message_sending import (
     PlayerMessageSending,
 )
-from ttt.presentation.aiogram.messages.command import (
+from ttt.presentation.aiogram.common.messages import (
     help_message,
     need_to_start_message,
 )

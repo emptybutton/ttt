@@ -38,6 +38,7 @@ from ttt.presentation.adapters.player_message_sending import (
 from ttt.presentation.adapters.player_views import (
     AiogramMessagesFromPostgresAsPlayerViews,
 )
+from ttt.presentation.aiogram.common.menu import set_menu
 from ttt.presentation.aiogram.common.routes.all import common_routers
 from ttt.presentation.aiogram.game.routes.all import game_routers
 from ttt.presentation.aiogram.player.routes.all import player_routers
@@ -66,8 +67,11 @@ class AiogramProvider(Provider):
         return dp
 
     @provide(scope=Scope.APP)
-    def provide_bot(self, secrets: Secrets) -> Bot:
-        return Bot(secrets.bot_token)
+    async def provide_bot(self, secrets: Secrets) -> Bot:
+        bot = Bot(secrets.bot_token)
+        await set_menu(bot)
+
+        return bot
 
     @provide(scope=Scope.REQUEST)
     def provide_message(self, event: TelegramObject) -> Message:
