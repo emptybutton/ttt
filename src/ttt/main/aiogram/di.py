@@ -119,10 +119,11 @@ class AiogramProvider(Provider):
     @provide(scope=Scope.REQUEST)
     async def unkillable_tasks(
         self, start_game: StartGame,
-    ) -> AsyncIterator[UnkillableTasks]:
-        async with UnkillableTasks() as tasks:
-            tasks.add(start_game)
-            yield tasks
+    ) -> UnkillableTasks:
+        tasks = UnkillableTasks()
+        tasks.add(start_game)
+
+        return tasks
 
 
 container = make_async_container(

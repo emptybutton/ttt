@@ -56,3 +56,4 @@ class UnkillableTasks:
     def _create_task(self, coro: Coroutine[Any, Any, Any]) -> None:
         task = self._loop.create_task(coro)
         self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)

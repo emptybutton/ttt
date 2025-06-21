@@ -17,4 +17,6 @@ async def start_aiogram(container: AsyncContainer) -> None:
     logging.basicConfig(level=logging.INFO)
 
     bot = await container.get(Bot)
-    await dp.start_polling(bot)
+
+    async with tasks:
+        await dp.start_polling(bot)

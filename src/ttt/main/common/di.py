@@ -30,7 +30,6 @@ from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.infrastructure.redis.batches import InRedisFixedBatches
-from ttt.presentation.unkillable_tasks import UnkillableTasks
 
 
 class CommonProvider(Provider):

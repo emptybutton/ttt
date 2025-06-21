@@ -33,5 +33,6 @@ class BackgroundTasks:
     def create_task[T](self, coro: Coroutine[Any, Any, T]) -> asyncio.Task[T]:
         task = self._loop.create_task(coro)
         self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
 
         return task
