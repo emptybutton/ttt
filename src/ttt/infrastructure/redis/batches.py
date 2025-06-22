@@ -52,19 +52,23 @@ class InRedisFixedBatches:
 
             result = await self._redis.zmpop(  # type: ignore[misc]
                 1,
-                self._sorted_set_name,  # type: ignore[arg-type]
+                [self._sorted_set_name],
                 min=True,
                 count=batch_len,
             )
             if result is None:
                 continue
 
-            _, batch = cast(tuple[bytes, list[bytes]], result)
+            result = cast(tuple[bytes, list[tuple[bytes, bytes]]], result)
+            _, values_with_score = result
+            batch = tuple(
+                value_and_score[0] for value_and_score in values_with_score
+            )
 
-            if len(batch) < batch_len:
+            if len(batch) == batch_len:
+                yield tuple(batch)
+            else:
                 await self.add(batch)
-
-            yield tuple(batch)
 
     async def _sleep(self) -> None:
         sleep_ms = (
