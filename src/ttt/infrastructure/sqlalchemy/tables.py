@@ -1,7 +1,6 @@
 from collections import defaultdict
 from collections.abc import Iterable
 from enum import StrEnum
-from itertools import groupby
 from uuid import UUID
 
 from sqlalchemy import BigInteger, ForeignKey
