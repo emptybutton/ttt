@@ -39,6 +39,8 @@ async def _(
         return
 
     x, y = map(int, not_none(message.text).split()[:2])
+    x -= 1
+    y -= 1
 
     try:
         await make_move_in_game(

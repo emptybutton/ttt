@@ -24,7 +24,7 @@ class MapToPostgres(Map):
             self._session.add(table_entity(entity))
 
         for entity in tracking.mutated:
-            await self._session.merge(table_entity(entity), load=False)
+            await self._session.merge(table_entity(entity))
 
         for entity in tracking.unused:
             await self._session.delete(table_entity(entity))

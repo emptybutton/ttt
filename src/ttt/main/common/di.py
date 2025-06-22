@@ -53,7 +53,7 @@ class CommonProvider(Provider):
             engine,
             autoflush=False,
             autobegin=False,
-            expire_on_commit=True,
+            expire_on_commit=False,
         )
 
         async with session:

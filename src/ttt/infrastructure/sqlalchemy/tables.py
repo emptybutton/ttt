@@ -1,3 +1,4 @@
+from collections import defaultdict
 from collections.abc import Iterable
 from enum import StrEnum
 from itertools import groupby
@@ -22,8 +23,7 @@ from ttt.entities.math.matrix import Matrix
 from ttt.entities.text.emoji import Emoji
 
 
-class Base(DeclarativeBase):
-    ...
+class Base(DeclarativeBase): ...
 
 
 class TablePlayer(Base):
@@ -34,9 +34,9 @@ class TablePlayer(Base):
     number_of_draws: Mapped[int]
     number_of_defeats: Mapped[int]
     game_location_game_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("games.id"),
+        ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
     )
-    game_location_chat_id: Mapped[int | None]
+    game_location_chat_id: Mapped[int | None] = mapped_column(BigInteger())
 
     def entity(self) -> Player:
         if (
@@ -44,7 +44,9 @@ class TablePlayer(Base):
             and self.game_location_chat_id is not None
         ):
             location = PlayerGameLocation(
-                self.id, self.game_location_chat_id, self.game_location_game_id,
+                self.id,
+                self.game_location_chat_id,
+                self.game_location_game_id,
             )
         else:
             location = None
@@ -81,7 +83,9 @@ class TableGameResult(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     game_id: Mapped[UUID] = mapped_column(ForeignKey("games.id"), unique=True)
-    winner_id: Mapped[int | None] = mapped_column(ForeignKey("players.id"))
+    winner_id: Mapped[int | None] = mapped_column(
+        BigInteger(), ForeignKey("players.id"),
+    )
 
     def entity(self) -> GameResult:
         return GameResult(
@@ -106,7 +110,9 @@ class TableCell(Base):
     game_id: Mapped[UUID] = mapped_column(ForeignKey("games.id"))
     board_position_x: Mapped[int]
     board_position_y: Mapped[int]
-    filler_id: Mapped[int | None] = mapped_column(ForeignKey("players.id"))
+    filler_id: Mapped[int | None] = mapped_column(
+        BigInteger(), ForeignKey("players.id"),
+    )
 
     def entity(self) -> Cell:
         return Cell(
@@ -163,11 +169,14 @@ class TableGame(Base):
     __tablename__ = "games"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    player1_id: Mapped[int] = mapped_column(ForeignKey("players.id"))
-    player2_id: Mapped[int] = mapped_column(ForeignKey("players.id"))
+    player1_id: Mapped[int] = mapped_column(
+        BigInteger(), ForeignKey("players.id"),
+    )
+    player2_id: Mapped[int] = mapped_column(
+        BigInteger(), ForeignKey("players.id"),
+    )
     state: Mapped[TableGameState] = mapped_column(game_state)
 
-    cells: Mapped[list["TableCell"]] = relationship()
     result: Mapped["TableGameResult | None"] = relationship(lazy="joined")
     player1: Mapped["TablePlayer"] = relationship(
         lazy="joined",
@@ -179,6 +188,7 @@ class TableGame(Base):
         foreign_keys=[player2_id],
     )
     player2_emoji_char: Mapped[str] = mapped_column(server_default="⭕️")
+    cells: Mapped[list["TableCell"]] = relationship(lazy="selectin")
 
     def entity(self) -> Game:
         board = self._board(it.entity() for it in self.cells)
@@ -202,29 +212,27 @@ class TableGame(Base):
         return TableGame(
             id=it.id,
             player1_id=it.player1.id,
+            player1_emoji_char=it.player1_emoji.char,
             player2_id=it.player2.id,
+            player2_emoji_char=it.player2_emoji.char,
             state=TableGameState.of(it.state),
         )
 
     def _board(self, cells: Iterable[Cell]) -> Board:
-        groups = list(groupby(cells, key=lambda it: it.board_position[1]))
+        cells_by_y = defaultdict[int, list[Cell]](list)
 
-        groups.sort(key=lambda it: it[0])  # noqa: FURB118
-        lines = [
-            sorted(line, key=lambda it: it.board_position[0])
-            for _, line in groups
-        ]
+        for cell in cells:
+            cells_by_y[cell.board_position[1]].append(cell)
 
-        return Matrix(lines)
+        for y_cells in cells_by_y.values():
+            y_cells.sort(key=lambda it: it.board_position[0])
+
+        return Matrix(list(cells_by_y.values()))
 
 
 type TablePlayerAggregate = TablePlayer
 
-type TableGameAggregate = (
-    TableGame
-    | TableGameResult
-    | TableCell
-)
+type TableGameAggregate = TableGame | TableGameResult | TableCell
 
 type TableAggregate = TablePlayerAggregate | TableGameAggregate
 

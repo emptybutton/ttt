@@ -43,6 +43,10 @@ class MakeMoveInGame:
                 if player.game_location is None
                 else player.game_location.game_id,
             )
+            locations = tuple(
+                not_none(player.game_location)
+                for player in (game.player1, game.player2)
+            )
             game_result_id = await self.uuids.random_uuid()
 
             tracking = Tracking()
@@ -50,10 +54,6 @@ class MakeMoveInGame:
                 player.id, cell_position, game_result_id, tracking,
             )
 
-            locations = tuple(
-                not_none(player.game_location)
-                for player in (game.player1, game.player2)
-            )
             await self.map_(tracking)
             await self.game_views.render_game_view_with_locations(
                 locations, game,
