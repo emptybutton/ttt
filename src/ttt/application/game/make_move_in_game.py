@@ -29,6 +29,7 @@ class MakeMoveInGame:
     ) -> GameResult | None:
         """
         :raises ttt.application.common.ports.players.NoPlayerWithIDError:
+        :raises ttt.application.game.ports.games.NoGameError:
         :raises ttt.entities.core.game.game.CompletedGameError:
         :raises ttt.entities.core.game.game.NotCurrentPlayerError:
         :raises ttt.entities.core.game.game.NoCellError:

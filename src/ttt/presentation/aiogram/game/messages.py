@@ -1,6 +1,7 @@
 from aiogram.client.bot import Bot
+from aiogram.enums import ParseMode
 from aiogram.types import ReplyKeyboardRemove
-from aiogram.utils.formatting import as_list
+from aiogram.utils.formatting import Bold, Text, as_list
 
 from ttt.entities.core.game.game import Game, GameState
 from ttt.entities.tools.assertion import not_none
@@ -101,13 +102,11 @@ async def double_waiting_for_game_message(bot: Bot, chat_id: int) -> None:
     await bot.send_message(chat_id, "👥 Поиск игры уже начат")
 
 
-async def invalid_board_position_message(bot: Bot, chat_id: int) -> None:
+async def no_game_message(bot: Bot, chat_id: int) -> None:
     await bot.send_message(
         chat_id,
-        (
-            "❌ Позиция ячейки — два числа, разделённые пробелом"
-            ", но лучше используйте клавиатуру..."
-        ),
+        Text("❌ Игры нет. Для поиска введите: ", Bold("/game")).as_markdown(),
+        parse_mode=ParseMode.MARKDOWN_V2,
     )
 
 

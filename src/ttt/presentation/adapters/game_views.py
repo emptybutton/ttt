@@ -2,8 +2,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from aiogram import Bot
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.storage.base import BaseStorage, StorageKey
+from aiogram.fsm.storage.base import BaseStorage
 
 from ttt.application.game.ports.game_views import GameViews
 from ttt.entities.core.game.game import Game, GameResult
@@ -14,7 +13,6 @@ from ttt.presentation.aiogram.game.messages import (
     maked_move_message,
     started_game_message,
 )
-from ttt.presentation.aiogram.game.routes.game import GameViewState
 
 
 @dataclass(frozen=True, unsafe_hash=False)
@@ -46,27 +44,12 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
         /,
     ) -> None:
         for location in player_locations:
-            self._tasks.create_task(
-                self._render_started_game_view_with_location(location, game),
-            )
-
-    async def _render_started_game_view_with_location(
-        self, location: PlayerGameLocation, game: Game, /,
-    ) -> None:
-        storage_key = StorageKey(
-            bot_id=self._bot.id,
-            user_id=location.player_id,
-            chat_id=location.chat_id,
-        )
-        state = FSMContext(storage=self._storage, key=storage_key)
-        await state.set_state(GameViewState.waiting_move)
-
-        await started_game_message(
-            self._bot,
-            location.chat_id,
-            game,
-            location.player_id,
-        )
+            self._tasks.create_task(started_game_message(
+                self._bot,
+                location.chat_id,
+                game,
+                location.player_id,
+            ))
 
     def _to_next_move_message_background_broadcast(
         self,

@@ -3,7 +3,7 @@ from enum import StrEnum
 from itertools import groupby
 from uuid import UUID
 
-from sqlalchemy import CHAR, BigInteger, ForeignKey
+from sqlalchemy import BigInteger, ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 

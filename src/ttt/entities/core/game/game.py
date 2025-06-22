@@ -43,7 +43,7 @@ class InvalidNumberOfUnfilledCellsError(Exception): ...
 
 
 @dataclass(frozen=True)
-class CompletedGameError(Exception):
+class AlreadyCompletedGameError(Exception):
     game_result: GameResult
 
 
@@ -122,7 +122,7 @@ class Game:
         current_player = self._current_player()
 
         if current_player is None:
-            raise CompletedGameError(not_none(self.result))
+            raise AlreadyCompletedGameError(not_none(self.result))
 
         assert_(
             player_id in {self.player1.id, self.player2.id},

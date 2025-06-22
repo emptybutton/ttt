@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from aiogram import Bot
 
 from ttt.application.game.dto.game_message import (
+    DoubleWaitingForGameMessage,
     GameMessage,
     PlayerAlreadyInGameMessage,
     WaitingForGameMessage,
@@ -13,6 +14,7 @@ from ttt.application.game.ports.game_message_sending import GameMessageSending
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.presentation.aiogram.game.messages import (
+    double_waiting_for_game_message,
     player_already_in_game_message,
     waiting_for_game_message,
 )
@@ -40,4 +42,8 @@ class BackgroundAiogramGameMessageSending(GameMessageSending):
             case WaitingForGameMessage(PlayerLocation(chat_id=chat_id)):
                 self._tasks.create_task(
                     waiting_for_game_message(self._bot, chat_id),
+                )
+            case DoubleWaitingForGameMessage(PlayerLocation(chat_id=chat_id)):
+                self._tasks.create_task(
+                    double_waiting_for_game_message(self._bot, chat_id),
                 )

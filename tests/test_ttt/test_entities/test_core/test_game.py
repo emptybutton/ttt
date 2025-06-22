@@ -5,7 +5,7 @@ from pytest import FixtureRequest, fixture, mark, raises
 from ttt.entities.core.game.board import Board, create_empty_board
 from ttt.entities.core.game.cell import AlreadyFilledCellError, Cell
 from ttt.entities.core.game.game import (
-    CompletedGameError,
+    AlreadyCompletedGameError,
     Game,
     GameResult,
     GameState,
@@ -276,7 +276,7 @@ def test_make_move_with_completed_game(  # noqa: PLR0913, PLR0917
         GameState.completed,
     )
 
-    with raises(CompletedGameError):
+    with raises(AlreadyCompletedGameError):
         game.make_move(1, (0, 0), UUID(int=8), tracking)
 
 
@@ -347,7 +347,7 @@ def test_winning_game(
         assert player2 == Player(2, 0, 0, 1, None)
 
     if object_ == "extra_move":
-        with raises(CompletedGameError):
+        with raises(AlreadyCompletedGameError):
             game.make_move(2, (2, 1), UUID(int=8), tracking)
 
 
@@ -389,7 +389,7 @@ def test_drawn_game(
         assert player2 == Player(2, 0, 1, 0, None)
 
     if object_ == "extra_move":
-        with raises(CompletedGameError):
+        with raises(AlreadyCompletedGameError):
             game.make_move(2, (2, 1), UUID(int=8), tracking)
 
 
@@ -431,5 +431,5 @@ def test_winning_game_with_filled_board(
         assert player2 == Player(2, 0, 0, 1, None)
 
     if object_ == "extra_move":
-        with raises(CompletedGameError):
+        with raises(AlreadyCompletedGameError):
             game.make_move(2, (2, 1), UUID(int=8), tracking)

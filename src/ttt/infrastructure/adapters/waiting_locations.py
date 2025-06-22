@@ -1,11 +1,13 @@
-from asyncio import gather
 from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
 from typing import ClassVar, cast
 
 from pydantic import TypeAdapter
 
-from ttt.application.game.ports.waiting_locations import WaitingLocations
+from ttt.application.game.ports.waiting_locations import (
+    WaitingLocations,
+    WaitingLocationsPush,
+)
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.infrastructure.redis.batches import InRedisFixedBatches
 
@@ -17,10 +19,15 @@ class InRedisFixedBatchesWaitingLocations(WaitingLocations):
     _adapter: ClassVar = TypeAdapter(PlayerLocation)
 
     async def push_many(self, locations: Sequence[PlayerLocation], /) -> None:
-        await gather(*(self.push(location) for location in locations))
+        await self._batches.add(map(self._bytes, locations))
 
-    async def push(self, location: PlayerLocation, /) -> None:
-        await self._batches.push(self._adapter.dump_json(location))
+    async def push(self, location: PlayerLocation, /) -> WaitingLocationsPush:
+        push_code = await self._batches.add([self._bytes(location)])
+        was_location_added_in_set = bool(push_code)
+
+        return WaitingLocationsPush(
+            was_location_dedublicated=not was_location_added_in_set,
+        )
 
     async def __aiter__(
         self,
@@ -33,3 +40,6 @@ class InRedisFixedBatchesWaitingLocations(WaitingLocations):
 
     def _entity(self, bytes_: bytes) -> PlayerLocation:
         return cast(PlayerLocation, self._adapter.validate_json(bytes_))
+
+    def _bytes(self, entity: PlayerLocation) -> bytes:
+        return cast(bytes, self._adapter.dump_json(entity))

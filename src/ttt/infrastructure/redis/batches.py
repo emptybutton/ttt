@@ -1,8 +1,8 @@
 from asyncio import sleep
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Iterable
 from dataclasses import dataclass
 from secrets import randbelow
-from typing import Literal, overload
+from typing import Literal, cast, overload
 
 from redis.asyncio import Redis
 
@@ -12,12 +12,17 @@ from ttt.entities.tools.assertion import assert_
 @dataclass(frozen=True, unsafe_hash=False)
 class InRedisFixedBatches:
     _redis: Redis
-    _list_name: str
+    _sorted_set_name: str
     _pulling_timeout_min_ms: int
     _pulling_timeout_salt_ms: int
 
-    async def push(self, value: bytes, /) -> None:
-        await self._redis.rpush(self._list_name, value)  # type: ignore[misc]
+    async def add(self, batch: Iterable[bytes], /) -> Literal[0, 1]:
+        seconds, _ = await cast(Awaitable[tuple[int, int]], self._redis.time())
+        mapping = dict.fromkeys(batch, seconds)
+        return cast(
+            Literal[0, 1],
+            await self._redis.zadd(self._sorted_set_name, mapping),
+        )
 
     @overload
     def with_len(
@@ -45,19 +50,19 @@ class InRedisFixedBatches:
         while True:
             await self._sleep()
 
-            result = await self._redis.lmpop(  # type: ignore[misc]
+            result = await self._redis.zmpop(  # type: ignore[misc]
                 1,
-                self._list_name,  # type: ignore[arg-type]
-                direction="LEFT",
+                self._sorted_set_name,  # type: ignore[arg-type]
+                min=True,
                 count=batch_len,
             )
             if result is None:
                 continue
 
-            _, batch = result
+            _, batch = cast(tuple[bytes, list[bytes]], result)
 
             if len(batch) < batch_len:
-                await self._redis.lpush(self._list_name, *batch)  # type: ignore[misc]
+                await self.add(batch)
 
             yield tuple(batch)
 

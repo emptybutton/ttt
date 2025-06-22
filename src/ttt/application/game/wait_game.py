@@ -8,7 +8,10 @@ from ttt.application.common.ports.player_message_sending import (
 )
 from ttt.application.common.ports.players import Players
 from ttt.application.common.ports.transaction import Transaction
-from ttt.application.game.dto.game_message import WaitingForGameMessage
+from ttt.application.game.dto.game_message import (
+    DoubleWaitingForGameMessage,
+    WaitingForGameMessage,
+)
 from ttt.application.game.ports.game_message_sending import GameMessageSending
 from ttt.application.game.ports.waiting_locations import WaitingLocations
 from ttt.entities.core.player.location import PlayerLocation
@@ -32,7 +35,13 @@ class WaitGame:
                 )
                 return
 
-            await self.game_message_sending.send_message(
-                WaitingForGameMessage(location),
-            )
-            await self.waiting_locations.push(location)
+            push = await self.waiting_locations.push(location)
+
+            if push.was_location_dedublicated:
+                await self.game_message_sending.send_message(
+                    DoubleWaitingForGameMessage(location),
+                )
+            else:
+                await self.game_message_sending.send_message(
+                    WaitingForGameMessage(location),
+                )

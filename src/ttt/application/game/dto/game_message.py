@@ -13,4 +13,13 @@ class WaitingForGameMessage:
     location: PlayerLocation
 
 
-type GameMessage = PlayerAlreadyInGameMessage | WaitingForGameMessage
+@dataclass(frozen=True)
+class DoubleWaitingForGameMessage:
+    location: PlayerLocation
+
+
+type GameMessage = (
+    PlayerAlreadyInGameMessage
+    | WaitingForGameMessage
+    | DoubleWaitingForGameMessage
+)
