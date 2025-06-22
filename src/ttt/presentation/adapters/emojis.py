@@ -1,15 +1,17 @@
 from dataclasses import dataclass, field
+from secrets import randbelow
 from types import TracebackType
-
-from random_unicode_emoji.random_unicode_emoji import random_emoji
 
 from ttt.application.common.ports.emojis import Emojis
 from ttt.entities.text.emoji import Emoji
+from ttt.infrastructure.dedublication import Dedublication
 
 
 @dataclass
-class AllEmojis(Emojis):
-    _selected_emojis: set[Emoji] = field(init=False, default_factory=set)
+class PictographsAsEmojis(Emojis):
+    _dedublication: Dedublication[str] = field(
+        init=False, default_factory=Dedublication,
+    )
 
     async def __aexit__(
         self,
@@ -17,15 +19,15 @@ class AllEmojis(Emojis):
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        self._selected_emojis = set()
+        self._dedublication.forget()
 
     async def random_emoji(self) -> Emoji:
-        char, *_ = random_emoji()
-        emoji = Emoji(char)
+        """
+        :raises ttt.infrastructure.dedublication.GenerationError:
+        """
 
-        while emoji not in self._selected_emojis:
-            char, *_ = random_emoji()
-            emoji = Emoji(char)
+        char = self._dedublication(self._random_char, 768)
+        return Emoji(char)
 
-        self._selected_emojis.add(emoji)
-        return emoji
+    def _random_char(self) -> str:
+        return chr(0x0001F300 + randbelow(768))

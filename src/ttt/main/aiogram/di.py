@@ -25,7 +25,7 @@ from ttt.application.player.ports.player_views import PlayerViews
 from ttt.application.player.view_player import ViewPlayer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.main.common.di import CommonProvider
-from ttt.presentation.adapters.emojis import AllEmojis
+from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_message_sending import (
     BackgroundAiogramGameMessageSending,
 )
@@ -84,7 +84,7 @@ class AiogramProvider(Provider):
                 raise NoMessageInEventError(event)
 
     provide_emoji = provide(
-        AllEmojis,
+        PictographsAsEmojis,
         provides=Emojis,
         scope=Scope.REQUEST,
     )

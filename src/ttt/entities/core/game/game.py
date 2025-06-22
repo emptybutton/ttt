@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, auto
 from itertools import chain
@@ -248,7 +249,7 @@ type GameAggregate = Game | GameResult | Cell
 
 @dataclass(frozen=True)
 class PlayersAlreadyInGameError(Exception):
-    players: tuple[Player, ...]
+    players: Sequence[Player]
 
 
 def start_game(  # noqa: PLR0913, PLR0917
@@ -284,17 +285,19 @@ def start_game(  # noqa: PLR0913, PLR0917
     )
     tracking.register_new(game)
 
+    players_in_game = []
+
     try:
         player1.be_in_game(game_id, player1_chat_id, tracking)
-    except PlayerAlreadyInGameError as error_:
-        error1 = error_
+    except PlayerAlreadyInGameError:
+        players_in_game.append(player1)
 
     try:
         player2.be_in_game(game_id, player2_chat_id, tracking)
-    except PlayerAlreadyInGameError as error_:
-        error2 = error_
+    except PlayerAlreadyInGameError:
+        players_in_game.append(player2)
 
-    if error1 or error2:
-        raise ExceptionGroup("", [error1, error2])
+    if players_in_game:
+        raise PlayersAlreadyInGameError(players_in_game)
 
     return game
