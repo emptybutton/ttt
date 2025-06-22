@@ -10,9 +10,9 @@ def game_cell(
 ) -> str:
     match cell.filler_id:
         case game.player1.id:
-            return game.player1_emoji.char
+            return game.player1_emoji.str_
         case game.player2.id:
-            return game.player2_emoji.char
+            return game.player2_emoji.str_
         case None:
             return default
         case _:
@@ -24,9 +24,9 @@ def winner_emoji(game: Game) -> str:
 
     match result.winner_id:
         case game.player1.id:
-            return game.player1_emoji.char
+            return game.player1_emoji.str_
         case game.player2.id:
-            return game.player2_emoji.char
+            return game.player2_emoji.str_
         case None:
             return "�"
         case _:

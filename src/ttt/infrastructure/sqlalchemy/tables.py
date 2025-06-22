@@ -182,12 +182,12 @@ class TableGame(Base):
         lazy="joined",
         foreign_keys=[player1_id],
     )
-    player1_emoji_char: Mapped[str] = mapped_column(server_default="❌")
+    player1_emoji_str: Mapped[str] = mapped_column(server_default="❌")
     player2: Mapped["TablePlayer"] = relationship(
         lazy="joined",
         foreign_keys=[player2_id],
     )
-    player2_emoji_char: Mapped[str] = mapped_column(server_default="⭕️")
+    player2_emoji_str: Mapped[str] = mapped_column(server_default="⭕️")
     cells: Mapped[list["TableCell"]] = relationship(lazy="selectin")
 
     def entity(self) -> Game:
@@ -198,9 +198,9 @@ class TableGame(Base):
         return Game(
             self.id,
             player1,
-            Emoji(self.player1_emoji_char),
+            Emoji(self.player1_emoji_str),
             player2,
-            Emoji(self.player2_emoji_char),
+            Emoji(self.player2_emoji_str),
             board,
             number_of_unfilled_cells(board),
             None if self.result is None else self.result.entity(),
@@ -212,9 +212,9 @@ class TableGame(Base):
         return TableGame(
             id=it.id,
             player1_id=it.player1.id,
-            player1_emoji_char=it.player1_emoji.char,
+            player1_emoji_char=it.player1_emoji.str_,
             player2_id=it.player2.id,
-            player2_emoji_char=it.player2_emoji.char,
+            player2_emoji_char=it.player2_emoji.str_,
             state=TableGameState.of(it.state),
         )
 

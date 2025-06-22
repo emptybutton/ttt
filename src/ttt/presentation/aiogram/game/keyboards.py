@@ -22,9 +22,9 @@ def _game_keyboard_button(
 ) -> KeyboardButton:
     match cell.filler_id:
         case game.player1.id:
-            return KeyboardButton(text=game.player1_emoji.char)
+            return KeyboardButton(text=game.player1_emoji.str_)
         case game.player2.id:
-            return KeyboardButton(text=game.player2_emoji.char)
+            return KeyboardButton(text=game.player2_emoji.str_)
         case None:
             return KeyboardButton(text=(
                 f"{cell.board_position[0] + 1} {cell.board_position[1] + 1}"

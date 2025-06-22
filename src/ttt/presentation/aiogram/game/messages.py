@@ -17,12 +17,12 @@ async def started_game_message(
 ) -> None:
     if player_id == game.player1.id:
         about_players = (
-            f"Вы — {game.player1_emoji.char}, враг — {game.player2_emoji.char}"
+            f"Вы — {game.player1_emoji.str_}, враг — {game.player2_emoji.str_}"
         )
         about_move = "Ходите"
     else:
         about_players = (
-            f"Враг — {game.player1_emoji.char}, вы — {game.player2_emoji.char}"
+            f"Враг — {game.player1_emoji.str_}, вы — {game.player2_emoji.str_}"
         )
         about_move = "Ждите хода врага"
 
