@@ -46,7 +46,13 @@ class CommonProvider(Provider):
     @provide(scope=Scope.APP)
     async def provide_postgres_engine(self, envs: Envs) -> AsyncEngine:
         return create_async_engine(
-            str(envs.postgres_url), echo=envs.postgres_echo,
+            str(envs.postgres_url),
+            echo=envs.postgres_echo,
+            max_overflow=0,
+            pool_size=envs.postgres_pool_size,
+            pool_timeout=envs.postgres_pool_timeout_seconds,
+            pool_recycle=envs.postgres_pool_recycle_seconds,
+            pool_pre_ping=envs.postgres_pool_pre_ping,
         )
 
     @provide(scope=Scope.REQUEST)

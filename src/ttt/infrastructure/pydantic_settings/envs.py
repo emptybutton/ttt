@@ -11,6 +11,10 @@ class Envs(BaseSettings):
 
     postgres_url: PostgresDsn
     postgres_echo: bool
+    postgres_pool_size: int
+    postgres_pool_timeout_seconds: int | float
+    postgres_pool_recycle_seconds: int | float
+    postgres_pool_pre_ping: bool
 
     redis_url: RedisDsn
     redis_pool_size: PositiveInt
