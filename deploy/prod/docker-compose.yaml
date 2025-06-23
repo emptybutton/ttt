@@ -16,14 +16,14 @@ services:
       redis:
         condition: service_healthy
     environment:
-      TTT_POSTGRES_URL: postgresql+psycopg://ttt:${POSTGRES_MASTER_TTT_PASSWORD}@postgres_master:5432/ttt
+      TTT_POSTGRES_URL: postgresql+psycopg://ttt:${POSTGRES_TTT_PASSWORD}@postgres_master:5432/ttt
       TTT_POSTGRES_POOL_SIZE: 8
       TTT_POSTGRES_POOL_TIMEOUT_SECONDS: 45
       TTT_POSTGRES_POOL_RECYCLE_SECONDS: 1800
       TTT_POSTGRES_POOL_PRE_PING: false
       TTT_POSTGRES_ECHO: true
 
-      TTT_REDIS_URL: redis://${REDIS_PASSWORD}@redis:6379/0
+      TTT_REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       TTT_REDIS_POOL_SIZE: 16
 
       TTT_GAME_WAITING_QUEUE_PULLING_TIMEOUT_MIN_MS: 100
@@ -34,6 +34,11 @@ services:
       - postgres
       - redis
     command: ttt
+    # healthcheck:
+    #   test: ["true"]
+    #   start_period: 1m
+    #   start_interval: 30s
+    #   interval: 10s
 
   redis:
     image: redis:8.0.2-bookworm
@@ -41,7 +46,6 @@ services:
     volumes:
       - redis-data:/data
       - ./redis:/mnt/dev
-      - ../common/redis:/mnt/common
     networks:
       - redis
     healthcheck:
@@ -54,53 +58,53 @@ services:
     ]
 
   postgres_master:
-    image: postgres:16.3-alpine3.19
+    build:
+      context: ../../
+      dockerfile: deploy/prod/postgres_master/Dockerfile
+      tags:
+        - "ttt_postgres_master:prod"
     container_name: ttt-postgres-master
     volumes:
-      - ./postgres_master/postgres.conf:/mnt/postgres.conf
-      - ./postgres/common-postgres.conf:/mnt/common-postgres.conf
-      - ./postgres_master/init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres-master-data:/var/lib/postgresql/data
     networks:
       - postgres
     environment:
-      POSTGRES_MASTER_REPLICA_PASSWORD: ${POSTGRES_MASTER_REPLICA_PASSWORD}
-      POSTGRES_MASTER_TTT_PASSWORD: ${POSTGRES_MASTER_TTT_PASSWORD}
-      POSTGRES_DB: root
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-    command: ["postgres", "-c", "config_file=/mnt/postgres.conf"]
+      POSTGRES_DB: ttt
+      POSTGRES_USER: ttt
+      POSTGRES_PASSWORD: ${POSTGRES_TTT_PASSWORD}
+      POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD}
+    command: ["-c", "config_file=/mnt/postgres.conf"]
     healthcheck:
-      test: pg_isready -d postgres -U root
+      test: pg_isready -d ttt -U ttt
       start_period: 1m
       start_interval: 1s
       interval: 5s
 
   postgres_replica1:
-    image: postgres:16.3-alpine3.19
+    build:
+      context: ../../
+      dockerfile: deploy/prod/postgres_replica/Dockerfile
+      tags:
+        - "ttt_postgres_replica1:prod"
+      args:
+        POSTGRES_REPLICA_NAME: replica1
+        POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD}
     container_name: ttt-postgres-replica1
     depends_on:
       postgres_master:
         condition: service_healthy
     volumes:
-      - ./postgres_replica/postgres.conf:/mnt/postgres.conf
-      - ./postgres/common-postgres.conf:/mnt/common-postgres.conf
       - postgres-replica1-data:/var/lib/postgresql/data
     networks:
       - postgres
     environment:
-      POSTGRES_DB: root
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-    command: [
-      "postgres",
-      "-c",
-      "config_file=/mnt/postgres.conf",
-      "-c",
-      "primary_conninfo='host=postgres_master user=replica password=${POSTGRES_MASTER_REPLICA_PASSWORD} application_name=replica1\'",
-    ]
+      POSTGRES_DB: ttt
+      POSTGRES_USER: ttt
+      POSTGRES_PASSWORD: ${POSTGRES_TTT_PASSWORD}
+    # user: postgres
+    command: ["bash", "/mnt/start-server.sh"]
     healthcheck:
-      test: pg_isready -d postgres -U root
+      test: pg_isready -d ttt -U ttt
       start_period: 1m
       start_interval: 1s
       interval: 5s

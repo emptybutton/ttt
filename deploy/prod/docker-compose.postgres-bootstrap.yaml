@@ -1,0 +1,26 @@
+name: ttt
+
+services:
+  postgres_master:
+    build:
+      context: ../../
+      dockerfile: deploy/prod/postgres_master/Dockerfile
+      tags:
+        - "ttt_postgres_master:prod"
+    container_name: ttt-postgres-master
+    volumes:
+      - postgres-master-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ttt
+      POSTGRES_USER: ttt
+      POSTGRES_PASSWORD: ${POSTGRES_TTT_PASSWORD}
+      POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD}
+    healthcheck:
+      test: pg_isready -d ttt -U ttt
+      start_period: 1m
+      start_interval: 1s
+      interval: 5s
+
+volumes:
+  postgres-master-data:
+    name: "ttt-prod-postgres-master-data"
