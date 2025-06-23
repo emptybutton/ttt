@@ -1,6 +1,7 @@
-# ttt
+# ***ttt!***
+> ***T***ic-***T***ac-***T***oe
 
-Tic-Tac-Toe Telegram bot.
+Многопользовательские онлайн-крестики-нолики в Telegram.
 
 ```bash
 git clone https://github.com/emptybutton/ttt.git
