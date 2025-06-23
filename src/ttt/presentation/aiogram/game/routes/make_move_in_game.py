@@ -5,6 +5,7 @@ from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.common.ports.players import NoPlayerWithIDError
 from ttt.application.game.make_move_in_game import MakeMoveInGame
+from ttt.application.game.ports.games import NoGameError
 from ttt.entities.core.game.cell import AlreadyFilledCellError
 from ttt.entities.core.game.game import (
     AlreadyCompletedGameError,
@@ -21,6 +22,7 @@ from ttt.presentation.aiogram.game.messages import (
     already_completed_game_message,
     already_filled_cell_message,
     no_cell_message,
+    no_game_message,
     not_current_player_message,
 )
 
@@ -48,6 +50,8 @@ async def _(
         )
     except NoPlayerWithIDError:
         await need_to_start_message(message)
+    except NoGameError:
+        await no_game_message(not_none(message.bot), message.chat.id)
     except AlreadyCompletedGameError:
         await already_completed_game_message(
             not_none(message.bot), message.chat.id,

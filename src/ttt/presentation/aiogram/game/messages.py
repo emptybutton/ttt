@@ -1,12 +1,12 @@
 from aiogram.client.bot import Bot
 from aiogram.enums import ParseMode
 from aiogram.types import ReplyKeyboardRemove
-from aiogram.utils.formatting import Bold, Text, as_list
+from aiogram.utils.formatting import Bold, BotCommand, Text, as_list
 
 from ttt.entities.core.game.game import Game, GameState
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.game.keyboards import game_keyboard
-from ttt.presentation.aiogram.game.texts import game_cell, winner_emoji
+from ttt.presentation.aiogram.game.texts import game_cell
 
 
 async def started_game_message(
@@ -27,7 +27,7 @@ async def started_game_message(
         about_move = "Ждите хода врага"
 
     content = as_list(
-        "⚔️ Матч начался",
+        "⚔️ Игра началась",
         about_players,
         about_move,
     )
@@ -47,12 +47,12 @@ async def maked_move_message(
             (game.player1.id, GameState.wait_player1)
             | (game.player2.id, GameState.wait_player2)
         ):
-            message = "🎯 Враг сделал свой ход. Ходите"
+            message = "🎯 Ходите"
         case (
             (game.player2.id, GameState.wait_player1)
             | (game.player1.id, GameState.wait_player2)
         ):
-            message = "🎯 Вы сделали свой ход. Ждите хода врага"
+            message = "🎯 Ждите хода врага"
         case _:
             raise ValueError(game.state, player_id)
 
@@ -67,22 +67,25 @@ async def completed_game_message(
     player_id: int,
 ) -> None:
     result = not_none(game.result)
-    winner_emoji_ = winner_emoji(game)
 
     match result.winner_id:
         case int() if result.winner_id == player_id:
-            title = f"⭐️ Игра завершилась, вы — {winner_emoji_} победили!"
+            result_emoji = "🎆"
+            about_result = "Вы победили!"
         case None:
-            title = "🕊 Игра завершилась — ничья!"
+            result_emoji = "🕊"
+            about_result = "Ничья!"
         case _:
-            title = f"💀 Игра завершилась, враг — {winner_emoji_} победил!"
+            result_emoji = "💀"
+            about_result = "Вы проиграли!"
 
     board_content = as_list(*(
-        as_list(*(game_cell(cell, game, "�") for cell in line), sep=" ")
+        as_list(*(game_cell(cell, game, " ") for cell in line), sep="")
         for line in game.board
     ))
-    content = as_list(title, board_content, sep="\n\n")
+    content = as_list(about_result, board_content, sep="\n\n")
 
+    await bot.send_message(chat_id, result_emoji)
     await bot.send_message(
         chat_id,
         **content.as_kwargs(),
@@ -91,7 +94,7 @@ async def completed_game_message(
 
 
 async def player_already_in_game_message(bot: Bot, chat_id: int) -> None:
-    await bot.send_message(chat_id, "⚔️ Вы уже в матче")
+    await bot.send_message(chat_id, "⚔️ Вы уже в игре")
 
 
 async def waiting_for_game_message(bot: Bot, chat_id: int) -> None:
@@ -103,11 +106,8 @@ async def double_waiting_for_game_message(bot: Bot, chat_id: int) -> None:
 
 
 async def no_game_message(bot: Bot, chat_id: int) -> None:
-    await bot.send_message(
-        chat_id,
-        Text("❌ Игры нет. Для поиска введите: ", Bold("/game")).as_markdown(),
-        parse_mode=ParseMode.MARKDOWN_V2,
-    )
+    text = Text("❌ Игры нет. Для поиска введите: ", Bold(BotCommand("game")))
+    await bot.send_message(chat_id, **text.as_kwargs())
 
 
 async def already_completed_game_message(bot: Bot, chat_id: int) -> None:

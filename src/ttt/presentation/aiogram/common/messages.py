@@ -1,7 +1,9 @@
 from aiogram.types.message import Message
 from aiogram.utils.formatting import (
     Bold,
+    Italic,
     Text,
+    Underline,
     as_list,
     as_marked_section,
 )
@@ -17,16 +19,18 @@ async def need_to_start_message(message: Message) -> None:
 
 async def help_message(message: Message) -> None:
     description = Text(
-        Bold("ttt!"),
+        Underline(Italic(Bold("ttt!"))),
         " — многопользовательские онлайн-крестики-нолики в Telegram.",
     )
+
+    description.as_kwargs()
 
     content = as_list(
         description,
         as_marked_section(
             "Комманды:",
             Text(Bold("/game"), " — начать игру"),
-            Text(Bold("/info"), " — посмотреть информацию о себе"),
+            Text(Bold("/profile"), " — показать профиль"),
             Text(Bold("/help"), " — вывести это сообщение"),
             marker="  ",
         ),

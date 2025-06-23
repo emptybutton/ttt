@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ttt.application.player.ports.player_views import PlayerViews
 from ttt.infrastructure.sqlalchemy.tables import TablePlayer
 from ttt.presentation.aiogram.common.messages import need_to_start_message
-from ttt.presentation.aiogram.player.messages import player_info_message
+from ttt.presentation.aiogram.player.messages import profile_message
 
 
 @dataclass(frozen=True, unsafe_hash=False)
@@ -35,7 +35,7 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews[Awaitable[Any]]):
         if row is None:
             return need_to_start_message(self._message)
 
-        return player_info_message(
+        return profile_message(
             self._message,
             row.number_of_wins,
             row.number_of_draws,
