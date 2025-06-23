@@ -2,8 +2,9 @@ from aiogram.types.message import Message
 from aiogram.utils.formatting import as_list
 
 
-async def profile_message(
+async def profile_message(  # noqa: PLR0913, PLR0917
     message: Message,
+    stars: int,
     number_of_wins: int,
     number_of_draws: int,
     number_of_defeats: int,
@@ -22,6 +23,7 @@ async def profile_message(
         winning_percentage_text = None
 
     content = as_list(
+        f"🌟 Звёзд: {stars}",
         f"🏆 Побед: {number_of_wins}",
         f"💀 Поражений: {number_of_defeats}",
         f"🕊️ Ничьих: {number_of_draws}",
@@ -30,7 +32,6 @@ async def profile_message(
             if winning_percentage_text is None
             else [f"📊 Процент побед: {winning_percentage_text}%"]
         ),
-        "",
         "⚔️ Сейчас в игре" if is_in_game else "💤 Сейчас не в игре",
     )
     await message.answer(**content.as_kwargs())

@@ -1,9 +1,9 @@
 from aiogram.client.bot import Bot
-from aiogram.enums import ParseMode
 from aiogram.types import ReplyKeyboardRemove
 from aiogram.utils.formatting import Bold, BotCommand, Text, as_list
 
 from ttt.entities.core.game.game import Game, GameState
+from ttt.entities.core.player.win import Win
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.game.keyboards import game_keyboard
 from ttt.presentation.aiogram.game.texts import game_cell
@@ -60,7 +60,7 @@ async def maked_move_message(
     await bot.send_message(chat_id, message, reply_markup=keyboard)
 
 
-async def completed_game_message(
+async def completed_game_messages(
     bot: Bot,
     chat_id: int,
     game: Game,
@@ -68,14 +68,14 @@ async def completed_game_message(
 ) -> None:
     result = not_none(game.result)
 
-    match result.winner_id:
-        case int() if result.winner_id == player_id:
+    match result.win:
+        case Win(winner_id=winner_id) if winner_id == player_id:
             result_emoji = "🎆"
-            about_result = "Вы победили!"
+            about_result = f"Вы победили! +{result.win.new_stars} 🌟"
         case None:
             result_emoji = "🕊"
             about_result = "Ничья!"
-        case _:
+        case Win(winner_id=_):
             result_emoji = "💀"
             about_result = "Вы проиграли!"
 

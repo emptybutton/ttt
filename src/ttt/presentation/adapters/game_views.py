@@ -9,7 +9,7 @@ from ttt.entities.core.game.game import Game, GameResult
 from ttt.entities.core.player.location import PlayerGameLocation
 from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.presentation.aiogram.game.messages import (
-    completed_game_message,
+    completed_game_messages,
     maked_move_message,
     started_game_message,
 )
@@ -70,7 +70,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
         game: Game,
     ) -> None:
         for location in player_locations:
-            self._tasks.create_task(completed_game_message(
+            self._tasks.create_task(completed_game_messages(
                 self._bot,
                 location.chat_id,
                 game,

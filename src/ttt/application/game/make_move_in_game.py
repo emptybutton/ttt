@@ -1,12 +1,13 @@
+from asyncio import gather
 from dataclasses import dataclass
 
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.players import Players
+from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.ports.game_views import GameViews
 from ttt.application.game.ports.games import Games
-from ttt.entities.core.game.game import GameResult
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.math.vector import Vector
 from ttt.entities.tools.assertion import not_none
@@ -20,13 +21,14 @@ class MakeMoveInGame:
     game_views: GameViews
     players: Players
     uuids: UUIDs
+    randoms: Randoms
     transaction: Transaction
 
     async def __call__(
         self,
         location: PlayerLocation,
         cell_position: Vector,
-    ) -> GameResult | None:
+    ) -> None:
         """
         :raises ttt.application.common.ports.players.NoPlayerWithIDError:
         :raises ttt.application.game.ports.games.NoGameError:
@@ -47,15 +49,17 @@ class MakeMoveInGame:
                 not_none(player.game_location)
                 for player in (game.player1, game.player2)
             )
-            game_result_id = await self.uuids.random_uuid()
+            game_result_id, random = await gather(
+                self.uuids.random_uuid(),
+                self.randoms.random(),
+            )
 
             tracking = Tracking()
-            result = game.make_move(
-                player.id, cell_position, game_result_id, tracking,
+            game.make_move(
+                player.id, cell_position, game_result_id, random, tracking,
             )
 
             await self.map_(tracking)
             await self.game_views.render_game_view_with_locations(
                 locations, game,
             )
-            return result

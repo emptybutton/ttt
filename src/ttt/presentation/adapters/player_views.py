@@ -24,6 +24,7 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews[Awaitable[Any]]):
             TablePlayer.number_of_wins,
             TablePlayer.number_of_draws,
             TablePlayer.number_of_defeats,
+            TablePlayer.account_stars,
             TablePlayer.game_location_game_id.is_not(None).label("is_in_game"),
         ).where(
             TablePlayer.id == player_id,
@@ -37,6 +38,7 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews[Awaitable[Any]]):
 
         return profile_message(
             self._message,
+            row.account_stars,
             row.number_of_wins,
             row.number_of_draws,
             row.number_of_defeats,

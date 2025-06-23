@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import (
 
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.players import Players
+from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.make_move_in_game import MakeMoveInGame
@@ -21,6 +22,7 @@ from ttt.application.player.register_player import RegisterPlayer
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
 from ttt.infrastructure.adapters.players import InPostgresPlayers
+from ttt.infrastructure.adapters.randoms import MersenneTwisterRandoms
 from ttt.infrastructure.adapters.transaction import InPostgresTransaction
 from ttt.infrastructure.adapters.uuids import UUIDv4s
 from ttt.infrastructure.adapters.waiting_locations import (
@@ -115,6 +117,10 @@ class CommonProvider(Provider):
         provides=UUIDs,
         scope=Scope.APP,
     )
+
+    @provide(scope=Scope.APP)
+    def provide_randoms(self) -> Randoms:
+        return MersenneTwisterRandoms()
 
     @provide(scope=Scope.REQUEST)
     def provide_waiting_locations(

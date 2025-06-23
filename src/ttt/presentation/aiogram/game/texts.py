@@ -1,6 +1,5 @@
 from ttt.entities.core.game.cell import Cell
 from ttt.entities.core.game.game import Game
-from ttt.entities.tools.assertion import not_none
 
 
 def game_cell(

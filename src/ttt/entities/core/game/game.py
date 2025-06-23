@@ -10,8 +10,13 @@ from ttt.entities.core.game.board import (
     is_board_standard,
 )
 from ttt.entities.core.game.cell import AlreadyFilledCellError, Cell
-from ttt.entities.core.player.player import Player, PlayerAlreadyInGameError
+from ttt.entities.core.player.player import (
+    Player,
+    PlayerAlreadyInGameError,
+)
+from ttt.entities.core.player.win import Win
 from ttt.entities.math.matrix import Matrix
+from ttt.entities.math.random import Random
 from ttt.entities.math.vector import Vector
 from ttt.entities.text.emoji import Emoji
 from ttt.entities.tools.assertion import assert_, not_none
@@ -28,7 +33,7 @@ class GameState(Enum):
 class GameResult:
     id: UUID
     game_id: UUID
-    winner_id: int | None
+    win: Win | None
 
 
 class OnePlayerError(Exception): ...
@@ -110,6 +115,7 @@ class Game:
         player_id: int,
         cell_position: Vector | FilledCellPosition,
         game_result_id: UUID,
+        random: Random,
         tracking: Tracking,
     ) -> GameResult | None:
         """
@@ -139,10 +145,11 @@ class Game:
         if self._is_player_winner(current_player, cell_position):
             not_current_player = not_none(self._not_current_player())
 
-            current_player.win(tracking)
+            win = current_player.win(random, tracking)
             not_current_player.lose(tracking)
 
-            return self._complete(game_result_id, current_player, tracking)
+            self._complete(win, game_result_id, tracking)
+            return None
 
         if not self._can_continue():
             not_current_player = not_none(self._not_current_player())
@@ -150,7 +157,8 @@ class Game:
             current_player.be_draw(tracking)
             not_current_player.be_draw(tracking)
 
-            return self._complete(game_result_id, None, tracking)
+            self._complete(None, game_result_id, tracking)
+            return None
 
         self._wait_next_move(tracking)
         return None
@@ -233,15 +241,11 @@ class Game:
         tracking.register_mutated(self)
 
     def _complete(
-        self, game_result_id: UUID, winner: Player | None, tracking: Tracking,
-    ) -> GameResult:
-        self.result = GameResult(
-            game_result_id, self.id, None if winner is None else winner.id,
-        )
+        self, win: Win | None, game_result_id: UUID, tracking: Tracking,
+    ) -> None:
+        self.result = GameResult(game_result_id, self.id, win)
         self.state = GameState.completed
         tracking.register_mutated(self)
-
-        return self.result
 
 
 type GameAggregate = Game | GameResult | Cell

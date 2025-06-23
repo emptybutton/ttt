@@ -16,8 +16,10 @@ from ttt.entities.core.game.game import (
     GameState,
     number_of_unfilled_cells,
 )
+from ttt.entities.core.player.account import Account
 from ttt.entities.core.player.location import PlayerGameLocation
 from ttt.entities.core.player.player import Player
+from ttt.entities.core.player.win import Win
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.text.emoji import Emoji
 
@@ -29,6 +31,7 @@ class TablePlayer(Base):
     __tablename__ = "players"
 
     id: Mapped[int] = mapped_column(BigInteger(), primary_key=True)
+    account_stars: Mapped[int] = mapped_column(server_default="0")
     number_of_wins: Mapped[int]
     number_of_draws: Mapped[int]
     number_of_defeats: Mapped[int]
@@ -52,6 +55,7 @@ class TablePlayer(Base):
 
         return Player(
             self.id,
+            Account(self.account_stars),
             self.number_of_wins,
             self.number_of_draws,
             self.number_of_defeats,
@@ -69,6 +73,7 @@ class TablePlayer(Base):
 
         return TablePlayer(
             id=it.id,
+            account_stars=it.account.stars,
             number_of_wins=it.number_of_wins,
             number_of_draws=it.number_of_draws,
             number_of_defeats=it.number_of_defeats,
@@ -82,24 +87,38 @@ class TableGameResult(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     game_id: Mapped[UUID] = mapped_column(ForeignKey("games.id"), unique=True)
-    winner_id: Mapped[int | None] = mapped_column(
+    win_winner_id: Mapped[int | None] = mapped_column(
         BigInteger(),
         ForeignKey("players.id"),
     )
+    win_new_stars: Mapped[int | None]
 
     def entity(self) -> GameResult:
+        if self.win_winner_id is None or self.win_new_stars is None:
+            win = None
+        else:
+            win = Win(self.win_winner_id, self.win_new_stars)
+
         return GameResult(
             self.id,
             self.game_id,
-            self.winner_id,
+            win,
         )
 
     @classmethod
     def of(cls, it: GameResult) -> "TableGameResult":
+        if it.win is None:
+            win_player_id = None
+            win_new_stars = None
+        else:
+            win_player_id = it.win.winner_id
+            win_new_stars = it.win.new_stars
+
         return TableGameResult(
             id=it.id,
             game_id=it.game_id,
-            winner_id=it.winner_id,
+            win_player_id=win_player_id,
+            win_new_stars=win_new_stars,
         )
 
 
@@ -254,67 +273,3 @@ def table_entity(entity: Aggregate) -> TableAggregate:
             return TableGameResult.of(entity)
         case Cell():
             return TableCell.of(entity)
-
-
-# Matrix([
-#     [
-#         Cell(
-#             id=UUID("3686d082-03a4-491e-90cc-f91b6520badf"),
-#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
-#             board_position=(0, 1),
-#             filler_id=1185717180,
-#         ),
-#         Cell(
-#             id=UUID("c9bcc587-a139-423e-b78d-da206bc71a0e"),
-#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
-#             board_position=(1, 1),
-#             filler_id=7469477174,
-#         ),
-#         Cell(
-#             id=UUID("e9033d51-d561-402c-bd56-ed1ba07ab686"),
-#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
-#             board_position=(2, 1),
-#             filler_id=None,
-#         ),
-#     ],
-#     [
-#         Cell(
-#             id=UUID("3e64f98f-de3f-4a5b-bb7d-0d5fcaae2643"),
-#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
-#             board_position=(0, 2),
-#             filler_id=None,
-#         ),
-#         Cell(
-#             id=UUID("872d4ea8-5965-4865-acbe-c4f798198a67"),
-#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
-#             board_position=(1, 2),
-#             filler_id=None,
-#         ),
-#         Cell(
-#             id=UUID("9e3f860b-6fd4-4c0c-a8e1-4420efb90656"),
-#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
-#             board_position=(2, 2),
-#             filler_id=None,
-#         ),
-#     ],
-#     [
-#         Cell(
-#             id=UUID("6cd91989-9241-4bb5-9cbe-f752b3925079"),
-#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
-#             board_position=(0, 0),
-#             filler_id=1185717180,
-#         ),
-#         Cell(
-#             id=UUID("cfa826a6-9a3d-4dc0-a8c9-eea9d36c40c1"),
-#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
-#             board_position=(1, 0),
-#             filler_id=7469477174,
-#         ),
-#         Cell(
-#             id=UUID("735a2145-95f4-4c61-9587-acad9badbef4"),
-#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
-#             board_position=(2, 0),
-#             filler_id=1185717180,
-#         ),
-#     ],
-# ])

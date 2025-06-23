@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from ttt.entities.core.player.account import Account
 from ttt.entities.core.player.location import PlayerGameLocation
+from ttt.entities.core.player.win import Win
+from ttt.entities.math.random import Random, deviated_int
 from ttt.entities.tools.assertion import assert_
 from ttt.entities.tools.tracking import Tracking
 
@@ -19,6 +22,7 @@ class PlayerNotInGameError(Exception):
 @dataclass
 class Player:
     id: int
+    account: Account
     number_of_wins: int
     number_of_draws: int
     number_of_defeats: int
@@ -52,7 +56,7 @@ class Player:
         self.number_of_defeats += 1
         tracking.register_mutated(self)
 
-    def win(self, tracking: Tracking) -> None:
+    def win(self, random: Random, tracking: Tracking) -> Win:
         """
         :raises ttt.entities.core.player.player.PlayerNotInGameError:
         """
@@ -60,7 +64,12 @@ class Player:
         self._leave_game(tracking)
 
         self.number_of_wins += 1
+
+        new_stars = deviated_int(50, 16, random=random)
+        self.account = self.account.map(lambda stars: stars + new_stars)
+
         tracking.register_mutated(self)
+        return Win(self.id, new_stars)
 
     def be_draw(self, tracking: Tracking) -> None:
         """
@@ -90,7 +99,7 @@ def register_player(
     player_id: int,
     tracking: Tracking,
 ) -> Player:
-    player = Player(player_id, 0, 0, 0, None)
+    player = Player(player_id, Account(0), 0, 0, 0, None)
     tracking.register_new(player)
 
     return player
