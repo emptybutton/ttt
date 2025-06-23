@@ -1,4 +1,10 @@
-# ***ttt!***
+# ***ttt!*** 
+[![CI](https://github.com/emptybutton/ttt/actions/workflows/ci.yml/badge.svg)](https://github.com/emptybutton/ttt/actions?query=workflow%3ACI)
+[![CD](https://github.com/emptybutton/ttt/actions/workflows/cd.yml/badge.svg)](https://github.com/emptybutton/ttt/actions/workflows/cd.yaml)
+[![GitHub Release](https://img.shields.io/github/v/release/emptybutton/ttt?style=flat&logo=github&labelColor=%23282e33&color=%237c73ff)](https://github.com/emptybutton/ttt/releases)
+[![Wakatime](https://wakatime.com/badge/user/0d3b7ff5-0547-4323-a43e-2a7308d973a0/project/f29e824e-5b14-420d-9f12-24f078225e48.svg)](https://wakatime.com/badge/user/0d3b7ff5-0547-4323-a43e-2a7308d973a0/project/f29e824e-5b14-420d-9f12-24f078225e48)
+[![Lines](https://img.shields.io/endpoint?url=https%3A%2F%2Fghloc.vercel.app%2Fapi%2Femptybutton%2Fttt%2Fbadge%3Ffilter%3D.py&logo=python&label=lines&color=blue)](https://github.com/search?q=repo%3Aemptybutton%2ttt+language%3APython+&type=code)
+
 > ***T***ic-***T***ac-***T***oe
 
 Многопользовательские онлайн-крестики-нолики в Telegram.
