@@ -1,29 +1,29 @@
-from collections.abc import AsyncIterator, Sequence
-from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
+from types import TracebackType
+from typing import Self
 
-from in_memory_db import InMemoryDb
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncSessionTransaction
 
-
-@asynccontextmanager
-async def in_postgres_transaction(session: AsyncSession) -> AsyncIterator[None]:
-    async with session.begin():
-        yield
+from ttt.application.common.ports.transaction import Transaction
+from ttt.entities.tools.assertion import not_none
 
 
-@asynccontextmanager
-async def in_memory_transaction(  # noqa: RUF029
-    dbs: Sequence[InMemoryDb],
-) -> AsyncIterator[None]:
-    for db in dbs:
-        db.begin()
+@dataclass
+class InPostgresTransaction(Transaction):
+    _session: AsyncSession
+    _transaction: AsyncSessionTransaction | None = field(
+        init=False, default=None,
+    )
 
-    try:
-        yield
-    except Exception as error:
-        for db in dbs:
-            db.rollback()
-        raise error from error
-    else:
-        for db in dbs:
-            db.commit()
+    async def __aenter__(self) -> Self:
+        self._transaction = await self._session.begin()
+        return self
+
+    async def __aexit__(
+        self,
+        error_type: type[BaseException] | None,
+        error: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        transaction = not_none(self._transaction)
+        return await transaction.__aexit__(error_type, error, traceback)

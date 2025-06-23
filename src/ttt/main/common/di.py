@@ -21,7 +21,7 @@ from ttt.application.player.register_player import RegisterPlayer
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
 from ttt.infrastructure.adapters.players import InPostgresPlayers
-from ttt.infrastructure.adapters.transaction import in_postgres_transaction
+from ttt.infrastructure.adapters.transaction import InPostgresTransaction
 from ttt.infrastructure.adapters.uuids import UUIDv4s
 from ttt.infrastructure.adapters.waiting_locations import (
     InRedisFixedBatchesWaitingLocations,
@@ -43,7 +43,9 @@ class CommonProvider(Provider):
 
     @provide(scope=Scope.APP)
     async def provide_postgres_engine(self, envs: Envs) -> AsyncEngine:
-        return create_async_engine(str(envs.postgres_url))
+        return create_async_engine(
+            str(envs.postgres_url), echo=envs.postgres_echo,
+        )
 
     @provide(scope=Scope.REQUEST)
     async def provide_postgres_session(
@@ -84,11 +86,11 @@ class CommonProvider(Provider):
         async with Redis.from_url(str(envs.redis_url)) as redis:
             yield redis
 
-    @provide(scope=Scope.REQUEST)
-    def provide_transaction(
-        self, session: AsyncSession,
-    ) -> Transaction:
-        return in_postgres_transaction(session=session)
+    provide_transaction = provide(
+        InPostgresTransaction,
+        provides=Transaction,
+        scope=Scope.REQUEST,
+    )
 
     provide_games = provide(
         InPostgresGames,

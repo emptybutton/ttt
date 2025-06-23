@@ -18,7 +18,7 @@ class WaitingLocations(ABC):
 
     @abstractmethod
     async def push_many(
-        self, location: Sequence[PlayerLocation], /,
+        self, locations: Sequence[PlayerLocation], /,
     ) -> None: ...
 
     @abstractmethod

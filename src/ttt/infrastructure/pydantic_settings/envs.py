@@ -10,6 +10,7 @@ class Envs(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="TTT_")
 
     postgres_url: PostgresDsn
+    postgres_echo: bool
 
     redis_url: RedisDsn
     redis_pool_size: PositiveInt

@@ -83,7 +83,8 @@ class TableGameResult(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True)
     game_id: Mapped[UUID] = mapped_column(ForeignKey("games.id"), unique=True)
     winner_id: Mapped[int | None] = mapped_column(
-        BigInteger(), ForeignKey("players.id"),
+        BigInteger(),
+        ForeignKey("players.id"),
     )
 
     def entity(self) -> GameResult:
@@ -110,7 +111,8 @@ class TableCell(Base):
     board_position_x: Mapped[int]
     board_position_y: Mapped[int]
     filler_id: Mapped[int | None] = mapped_column(
-        BigInteger(), ForeignKey("players.id"),
+        BigInteger(),
+        ForeignKey("players.id"),
     )
 
     def entity(self) -> Cell:
@@ -169,10 +171,12 @@ class TableGame(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     player1_id: Mapped[int] = mapped_column(
-        BigInteger(), ForeignKey("players.id"),
+        BigInteger(),
+        ForeignKey("players.id"),
     )
     player2_id: Mapped[int] = mapped_column(
-        BigInteger(), ForeignKey("players.id"),
+        BigInteger(),
+        ForeignKey("players.id"),
     )
     state: Mapped[TableGameState] = mapped_column(game_state)
 
@@ -211,9 +215,9 @@ class TableGame(Base):
         return TableGame(
             id=it.id,
             player1_id=it.player1.id,
-            player1_emoji_char=it.player1_emoji.str_,
+            player1_emoji_str=it.player1_emoji.str_,
             player2_id=it.player2.id,
-            player2_emoji_char=it.player2_emoji.str_,
+            player2_emoji_str=it.player2_emoji.str_,
             state=TableGameState.of(it.state),
         )
 
@@ -223,10 +227,13 @@ class TableGame(Base):
         for cell in cells:
             cells_by_y[cell.board_position[1]].append(cell)
 
-        for y_cells in cells_by_y.values():
-            y_cells.sort(key=lambda it: it.board_position[0])
+        lines = list()
 
-        return Matrix(list(cells_by_y.values()))
+        for y in sorted(cells_by_y):
+            cells_by_y[y].sort(key=lambda it: it.board_position[0])
+            lines.append(cells_by_y[y])
+
+        return Matrix(lines)
 
 
 type TablePlayerAggregate = TablePlayer
@@ -247,3 +254,67 @@ def table_entity(entity: Aggregate) -> TableAggregate:
             return TableGameResult.of(entity)
         case Cell():
             return TableCell.of(entity)
+
+
+# Matrix([
+#     [
+#         Cell(
+#             id=UUID("3686d082-03a4-491e-90cc-f91b6520badf"),
+#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
+#             board_position=(0, 1),
+#             filler_id=1185717180,
+#         ),
+#         Cell(
+#             id=UUID("c9bcc587-a139-423e-b78d-da206bc71a0e"),
+#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
+#             board_position=(1, 1),
+#             filler_id=7469477174,
+#         ),
+#         Cell(
+#             id=UUID("e9033d51-d561-402c-bd56-ed1ba07ab686"),
+#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
+#             board_position=(2, 1),
+#             filler_id=None,
+#         ),
+#     ],
+#     [
+#         Cell(
+#             id=UUID("3e64f98f-de3f-4a5b-bb7d-0d5fcaae2643"),
+#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
+#             board_position=(0, 2),
+#             filler_id=None,
+#         ),
+#         Cell(
+#             id=UUID("872d4ea8-5965-4865-acbe-c4f798198a67"),
+#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
+#             board_position=(1, 2),
+#             filler_id=None,
+#         ),
+#         Cell(
+#             id=UUID("9e3f860b-6fd4-4c0c-a8e1-4420efb90656"),
+#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
+#             board_position=(2, 2),
+#             filler_id=None,
+#         ),
+#     ],
+#     [
+#         Cell(
+#             id=UUID("6cd91989-9241-4bb5-9cbe-f752b3925079"),
+#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
+#             board_position=(0, 0),
+#             filler_id=1185717180,
+#         ),
+#         Cell(
+#             id=UUID("cfa826a6-9a3d-4dc0-a8c9-eea9d36c40c1"),
+#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
+#             board_position=(1, 0),
+#             filler_id=7469477174,
+#         ),
+#         Cell(
+#             id=UUID("735a2145-95f4-4c61-9587-acad9badbef4"),
+#             game_id=UUID("e5a4ccfc-8ea7-4309-a748-b3d981ba9635"),
+#             board_position=(2, 0),
+#             filler_id=1185717180,
+#         ),
+#     ],
+# ])

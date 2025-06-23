@@ -19,7 +19,8 @@ class InRedisFixedBatchesWaitingLocations(WaitingLocations):
     _adapter: ClassVar = TypeAdapter(PlayerLocation)
 
     async def push_many(self, locations: Sequence[PlayerLocation], /) -> None:
-        await self._batches.add(map(self._bytes, locations))
+        if locations:
+            await self._batches.add(map(self._bytes, locations))
 
     async def push(self, location: PlayerLocation, /) -> WaitingLocationsPush:
         push_code = await self._batches.add([self._bytes(location)])

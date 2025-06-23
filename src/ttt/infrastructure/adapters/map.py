@@ -20,6 +20,7 @@ class MapToPostgres(Map):
         self,
         tracking: MappableTracking,
     ) -> None:
+        print(tracking)
         for entity in tracking.new:
             self._session.add(table_entity(entity))
 
