@@ -8,7 +8,7 @@
 
 > ***T***ic-***T***ac-***T***oe
 
-Telegram бот многопользовательских крестико-ноликов.
+Telegram бот для многопользовательской игры «Крестики-нолики»
 
 ```bash
 git clone https://github.com/emptybutton/ttt.git
