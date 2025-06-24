@@ -14,6 +14,6 @@ WORKDIR /run/app
 COPY --from=wheel /run/build/dist dist
 RUN pip install dist/* && rm dist -fr
 
-COPY deploy/prod/ttt/alembic.ini .
-
+COPY deploy/prod/ttt/alembic.ini /usr/local/lib/python3.13/site-packages/ttt
+WORKDIR /usr/local/lib/python3.13/site-packages/ttt
 CMD ["ttt"]

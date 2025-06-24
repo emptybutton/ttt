@@ -34,11 +34,6 @@ services:
       - postgres
       - redis
     command: ttt
-    # healthcheck:
-    #   test: ["true"]
-    #   start_period: 1m
-    #   start_interval: 30s
-    #   interval: 10s
 
   redis:
     image: redis:8.0.2-bookworm
