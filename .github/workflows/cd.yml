@@ -2,13 +2,23 @@ name: CD
 
 on:
   release:
-    branches: [ "main" ]
-    type: released
+    branches: [main]
+    types: [published]
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: [self-hosted, linux, x64, prod]
+    environment: Production
     steps:
-    - uses: actions/checkout@v4
-    - name: deploy
-      run: bash ./deploy/prod/deploy.sh
+      - uses: actions/checkout@v4
+
+      - name: add secrets
+        run: echo ${{ secrets.CONFIG }} > deploy/prod/ttt/secrets.yaml
+
+      - name: deploy
+        run: bash ./deploy/prod/deploy.sh
+        env:
+            REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+
+            POSTGRES_TTT_PASSWORD: ${{ secrets.POSTGRES_TTT_PASSWORD }}
+            POSTGRES_REPLICA_PASSWORD: ${{ secrets.POSTGRES_REPLICA_PASSWORD }}
