@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: add secrets
-        run: echo ${{ secrets.CONFIG }} > deploy/prod/ttt/secrets.yaml
+        run: echo ${{ secrets.PROD_CONFIG }} > deploy/prod/ttt/secrets.yaml
 
       - name: deploy
         run: bash ./deploy/prod/deploy.sh
