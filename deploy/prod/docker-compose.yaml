@@ -8,6 +8,7 @@ services:
       tags:
         - "ttt:prod"
     container_name: ttt
+    restart: always
     depends_on:
       postgres_master:
         condition: service_healthy
@@ -34,10 +35,12 @@ services:
       - postgres
       - redis
     command: ttt
+    mem_limit: 200mb
 
   redis:
     image: redis:8.0.2-bookworm
     container_name: ttt-redis
+    restart: always
     volumes:
       - redis-data:/data
       - ./redis:/mnt/dev
@@ -51,6 +54,7 @@ services:
     command: [
       "redis-server", "/mnt/dev/redis.conf", "--requirepass", "$REDIS_PASSWORD"
     ]
+    mem_limit: 20mb
 
   postgres_master:
     build:
@@ -59,6 +63,7 @@ services:
       tags:
         - "ttt_postgres_master:prod"
     container_name: ttt-postgres-master
+    restart: always
     volumes:
       - postgres-master-data:/var/lib/postgresql/data
     networks:
@@ -69,6 +74,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_TTT_PASSWORD}
       POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD}
     command: ["-c", "config_file=/mnt/postgres.conf"]
+    mem_limit: 30mb
     healthcheck:
       test: pg_isready -d ttt -U ttt
       start_period: 1m
@@ -85,6 +91,7 @@ services:
         POSTGRES_REPLICA_NAME: replica1
         POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD}
     container_name: ttt-postgres-replica1
+    restart: always
     depends_on:
       postgres_master:
         condition: service_healthy
@@ -96,8 +103,8 @@ services:
       POSTGRES_DB: ttt
       POSTGRES_USER: ttt
       POSTGRES_PASSWORD: ${POSTGRES_TTT_PASSWORD}
-    # user: postgres
     command: ["bash", "/mnt/start-server.sh"]
+    mem_limit: 30mb
     healthcheck:
       test: pg_isready -d ttt -U ttt
       start_period: 1m
