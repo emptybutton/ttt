@@ -7,7 +7,7 @@
 
 > ***T***ic-***T***ac-***T***oe
 
-Многопользовательские онлайн-крестики-нолики в Telegram.
+Telegram бот многопользовательских крестико-ноликов.
 
 ```bash
 git clone https://github.com/emptybutton/ttt.git
