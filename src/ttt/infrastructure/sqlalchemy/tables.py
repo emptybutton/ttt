@@ -1,9 +1,10 @@
 from collections import defaultdict
 from collections.abc import Iterable
+from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import BigInteger, ForeignKey
+from sqlalchemy import CHAR, BigInteger, ForeignKey
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -19,6 +20,7 @@ from ttt.entities.core.game.game import (
     number_of_unfilled_cells,
 )
 from ttt.entities.core.player.account import Account
+from ttt.entities.core.player.emoji import PlayerEmoji
 from ttt.entities.core.player.location import PlayerGameLocation
 from ttt.entities.core.player.player import Player
 from ttt.entities.core.player.win import Win
@@ -30,11 +32,40 @@ from ttt.entities.tools.assertion import not_none
 class Base(DeclarativeBase): ...
 
 
+class TablePlayerEmoji(Base):
+    __tablename__ = "player_emojis"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    player_id: Mapped[int] = mapped_column(ForeignKey("players.id"))
+    emoji_str: Mapped[str] = mapped_column(CHAR(1))
+    datetime_of_purchase: Mapped[datetime]
+
+    def entity(self) -> PlayerEmoji:
+        return PlayerEmoji(
+            self.id,
+            self.player_id,
+            Emoji(self.emoji_str),
+            self.datetime_of_purchase,
+        )
+
+    @classmethod
+    def of(cls, it: PlayerEmoji) -> "TablePlayerEmoji":
+        return TablePlayerEmoji(
+            id=it.id,
+            player_id=it.player_id,
+            emoji_str=it.emoji.str_,
+            datetime_of_purchase=it.datetime_of_purchase,
+        )
+
+
 class TablePlayer(Base):
     __tablename__ = "players"
 
     id: Mapped[int] = mapped_column(BigInteger(), primary_key=True)
     account_stars: Mapped[int] = mapped_column(server_default="0")
+    selected_emoji_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("player_emojis.id"),
+    )
     number_of_wins: Mapped[int]
     number_of_draws: Mapped[int]
     number_of_defeats: Mapped[int]
@@ -42,6 +73,11 @@ class TablePlayer(Base):
         ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
     )
     game_location_chat_id: Mapped[int | None] = mapped_column(BigInteger())
+
+    emojis: Mapped[list[TablePlayerEmoji]] = relationship(
+        lazy="selectin",
+        foreign_keys=[TablePlayerEmoji.player_id],
+    )
 
     def entity(self) -> Player:
         if (
@@ -59,6 +95,8 @@ class TablePlayer(Base):
         return Player(
             self.id,
             Account(self.account_stars),
+            [emoji.entity() for emoji in self.emojis],
+            self.selected_emoji_id,
             self.number_of_wins,
             self.number_of_draws,
             self.number_of_defeats,
@@ -77,6 +115,7 @@ class TablePlayer(Base):
         return TablePlayer(
             id=it.id,
             account_stars=it.account.stars,
+            selected_emoji_id=it.selected_emoji_id,
             number_of_wins=it.number_of_wins,
             number_of_draws=it.number_of_draws,
             number_of_defeats=it.number_of_defeats,
@@ -295,8 +334,7 @@ class TableGame(Base):
         return Matrix(lines)
 
 
-type TablePlayerAggregate = TablePlayer
-
+type TablePlayerAggregate = TablePlayer | TablePlayerEmoji
 type TableGameAggregate = TableGame | TableGameResult | TableCell
 
 type TableAggregate = TablePlayerAggregate | TableGameAggregate
@@ -306,6 +344,8 @@ def table_entity(entity: Aggregate) -> TableAggregate:
     match entity:
         case Player():
             return TablePlayer.of(entity)
+        case PlayerEmoji():
+            return TablePlayerEmoji.of(entity)
 
         case Game():
             return TableGame.of(entity)

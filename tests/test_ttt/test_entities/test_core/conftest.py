@@ -23,14 +23,28 @@ def random() -> Random:
 @fixture
 def player1() -> Player:
     return Player(
-        1, Account(0), 0, 0, 0, PlayerGameLocation(1, 64, UUID(int=0)),
+        id=1,
+        account=Account(0),
+        emojis=[],
+        selected_emoji_id=None,
+        number_of_wins=0,
+        number_of_draws=0,
+        number_of_defeats=0,
+        game_location=PlayerGameLocation(1, 64, UUID(int=0)),
     )
 
 
 @fixture
 def player2() -> Player:
     return Player(
-        2, Account(0), 0, 0, 0, PlayerGameLocation(2, 64, UUID(int=0)),
+        id=2,
+        account=Account(0),
+        emojis=[],
+        selected_emoji_id=None,
+        number_of_wins=0,
+        number_of_draws=0,
+        number_of_defeats=0,
+        game_location=PlayerGameLocation(2, 64, UUID(int=0)),
     )
 
 

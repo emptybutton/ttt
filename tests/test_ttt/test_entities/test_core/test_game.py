@@ -14,8 +14,8 @@ from ttt.entities.core.game.game import (
     NotCurrentPlayerError,
     NotPlayerError,
     NotStandardBoardError,
-    OneEmojiError,
     OnePlayerError,
+    SameRandomEmojiError,
 )
 from ttt.entities.core.player.account import Account
 from ttt.entities.core.player.player import Player
@@ -192,7 +192,7 @@ def test_one_emoji(
     emoji1: Emoji,
     standard_board: Board,
 ) -> None:
-    with raises(OneEmojiError):
+    with raises(SameRandomEmojiError):
         Game(
             UUID(int=1),
             player1,
@@ -368,10 +368,28 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
         )
 
     if object_ == "player1":
-        assert player1 == Player(1, Account(50), 1, 0, 0, None)
+        assert player1 == Player(
+            id=1,
+            account=Account(50),
+            emojis=[],
+            selected_emoji_id=None,
+            number_of_wins=1,
+            number_of_draws=0,
+            number_of_defeats=0,
+            game_location=None,
+        )
 
     if object_ == "player2":
-        assert player2 == Player(2, Account(0), 0, 0, 1, None)
+        assert player2 == Player(
+            id=2,
+            account=Account(0),
+            emojis=[],
+            selected_emoji_id=None,
+            number_of_wins=0,
+            number_of_draws=0,
+            number_of_defeats=1,
+            game_location=None,
+        )
 
     if object_ == "extra_move":
         with raises(AlreadyCompletedGameError):
@@ -416,10 +434,28 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
         )
 
     if object_ == "player1":
-        assert player1 == Player(1, Account(0), 0, 1, 0, None)
+        assert player1 == Player(
+            id=1,
+            account=Account(0),
+            emojis=[],
+            selected_emoji_id=None,
+            number_of_wins=0,
+            number_of_draws=1,
+            number_of_defeats=0,
+            game_location=None,
+        )
 
     if object_ == "player2":
-        assert player2 == Player(2, Account(0), 0, 1, 0, None)
+        assert player2 == Player(
+            id=2,
+            account=Account(0),
+            emojis=[],
+            selected_emoji_id=None,
+            number_of_wins=0,
+            number_of_draws=1,
+            number_of_defeats=0,
+            game_location=None,
+        )
 
     if object_ == "extra_move":
         with raises(AlreadyCompletedGameError):
@@ -464,10 +500,28 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
         )
 
     if object_ == "player1":
-        assert player1 == Player(1, Account(50), 1, 0, 0, None)
+        assert player1 == Player(
+            id=1,
+            account=Account(50),
+            emojis=[],
+            selected_emoji_id=None,
+            number_of_wins=1,
+            number_of_draws=0,
+            number_of_defeats=0,
+            game_location=None,
+        )
 
     if object_ == "player2":
-        assert player2 == Player(2, Account(0), 0, 0, 1, None)
+        assert player2 == Player(
+            id=2,
+            account=Account(0),
+            emojis=[],
+            selected_emoji_id=None,
+            number_of_wins=0,
+            number_of_draws=0,
+            number_of_defeats=1,
+            game_location=None,
+        )
 
     if object_ == "extra_move":
         with raises(AlreadyCompletedGameError):

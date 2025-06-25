@@ -1,10 +1,15 @@
 from dataclasses import dataclass
+from datetime import datetime
+from typing import ClassVar
 from uuid import UUID
 
 from ttt.entities.core.player.account import Account
+from ttt.entities.core.player.emoji import PlayerEmoji
 from ttt.entities.core.player.location import PlayerGameLocation
+from ttt.entities.core.player.stars import Stars
 from ttt.entities.core.player.win import Win
 from ttt.entities.math.random import Random, deviated_int
+from ttt.entities.text.emoji import Emoji
 from ttt.entities.tools.assertion import assert_
 from ttt.entities.tools.tracking import Tracking
 
@@ -19,14 +24,30 @@ class PlayerNotInGameError(Exception):
     player: "Player"
 
 
+@dataclass(frozen=True)
+class NotEnoughStarsError(Exception):
+    stars_to_become_enough: Stars
+
+
+class EmojiAlreadyPurchasedError(Exception): ...
+
+
+class EmojiNotPurchasedError(Exception): ...
+
+
 @dataclass
 class Player:
     id: int
     account: Account
+    emojis: list[PlayerEmoji]
+    selected_emoji_id: UUID | None
+
     number_of_wins: int
     number_of_draws: int
     number_of_defeats: int
     game_location: PlayerGameLocation | None
+
+    emoji_cost: ClassVar[Stars] = 1000
 
     def is_in_game(self) -> bool:
         return self.game_location is not None
@@ -91,15 +112,84 @@ class Player:
         self.game_location = None
         tracking.register_mutated(self)
 
+    def buy_emoji(
+        self,
+        emoji: Emoji,
+        purchased_emoji_id: UUID,
+        tracking: Tracking,
+        current_datetime: datetime,
+    ) -> None:
+        """
+        :raises ttt.entities.core.player.player.EmojiAlreadyPurchasedError:
+        :raises ttt.entities.core.player.player.NotEnoughStarsError:
+        """
 
-type PlayerAggregate = Player
+        assert_(
+            all(self_emoji.emoji != emoji for self_emoji in self.emojis),
+            else_=EmojiAlreadyPurchasedError,
+        )
+
+        assert_(
+            self.account.stars >= self.emoji_cost,
+            NotEnoughStarsError(
+                stars_to_become_enough=self.emoji_cost - self.account.stars,
+            ),
+        )
+
+        self.account = self.account.map(lambda stars: stars - self.emoji_cost)
+        tracking.register_mutated(self)
+
+        new_emoji = PlayerEmoji(
+            purchased_emoji_id,
+            self.id,
+            emoji,
+            datetime_of_purchase=current_datetime,
+        )
+        tracking.register_new(new_emoji)
+        self.emojis.append(new_emoji)
+
+    def emoji(self, random_emoji: Emoji) -> Emoji:
+        if self.selected_emoji_id is None:
+            return random_emoji
+
+        for self_emoji in self.emojis:
+            if self_emoji.id == self.selected_emoji_id:
+                return self_emoji.emoji
+
+        raise ValueError
+
+    def select_emoji(self, emoji: Emoji, tracking: Tracking) -> None:
+        """
+        :raises ttt.entities.core.player.player.EmojiNotPurchasedError:
+        """
+
+        for self_emoji in self.emojis:
+            if self_emoji.emoji == emoji:
+                self.selected_emoji_id = self_emoji.id
+                tracking.register_mutated(self)
+                return
+
+        raise EmojiNotPurchasedError
+
+    def remove_selected_emoji(self, tracking: Tracking) -> None:
+        self.selected_emoji_id = None
+        tracking.register_mutated(self)
 
 
-def register_player(
-    player_id: int,
-    tracking: Tracking,
-) -> Player:
-    player = Player(player_id, Account(0), 0, 0, 0, None)
+type PlayerAggregate = Player | PlayerEmoji
+
+
+def register_player(player_id: int, tracking: Tracking) -> Player:
+    player = Player(
+        id=player_id,
+        account=Account(0),
+        emojis=[],
+        selected_emoji_id=None,
+        number_of_wins=0,
+        number_of_draws=0,
+        number_of_defeats=0,
+        game_location=None,
+    )
     tracking.register_new(player)
 
     return player

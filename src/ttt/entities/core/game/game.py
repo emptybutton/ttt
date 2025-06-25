@@ -77,6 +77,9 @@ class NotCurrentPlayerError(Exception): ...
 class OneEmojiError(Exception): ...
 
 
+class SameRandomEmojiError(Exception): ...
+
+
 def number_of_unfilled_cells(board: Matrix[Cell]) -> int:
     return sum(int(not cell.is_filled()) for cell in chain.from_iterable(board))
 
@@ -302,22 +305,30 @@ def start_game(  # noqa: PLR0913, PLR0917
     cell_id_matrix: Matrix[UUID],
     game_id: UUID,
     player1: Player,
-    player1_emoji: Emoji,
+    player1_random_emoji: Emoji,
     player1_chat_id: int,
     player2: Player,
-    player2_emoji: Emoji,
+    player2_random_emoji: Emoji,
     player2_chat_id: int,
     tracking: Tracking,
 ) -> Game:
     """
-    :raises ttt.entities.core.game.game.OneEmojiError:
+    :raises ttt.entities.core.game.game.SameRandomEmojiError:
     :raises ttt.entities.core.game.game.OnePlayerError:
     :raises ttt.entities.core.game.game.PlayersAlreadyInGameError:
     :raises ttt.entities.core.game.board.InvalidCellIDMatrixError:
     """
 
-    board = create_empty_board(cell_id_matrix, game_id, tracking)
+    assert_(player1_random_emoji != player2_random_emoji, SameRandomEmojiError)
 
+    player1_emoji = player1.emoji(player1_random_emoji)
+    player2_emoji = player2.emoji(player2_random_emoji)
+
+    if player1_emoji == player2_emoji:
+        player1_emoji = player1_random_emoji
+        player2_emoji = player2_random_emoji
+
+    board = create_empty_board(cell_id_matrix, game_id, tracking)
     game = Game(
         game_id,
         player1,
