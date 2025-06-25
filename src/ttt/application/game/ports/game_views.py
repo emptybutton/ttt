@@ -46,3 +46,18 @@ class GameViews(ABC):
     async def render_already_filled_cell_error(
         self, player_location: PlayerLocation, game: Game, /,
     ) -> None: ...
+
+    @abstractmethod
+    async def render_player_already_in_game_views(
+        self, locations: Sequence[PlayerLocation],
+    ) -> None: ...
+
+    @abstractmethod
+    async def render_waiting_for_game_view(
+        self, location: PlayerLocation,
+    ) -> None: ...
+
+    @abstractmethod
+    async def render_double_waiting_for_game_view(
+        self, location: PlayerLocation,
+    ) -> None: ...

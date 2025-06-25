@@ -15,10 +15,6 @@ from dishka.integrations.aiogram import AiogramProvider as DishkaAiogramProvider
 from redis.asyncio import Redis
 
 from ttt.application.common.ports.emojis import Emojis
-from ttt.application.common.ports.player_message_sending import (
-    PlayerMessageSending,
-)
-from ttt.application.game.ports.game_message_sending import GameMessageSending
 from ttt.application.game.ports.game_views import GameViews
 from ttt.application.game.start_game import StartGame
 from ttt.application.player.ports.player_views import PlayerViews
@@ -26,14 +22,8 @@ from ttt.application.player.view_player import ViewPlayer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.main.common.di import CommonProvider
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
-from ttt.presentation.adapters.game_message_sending import (
-    BackgroundAiogramGameMessageSending,
-)
 from ttt.presentation.adapters.game_views import (
     BackroundAiogramMessagesAsGameViews,
-)
-from ttt.presentation.adapters.player_message_sending import (
-    AiogramPlayerMessageSending,
 )
 from ttt.presentation.adapters.player_views import (
     AiogramMessagesFromPostgresAsPlayerViews,
@@ -89,11 +79,6 @@ class AiogramProvider(Provider):
         scope=Scope.REQUEST,
     )
 
-    provide_game_message_sending = provide(
-        BackgroundAiogramGameMessageSending,
-        provides=GameMessageSending,
-        scope=Scope.APP,
-    )
     provide_game_views = provide(
         BackroundAiogramMessagesAsGameViews,
         provides=GameViews,
@@ -102,19 +87,11 @@ class AiogramProvider(Provider):
 
     provide_player_views = provide(
         AiogramMessagesFromPostgresAsPlayerViews,
-        provides=PlayerViews[Awaitable[Any]],
+        provides=PlayerViews,
         scope=Scope.REQUEST,
     )
 
-    provide_player_message_sending = provide(
-        AiogramPlayerMessageSending,
-        provides=PlayerMessageSending,
-        scope=Scope.REQUEST,
-    )
-
-    provide_view_player = provide(
-        ViewPlayer[Awaitable[Any]], scope=Scope.REQUEST,
-    )
+    provide_view_player = provide(ViewPlayer, scope=Scope.REQUEST)
 
     @provide(scope=Scope.REQUEST)
     async def unkillable_tasks(

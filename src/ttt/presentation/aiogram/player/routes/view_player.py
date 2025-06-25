@@ -1,6 +1,3 @@
-from collections.abc import Awaitable
-from typing import Any
-
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.state import any_state
@@ -17,11 +14,10 @@ view_player_router = Router(name=__name__)
 @view_player_router.message(Command("profile"), any_state)
 @inject
 async def _(
-    message: Message, view_player: FromDishka[ViewPlayer[Awaitable[Any]]],
+    message: Message, view_player: FromDishka[ViewPlayer],
 ) -> None:
     if message.from_user is None:
         await anons_are_rohibited_message(message)
         return
 
-    send_message = await view_player(message.from_user.id)
-    await send_message
+    await view_player(message.from_user.id)

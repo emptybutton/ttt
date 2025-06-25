@@ -6,8 +6,6 @@ from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.players import Players
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
-from ttt.application.game.dto.game_message import PlayerAlreadyInGameMessage
-from ttt.application.game.ports.game_message_sending import GameMessageSending
 from ttt.application.game.ports.game_views import GameViews
 from ttt.application.game.ports.games import Games
 from ttt.application.game.ports.waiting_locations import WaitingLocations
@@ -24,7 +22,6 @@ class StartGame:
     players: Players
     games: Games
     game_views: GameViews
-    game_message_sending: GameMessageSending
     waiting_locations: WaitingLocations
     transaction: Transaction
 
@@ -75,10 +72,9 @@ class StartGame:
                     await self.waiting_locations.push_many(
                         locations_of_players_not_in_game,
                     )
-                    await self.game_message_sending.send_messages(tuple(
-                        PlayerAlreadyInGameMessage(location)
-                        for location in locations_of_players_in_game
-                    ))
+                    await self.game_views.render_player_already_in_game_views(
+                        locations_of_players_in_game,
+                    )
                     continue
 
                 else:
