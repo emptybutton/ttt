@@ -1,4 +1,4 @@
-from typing import Literal, NoReturn, overload
+from typing import Any, Literal, NoReturn, overload
 
 
 def not_none[ValueT](
@@ -9,6 +9,14 @@ def not_none[ValueT](
         return value
 
     raise else_
+
+
+def none(
+    value: Any,  # noqa: ANN401
+    else_: Exception | type[Exception] = ValueError,
+) -> None:
+    if value is not None:
+        raise else_
 
 
 @overload

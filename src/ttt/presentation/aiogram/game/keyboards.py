@@ -12,7 +12,7 @@ def game_keyboard(game: Game) -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=kb,
         resize_keyboard=True,
-        input_field_placeholder="Введите позицию закрашиваемой ячейки",
+        input_field_placeholder="Введите номер закрашиваемой ячейки",
     )
 
 
@@ -26,8 +26,6 @@ def _game_keyboard_button(
         case game.player2.id:
             return KeyboardButton(text=game.player2_emoji.str_)
         case None:
-            return KeyboardButton(text=(
-                f"{cell.board_position[0] + 1} {cell.board_position[1] + 1}"
-            ))
+            return KeyboardButton(text=f"{int(cell.number())}")
         case _:
             raise ValueError((cell.filler_id, game.player1.id, game.player2.id))

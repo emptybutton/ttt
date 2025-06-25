@@ -2,7 +2,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, auto
 from itertools import chain
-from typing import cast
 from uuid import UUID
 
 from ttt.entities.core.game.board import (
@@ -10,7 +9,11 @@ from ttt.entities.core.game.board import (
     create_empty_board,
     is_board_standard,
 )
-from ttt.entities.core.game.cell import AlreadyFilledCellError, Cell
+from ttt.entities.core.game.cell import Cell
+from ttt.entities.core.game.cell_number import (
+    CellNumber,
+    InvalidCellNumberError,
+)
 from ttt.entities.core.player.player import (
     Player,
     PlayerAlreadyInGameError,
@@ -20,7 +23,7 @@ from ttt.entities.math.matrix import Matrix
 from ttt.entities.math.random import Random
 from ttt.entities.math.vector import Vector
 from ttt.entities.text.emoji import Emoji
-from ttt.entities.tools.assertion import assert_, not_none
+from ttt.entities.tools.assertion import assert_, none, not_none
 from ttt.entities.tools.tracking import Tracking
 
 
@@ -78,9 +81,6 @@ def number_of_unfilled_cells(board: Matrix[Cell]) -> int:
     return sum(int(not cell.is_filled()) for cell in chain.from_iterable(board))
 
 
-type FilledCellPosition = None
-
-
 @dataclass
 class Game:
     """
@@ -127,9 +127,7 @@ class Game:
         :raises ttt.entities.core.game.game.NotPlayerError:
         """
 
-        self.result = cast(
-            GameResult, not_none(self.result, AlreadyCompletedGameError),
-        )
+        none(self.result, else_=AlreadyCompletedGameError)
         canceler = not_none(self._player(player_id), else_=NotPlayerError)
 
         self.player1.leave_game(tracking)
@@ -145,7 +143,7 @@ class Game:
     def make_move(
         self,
         player_id: int,
-        cell_position: Vector | FilledCellPosition,
+        cell_number_int: int,
         game_result_id: UUID,
         random: Random,
         tracking: Tracking,
@@ -167,8 +165,12 @@ class Game:
         )
         assert_(current_player.id == player_id, else_=NotCurrentPlayerError())
 
-        if cell_position is None:
-            raise AlreadyFilledCellError
+        try:
+            cell_number = CellNumber(cell_number_int)
+        except InvalidCellNumberError as error:
+            raise NoCellError from error
+        else:
+            cell_position = cell_number.board_position()
 
         self._fill_cell(cell_position, player_id, tracking)
 

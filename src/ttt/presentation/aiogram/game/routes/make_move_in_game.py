@@ -13,7 +13,7 @@ from ttt.presentation.aiogram.common.messages import (
 make_move_in_game_router = Router(name=__name__)
 
 
-@make_move_in_game_router.message(F.text.regexp(r"^-?\d+\s-?\d+$"))
+@make_move_in_game_router.message(F.text.regexp(r"^\d+$"))
 @inject
 async def _(
     message: Message,
@@ -23,10 +23,8 @@ async def _(
         await anons_are_rohibited_message(message)
         return
 
-    x, y = map(int, not_none(message.text).split()[:2])
-    x -= 1
-    y -= 1
+    cell_number_int = int(not_none(message.text))
 
     await make_move_in_game(
-        PlayerLocation(message.from_user.id, message.chat.id), (x, y),
+        PlayerLocation(message.from_user.id, message.chat.id), cell_number_int,
     )

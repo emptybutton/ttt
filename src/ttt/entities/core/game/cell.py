@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from ttt.entities.core.game.cell_number import CellNumber
 from ttt.entities.math.vector import Vector
 from ttt.entities.tools.assertion import assert_
 from ttt.entities.tools.tracking import Tracking
@@ -15,6 +16,9 @@ class Cell:
     game_id: UUID
     board_position: Vector
     filler_id: int | None
+
+    def number(self) -> CellNumber:
+        return CellNumber.of_board_position(self.board_position)
 
     def is_filled(self) -> bool:
         return self.filler_id is not None

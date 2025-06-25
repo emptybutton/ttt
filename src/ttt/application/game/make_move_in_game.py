@@ -15,7 +15,6 @@ from ttt.entities.core.game.game import (
     NotCurrentPlayerError,
 )
 from ttt.entities.core.player.location import PlayerLocation
-from ttt.entities.math.vector import Vector
 from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
 
@@ -33,7 +32,7 @@ class MakeMoveInGame:
     async def __call__(
         self,
         location: PlayerLocation,
-        cell_position: Vector,
+        cell_number_int: int,
     ) -> None:
         async with self.transaction:
             game = await self.games.game_with_game_location(location.player_id)
@@ -55,7 +54,7 @@ class MakeMoveInGame:
                 tracking = Tracking()
                 game.make_move(
                     location.player_id,
-                    cell_position,
+                    cell_number_int,
                     game_result_id,
                     random,
                     tracking,
