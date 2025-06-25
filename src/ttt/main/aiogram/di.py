@@ -1,6 +1,4 @@
-from collections.abc import Awaitable
 from dataclasses import dataclass
-from typing import Any
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.base import BaseStorage
