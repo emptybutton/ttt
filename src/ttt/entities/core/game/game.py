@@ -59,9 +59,7 @@ class InvalidCellOrderError(Exception): ...
 class InvalidNumberOfUnfilledCellsError(Exception): ...
 
 
-@dataclass(frozen=True)
-class AlreadyCompletedGameError(Exception):
-    game_result: GameResult
+class AlreadyCompletedGameError(Exception): ...
 
 
 class NoCellError(Exception): ...
@@ -129,9 +127,9 @@ class Game:
         :raises ttt.entities.core.game.game.NotPlayerError:
         """
 
-        if self.result is not None:
-            raise AlreadyCompletedGameError(self.result)
-
+        self.result = cast(
+            GameResult, not_none(self.result, AlreadyCompletedGameError),
+        )
         canceler = not_none(self._player(player_id), else_=NotPlayerError)
 
         self.player1.leave_game(tracking)
@@ -160,13 +158,9 @@ class Game:
         :raises ttt.entities.core.game.cell.AlreadyFilledCellError:
         """
 
-        current_player = self._current_player()
-
-        if current_player is None:
-            raise AlreadyCompletedGameError(
-                cast(GameResult, not_none(self.result)),
-            )
-
+        current_player = not_none(
+            self._current_player(), AlreadyCompletedGameError,
+        )
         assert_(
             player_id in {self.player1.id, self.player2.id},
             else_=NotPlayerError(),

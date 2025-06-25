@@ -35,4 +35,12 @@ class InPostgresPlayers(Players):
     async def players_with_ids(
         self, ids: Sequence[int],
     ) -> tuple[Player, ...]:
-        return tuple(await gather(*map(self.player_with_id, ids)))
+        return tuple(await gather(*map(self._player_with_id, ids)))
+
+    async def _player_with_id(self, id_: int, /) -> Player:
+        table_player = await self._session.get(TablePlayer, id_)
+
+        if table_player is None:
+            raise NoPlayerWithIDError(id_)
+
+        return table_player.entity()
