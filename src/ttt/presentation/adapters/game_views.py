@@ -10,9 +10,12 @@ from ttt.entities.core.player.location import PlayerGameLocation, PlayerLocation
 from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.presentation.aiogram.game.messages import (
     already_completed_game_message,
+    already_filled_cell_message,
     completed_game_messages,
     maked_move_message,
+    no_cell_message,
     no_game_message,
+    not_current_player_message,
     started_game_message,
 )
 
@@ -60,8 +63,29 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
             no_game_message(self._bot, player_location.chat_id),
         )
 
+    async def render_not_current_player_view(
+        self, player_location: PlayerLocation, game: Game, /,
+    ) -> None:
+        self._tasks.create_task(
+            not_current_player_message(self._bot, player_location.chat_id),
+        )
+
+    async def render_no_cell_view(
+        self, player_location: PlayerLocation, game: Game, /,
+    ) -> None:
+        self._tasks.create_task(
+            no_cell_message(self._bot, player_location.chat_id),
+        )
+
+    async def render_already_filled_cell_error(
+        self, player_location: PlayerLocation, game: Game, /,
+    ) -> None:
+        self._tasks.create_task(
+            already_filled_cell_message(self._bot, player_location.chat_id),
+        )
+
     async def render_game_already_complteted_view(
-        self, player_location: PlayerLocation, game: Game, /,  # noqa: ARG002
+        self, player_location: PlayerLocation, game: Game, /,
     ) -> None:
         self._tasks.create_task(
             already_completed_game_message(self._bot, player_location.chat_id),

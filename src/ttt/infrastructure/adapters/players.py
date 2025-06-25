@@ -22,14 +22,6 @@ class InPostgresPlayers(Players):
 
         return bool(await self._session.execute(stmt))
 
-    async def player_with_id(self, id_: int, /) -> Player:
-        table_player = await self._session.get(TablePlayer, id_)
-
-        if table_player is None:
-            raise NoPlayerWithIDError(id_)
-
-        return table_player.entity()
-
     @overload
     async def players_with_ids(
         self, ids: Sequence[int], /,

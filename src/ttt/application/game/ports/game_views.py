@@ -31,3 +31,18 @@ class GameViews(ABC):
     async def render_game_already_complteted_view(
         self, player_location: PlayerLocation, game: Game, /,
     ) -> None: ...
+
+    @abstractmethod
+    async def render_not_current_player_view(
+        self, player_location: PlayerLocation, game: Game, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def render_no_cell_view(
+        self, player_location: PlayerLocation, game: Game, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def render_already_filled_cell_error(
+        self, player_location: PlayerLocation, game: Game, /,
+    ) -> None: ...
