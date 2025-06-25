@@ -6,7 +6,7 @@ from typing import overload
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ttt.application.common.ports.players import NoPlayerWithIDError, Players
+from ttt.application.player.ports.players import NoPlayerWithIDError, Players
 from ttt.entities.core.player.player import Player
 from ttt.infrastructure.sqlalchemy.tables import TablePlayer
 
@@ -18,7 +18,7 @@ class InPostgresPlayers(Players):
     async def contains_player_with_id(
         self, id_: int, /,
     ) -> bool:
-        stmt = select(exists(1) .where(TablePlayer.id == id_))
+        stmt = select(exists(1).where(TablePlayer.id == id_))
 
         return bool(await self._session.execute(stmt))
 

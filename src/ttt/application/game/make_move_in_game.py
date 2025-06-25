@@ -2,12 +2,12 @@ from asyncio import gather
 from dataclasses import dataclass
 
 from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.players import Players
 from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.ports.game_views import GameViews
 from ttt.application.game.ports.games import Games
+from ttt.application.player.ports.players import Players
 from ttt.entities.core.game.cell import AlreadyFilledCellError
 from ttt.entities.core.game.game import (
     AlreadyCompletedGameError,

@@ -35,5 +35,5 @@ class Players(ABC):
         self, ids: Sequence[int], /,
     ) -> tuple[Player, ...]:
         """
-        :raises ttt.application.common.ports.players.NoPlayerWithIDError:
+        :raises ttt.application.player.ports.players.NoPlayerWithIDError:
         """

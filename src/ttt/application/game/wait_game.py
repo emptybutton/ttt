@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
-from ttt.application.common.ports.players import Players
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.game.ports.game_views import GameViews
 from ttt.application.game.ports.waiting_locations import WaitingLocations
 from ttt.application.player.ports.player_views import PlayerViews
+from ttt.application.player.ports.players import Players
 from ttt.entities.core.player.location import PlayerLocation
 
 

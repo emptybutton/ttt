@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.players import Players
 from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
@@ -19,6 +18,7 @@ from ttt.application.game.ports.games import Games
 from ttt.application.game.ports.waiting_locations import WaitingLocations
 from ttt.application.game.start_game import StartGame
 from ttt.application.game.wait_game import WaitGame
+from ttt.application.player.ports.players import Players
 from ttt.application.player.register_player import RegisterPlayer
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
