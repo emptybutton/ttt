@@ -51,7 +51,7 @@ class Player:
         :raises ttt.entities.core.player.player.PlayerNotInGameError:
         """
 
-        self._leave_game(tracking)
+        self.leave_game(tracking)
 
         self.number_of_defeats += 1
         tracking.register_mutated(self)
@@ -61,7 +61,7 @@ class Player:
         :raises ttt.entities.core.player.player.PlayerNotInGameError:
         """
 
-        self._leave_game(tracking)
+        self.leave_game(tracking)
 
         self.number_of_wins += 1
 
@@ -76,12 +76,12 @@ class Player:
         :raises ttt.entities.core.player.player.PlayerNotInGameError:
         """
 
-        self._leave_game(tracking)
+        self.leave_game(tracking)
 
         self.number_of_draws += 1
         tracking.register_mutated(self)
 
-    def _leave_game(self, tracking: Tracking) -> None:
+    def leave_game(self, tracking: Tracking) -> None:
         """
         :raises ttt.entities.core.player.player.PlayerNotInGameError:
         """

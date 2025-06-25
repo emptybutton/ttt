@@ -2,9 +2,13 @@ from aiogram.client.bot import Bot
 from aiogram.types import ReplyKeyboardRemove
 from aiogram.utils.formatting import Bold, BotCommand, Text, as_list
 
-from ttt.entities.core.game.game import Game, GameState
+from ttt.entities.core.game.game import (
+    Game,
+    GameCancellationResult,
+    GameCompletionResult,
+    GameState,
+)
 from ttt.entities.core.player.win import Win
-from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.game.keyboards import game_keyboard
 from ttt.presentation.aiogram.game.texts import game_cell
 
@@ -66,18 +70,23 @@ async def completed_game_messages(
     game: Game,
     player_id: int,
 ) -> None:
-    result = not_none(game.result)
-
-    match result.win:
-        case Win(winner_id=winner_id) if winner_id == player_id:
+    match game.result:
+        case GameCompletionResult(
+            win=Win(winner_id=winner_id) as win,
+        ) if winner_id == player_id:
             result_emoji = "🎆"
-            about_result = f"Вы победили! +{result.win.new_stars} 🌟"
-        case None:
+            about_result = f"Вы победили! +{win.new_stars} 🌟"
+        case GameCompletionResult(win=None):
             result_emoji = "🕊"
             about_result = "Ничья!"
-        case Win(winner_id=_):
+        case GameCompletionResult(win=Win(winner_id=_)):
             result_emoji = "💀"
             about_result = "Вы проиграли!"
+        case GameCancellationResult():
+            result_emoji = "👻"
+            about_result = "Игра отменена!"
+        case _:
+            raise ValueError
 
     board_content = as_list(*(
         as_list(*(game_cell(cell, game, " ") for cell in line), sep="")

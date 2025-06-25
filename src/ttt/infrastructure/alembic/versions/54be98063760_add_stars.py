@@ -26,7 +26,8 @@ def upgrade() -> None:
         new_column_name="win_winner_id",
     )
     op.add_column(
-        "game_results", sa.Column("win_new_stars", sa.Integer(), nullable=True),
+        "game_results",
+        sa.Column("win_new_stars", sa.Integer(), nullable=True),
     )
 
 

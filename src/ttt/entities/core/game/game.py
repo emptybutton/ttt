@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, auto
 from itertools import chain
+from typing import cast
 from uuid import UUID
 
 from ttt.entities.core.game.board import (
@@ -30,10 +31,20 @@ class GameState(Enum):
 
 
 @dataclass(frozen=True)
-class GameResult:
+class GameCompletionResult:
     id: UUID
     game_id: UUID
     win: Win | None
+
+
+@dataclass(frozen=True)
+class GameCancellationResult:
+    id: UUID
+    game_id: UUID
+    canceler_id: int
+
+
+type GameResult = GameCompletionResult | GameCancellationResult
 
 
 class OnePlayerError(Exception): ...
@@ -110,6 +121,29 @@ class Game:
             else_=InvalidNumberOfUnfilledCellsError,
         )
 
+    def cancel(
+        self, player_id: int, game_result_id: UUID, tracking: Tracking,
+    ) -> None:
+        """
+        :raises ttt.entities.core.game.game.AlreadyCompletedGameError:
+        :raises ttt.entities.core.game.game.NotPlayerError:
+        """
+
+        if self.result is not None:
+            raise AlreadyCompletedGameError(self.result)
+
+        canceler = not_none(self._player(player_id), else_=NotPlayerError)
+
+        self.player1.leave_game(tracking)
+        self.player2.leave_game(tracking)
+
+        self.result = GameCancellationResult(
+            game_result_id, self.id, canceler.id,
+        )
+        tracking.register_new(self.result)
+        self.state = GameState.completed
+        tracking.register_mutated(self)
+
     def make_move(
         self,
         player_id: int,
@@ -119,7 +153,7 @@ class Game:
         tracking: Tracking,
     ) -> GameResult | None:
         """
-        :raises ttt.entities.core.game.game.CompletedGameError:
+        :raises ttt.entities.core.game.game.AlreadyCompletedGameError:
         :raises ttt.entities.core.game.game.NotPlayerError:
         :raises ttt.entities.core.game.game.NotCurrentPlayerError:
         :raises ttt.entities.core.game.game.NoCellError:
@@ -129,7 +163,9 @@ class Game:
         current_player = self._current_player()
 
         if current_player is None:
-            raise AlreadyCompletedGameError(not_none(self.result))
+            raise AlreadyCompletedGameError(
+                cast(GameResult, not_none(self.result)),
+            )
 
         assert_(
             player_id in {self.player1.id, self.player2.id},
@@ -220,6 +256,15 @@ class Game:
             case GameState.completed:
                 return None
 
+    def _player(self, player_id: int) -> Player | None:
+        match player_id:
+            case self.player1.id:
+                return self.player1
+            case self.player2.id:
+                return self.player2
+            case _:
+                return None
+
     def _not_current_player(self) -> Player | None:
         match self.state:
             case GameState.wait_player1:
@@ -243,7 +288,8 @@ class Game:
     def _complete(
         self, win: Win | None, game_result_id: UUID, tracking: Tracking,
     ) -> None:
-        self.result = GameResult(game_result_id, self.id, win)
+        self.result = GameCompletionResult(game_result_id, self.id, win)
+        tracking.register_new(self.result)
         self.state = GameState.completed
         tracking.register_mutated(self)
 

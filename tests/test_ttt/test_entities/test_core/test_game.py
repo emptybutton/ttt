@@ -7,7 +7,7 @@ from ttt.entities.core.game.cell import AlreadyFilledCellError, Cell
 from ttt.entities.core.game.game import (
     AlreadyCompletedGameError,
     Game,
-    GameResult,
+    GameCompletionResult,
     GameState,
     InvalidCellOrderError,
     NoCellError,
@@ -181,7 +181,7 @@ def test_one_player(
             emoji2,
             standard_board,
             9,
-            GameResult(UUID(int=8), UUID(int=0), win=None),
+            GameCompletionResult(UUID(int=8), UUID(int=0), win=None),
             GameState.wait_player1,
         )
 
@@ -201,7 +201,7 @@ def test_one_emoji(
             emoji1,
             standard_board,
             9,
-            GameResult(UUID(int=8), UUID(int=0), win=None),
+            GameCompletionResult(UUID(int=8), UUID(int=0), win=None),
             GameState.wait_player1,
         )
 
@@ -279,7 +279,7 @@ def test_make_move_with_completed_game(  # noqa: PLR0913, PLR0917
         emoji2,
         standard_board,
         9,
-        GameResult(UUID(int=8), UUID(int=0), win=None),
+        GameCompletionResult(UUID(int=8), UUID(int=0), win=None),
         GameState.completed,
     )
 
@@ -355,7 +355,9 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
     result = game.result
 
     if object_ == "result":
-        assert result == GameResult(UUID(int=8), UUID(int=0), win=Win(1, 50))
+        assert result == GameCompletionResult(
+            UUID(int=8), UUID(int=0), win=Win(1, 50),
+        )
 
     if object_ == "player1":
         assert player1 == Player(1, Account(50), 1, 0, 0, None)
@@ -399,7 +401,9 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
     result = game.result
 
     if object_ == "result":
-        assert result == GameResult(UUID(int=8), UUID(int=0), win=None)
+        assert result == GameCompletionResult(
+            UUID(int=8), UUID(int=0), win=None,
+        )
 
     if object_ == "player1":
         assert player1 == Player(1, Account(0), 0, 1, 0, None)
@@ -443,7 +447,9 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
     result = game.result
 
     if object_ == "result":
-        assert result == GameResult(UUID(int=8), UUID(int=0), Win(1, 50))
+        assert result == GameCompletionResult(
+            UUID(int=8), UUID(int=0), Win(1, 50),
+        )
 
     if object_ == "player1":
         assert player1 == Player(1, Account(50), 1, 0, 0, None)

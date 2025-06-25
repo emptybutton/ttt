@@ -13,3 +13,8 @@ class Games(ABC):
         """
         :raises ttt.application.game.ports.games.NoGameError:
         """
+
+    @abstractmethod
+    async def game_with_game_location(
+        self, game_location_player_id: int, /,
+    ) -> Game | None: ...

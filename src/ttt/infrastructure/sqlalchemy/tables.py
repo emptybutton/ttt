@@ -12,6 +12,8 @@ from ttt.entities.core.game.board import Board
 from ttt.entities.core.game.cell import Cell
 from ttt.entities.core.game.game import (
     Game,
+    GameCancellationResult,
+    GameCompletionResult,
     GameResult,
     GameState,
     number_of_unfilled_cells,
@@ -22,6 +24,7 @@ from ttt.entities.core.player.player import Player
 from ttt.entities.core.player.win import Win
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.text.emoji import Emoji
+from ttt.entities.tools.assertion import not_none
 
 
 class Base(DeclarativeBase): ...
@@ -82,16 +85,31 @@ class TablePlayer(Base):
         )
 
 
+class TableGameResultType(StrEnum):
+    completed = "completed"
+    cancelled = "cancelled"
+
+
+game_result_type = postgresql.ENUM(TableGameResultType, name="game_result_type")
+
+
 class TableGameResult(Base):
     __tablename__ = "game_results"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     game_id: Mapped[UUID] = mapped_column(ForeignKey("games.id"), unique=True)
+    type: Mapped[TableGameResultType] = mapped_column(game_result_type)
+
     win_winner_id: Mapped[int | None] = mapped_column(
         BigInteger(),
         ForeignKey("players.id"),
     )
     win_new_stars: Mapped[int | None]
+
+    canceler_id: Mapped[int | None] = mapped_column(
+        BigInteger(),
+        ForeignKey("players.id"),
+    )
 
     def entity(self) -> GameResult:
         if self.win_winner_id is None or self.win_new_stars is None:
@@ -99,27 +117,49 @@ class TableGameResult(Base):
         else:
             win = Win(self.win_winner_id, self.win_new_stars)
 
-        return GameResult(
-            self.id,
-            self.game_id,
-            win,
-        )
+        match self.type:
+            case TableGameResultType.completed:
+                return GameCompletionResult(
+                    self.id,
+                    self.game_id,
+                    win,
+                )
+            case TableGameResultType.cancelled:
+                return GameCancellationResult(
+                    self.id,
+                    self.game_id,
+                    not_none(self.canceler_id),
+                )
 
     @classmethod
     def of(cls, it: GameResult) -> "TableGameResult":
-        if it.win is None:
-            win_player_id = None
-            win_new_stars = None
-        else:
-            win_player_id = it.win.winner_id
-            win_new_stars = it.win.new_stars
+        match it:
+            case GameCompletionResult():
+                if it.win is None:
+                    win_winner_id = None
+                    win_new_stars = None
+                else:
+                    win_winner_id = it.win.winner_id
+                    win_new_stars = it.win.new_stars
 
-        return TableGameResult(
-            id=it.id,
-            game_id=it.game_id,
-            win_player_id=win_player_id,
-            win_new_stars=win_new_stars,
-        )
+                return TableGameResult(
+                    id=it.id,
+                    game_id=it.game_id,
+                    type=TableGameResultType.completed,
+                    win_winner_id=win_winner_id,
+                    win_new_stars=win_new_stars,
+                    canceler_id=None,
+                )
+
+            case GameCancellationResult():
+                return TableGameResult(
+                    id=it.id,
+                    game_id=it.game_id,
+                    type=TableGameResultType.cancelled,
+                    win_winner_id=None,
+                    win_new_stars=None,
+                    canceler_id=it.canceler_id,
+                )
 
 
 class TableCell(Base):
@@ -269,7 +309,7 @@ def table_entity(entity: Aggregate) -> TableAggregate:
 
         case Game():
             return TableGame.of(entity)
-        case GameResult():
+        case GameCancellationResult() | GameCompletionResult():
             return TableGameResult.of(entity)
         case Cell():
             return TableCell.of(entity)

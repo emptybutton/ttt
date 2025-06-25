@@ -5,12 +5,14 @@ from aiogram import Bot
 from aiogram.fsm.storage.base import BaseStorage
 
 from ttt.application.game.ports.game_views import GameViews
-from ttt.entities.core.game.game import Game, GameResult
-from ttt.entities.core.player.location import PlayerGameLocation
+from ttt.entities.core.game.game import Game
+from ttt.entities.core.player.location import PlayerGameLocation, PlayerLocation
 from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.presentation.aiogram.game.messages import (
+    already_completed_game_message,
     completed_game_messages,
     maked_move_message,
+    no_game_message,
     started_game_message,
 )
 
@@ -32,7 +34,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
                 self._to_next_move_message_background_broadcast(
                     player_locations, game,
                 )
-            case GameResult():
+            case _:
                 self._completed_game_message_background_broadcast(
                     player_locations, game,
                 )
@@ -50,6 +52,20 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
                 game,
                 location.player_id,
             ))
+
+    async def render_no_game_view(
+        self, player_location: PlayerLocation, /,
+    ) -> None:
+        self._tasks.create_task(
+            no_game_message(self._bot, player_location.chat_id),
+        )
+
+    async def render_game_already_complteted_view(
+        self, player_location: PlayerLocation, game: Game, /,  # noqa: ARG002
+    ) -> None:
+        self._tasks.create_task(
+            already_completed_game_message(self._bot, player_location.chat_id),
+        )
 
     def _to_next_move_message_background_broadcast(
         self,

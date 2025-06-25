@@ -13,6 +13,7 @@ from ttt.application.common.ports.players import Players
 from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
+from ttt.application.game.cancel_game import CancelGame
 from ttt.application.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.ports.games import Games
 from ttt.application.game.ports.waiting_locations import WaitingLocations
@@ -57,7 +58,8 @@ class CommonProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     async def provide_postgres_session(
-        self, engine: AsyncEngine,
+        self,
+        engine: AsyncEngine,
     ) -> AsyncIterator[AsyncSession]:
         session = AsyncSession(
             engine,
@@ -71,7 +73,8 @@ class CommonProvider(Provider):
 
     @provide(scope=Scope.APP)
     async def provide_redis_pool(
-        self, envs: Envs,
+        self,
+        envs: Envs,
     ) -> AsyncIterator[ConnectionPool]:
         pool = ConnectionPool.from_url(
             str(envs.redis_url),
@@ -84,7 +87,8 @@ class CommonProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     async def provide_request_redis(
-        self, pool: ConnectionPool,
+        self,
+        pool: ConnectionPool,
     ) -> AsyncIterator[Redis]:
         async with Redis(connection_pool=pool) as redis:
             yield redis
@@ -130,17 +134,22 @@ class CommonProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     def provide_waiting_locations(
-        self, redis: Redis, envs: Envs,
+        self,
+        redis: Redis,
+        envs: Envs,
     ) -> WaitingLocations:
-        return InRedisFixedBatchesWaitingLocations(InRedisFixedBatches(
-            redis,
-            "waiting_locations",
-            envs.game_waiting_queue_pulling_timeout_min_ms,
-            envs.game_waiting_queue_pulling_timeout_salt_ms,
-        ))
+        return InRedisFixedBatchesWaitingLocations(
+            InRedisFixedBatches(
+                redis,
+                "waiting_locations",
+                envs.game_waiting_queue_pulling_timeout_min_ms,
+                envs.game_waiting_queue_pulling_timeout_salt_ms,
+            ),
+        )
 
     provide_register_player = provide(RegisterPlayer, scope=Scope.REQUEST)
 
     provide_start_game = provide(StartGame, scope=Scope.REQUEST)
     provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
+    provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
     provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)
