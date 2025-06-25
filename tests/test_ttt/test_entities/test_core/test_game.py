@@ -14,8 +14,8 @@ from ttt.entities.core.game.game import (
     NotCurrentPlayerError,
     NotPlayerError,
     NotStandardBoardError,
+    OneEmojiError,
     OnePlayerError,
-    SameRandomEmojiError,
 )
 from ttt.entities.core.player.account import Account
 from ttt.entities.core.player.player import Player
@@ -192,7 +192,7 @@ def test_one_emoji(
     emoji1: Emoji,
     standard_board: Board,
 ) -> None:
-    with raises(SameRandomEmojiError):
+    with raises(OneEmojiError):
         Game(
             UUID(int=1),
             player1,
