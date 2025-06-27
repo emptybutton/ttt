@@ -7,12 +7,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.player.ports.player_views import PlayerViews
 from ttt.entities.core.player.location import PlayerLocation
+from ttt.entities.core.player.stars import Stars
+from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.sqlalchemy.tables import TablePlayer, TablePlayerEmoji
 from ttt.presentation.aiogram.common.messages import (
     help_message,
     need_to_start_message,
 )
-from ttt.presentation.aiogram.player.messages import profile_message
+from ttt.presentation.aiogram.player.messages import (
+    emoji_already_purchased_message,
+    emoji_was_purchased_message,
+    invalid_emoji_to_buy_message,
+    not_enough_stars_to_buy_emoji_message,
+    profile_message,
+    wait_emoji_to_buy_message,
+)
 
 
 @dataclass(frozen=True, unsafe_hash=False)
@@ -38,9 +47,9 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews):
             )
             .outerjoin(
                 TablePlayerEmoji,
-                (TablePlayer.id == player_id)
-                & (TablePlayerEmoji.id == TablePlayer.selected_emoji_id),
+                TablePlayerEmoji.id == TablePlayer.selected_emoji_id,
             )
+            .where(TablePlayer.id == player_id)
         )
         emoji_stmt = (
             select(TablePlayerEmoji.emoji_str)
@@ -48,16 +57,14 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews):
             .order_by(TablePlayerEmoji.datetime_of_purchase)
         )
 
-        player_result, emojis = await gather(
-            self._session.execute(player_stmt),
-            self._session.scalars(emoji_stmt),
-        )
-
+        player_result = await self._session.execute(player_stmt)
         player_row = player_result.first()
 
         if player_row is None:
             await need_to_start_message(self._message)
             return
+
+        emojis = await self._session.scalars(emoji_stmt)
 
         await profile_message(
             self._message,
@@ -84,3 +91,40 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews):
         self, location: PlayerLocation,
     ) -> None:
         await help_message(self._message)
+
+    async def render_wait_emoji_to_buy_view(
+        self, location: PlayerLocation, /,
+    ) -> None:
+        await wait_emoji_to_buy_message(
+            not_none(self._message.bot), self._message.chat.id,
+        )
+
+    async def render_not_enough_stars_to_buy_emoji_view(
+        self, location: PlayerLocation, stars_to_become_enough: Stars, /,
+    ) -> None:
+        await not_enough_stars_to_buy_emoji_message(
+            not_none(self._message.bot),
+            self._message.chat.id,
+            stars_to_become_enough,
+        )
+
+    async def render_emoji_already_purchased_view(
+        self, location: PlayerLocation, /,
+    ) -> None:
+        await emoji_already_purchased_message(
+            not_none(self._message.bot), self._message.chat.id,
+        )
+
+    async def render_emoji_was_purchased_view(
+        self, location: PlayerLocation, /,
+    ) -> None:
+        await emoji_was_purchased_message(
+            not_none(self._message.bot), self._message.chat.id,
+        )
+
+    async def render_invalid_emoji_to_buy_view(
+        self, location: PlayerLocation, /,
+    ) -> None:
+        await invalid_emoji_to_buy_message(
+            not_none(self._message.bot), self._message.chat.id,
+        )

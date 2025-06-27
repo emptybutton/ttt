@@ -32,6 +32,7 @@ async def help_message(message: Message) -> None:
             Text(Bold("/game"), " — начать игру"),
             Text(Bold("/cancel_game"), " — отменить игру"),
             Text(Bold("/profile"), " — показать профиль"),
+            Text(Bold("/buy_emoji"), " — купить эмоджи"),
             Text(Bold("/help"), " — вывести это сообщение"),
             marker="  ",
         ),

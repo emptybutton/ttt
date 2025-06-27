@@ -19,6 +19,9 @@ class Players(ABC):
         ...
 
     @abstractmethod
+    async def player_with_id(self, id_: int, /) -> Player: ...
+
+    @abstractmethod
     @overload
     async def players_with_ids(
         self, ids: Sequence[int], /,

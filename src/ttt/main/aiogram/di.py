@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from aiogram import Bot, Dispatcher
+from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.base import BaseStorage
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import (
@@ -9,20 +10,22 @@ from aiogram.types import (
     TelegramObject,
 )
 from dishka import Provider, Scope, make_async_container, provide
+from dishka.integrations.aiogram import AiogramMiddlewareData
 from dishka.integrations.aiogram import AiogramProvider as DishkaAiogramProvider
 from redis.asyncio import Redis
 
 from ttt.application.common.ports.emojis import Emojis
 from ttt.application.game.ports.game_views import GameViews
 from ttt.application.game.start_game import StartGame
+from ttt.application.player.ports.player_fsm import PlayerFsm
 from ttt.application.player.ports.player_views import PlayerViews
-from ttt.application.player.view_player import ViewPlayer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.main.common.di import CommonProvider
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
     BackroundAiogramMessagesAsGameViews,
 )
+from ttt.presentation.adapters.player_fsm import AiogramTrustingPlayerFsm
 from ttt.presentation.adapters.player_views import (
     AiogramMessagesFromPostgresAsPlayerViews,
 )
@@ -71,6 +74,12 @@ class AiogramProvider(Provider):
             case _:
                 raise NoMessageInEventError(event)
 
+    @provide(scope=Scope.REQUEST)
+    def provide_fsm_context(
+        self, middleware_data: AiogramMiddlewareData,
+    ) -> FSMContext:
+        return middleware_data["state"]
+
     provide_emoji = provide(
         PictographsAsEmojis,
         provides=Emojis,
@@ -88,8 +97,11 @@ class AiogramProvider(Provider):
         provides=PlayerViews,
         scope=Scope.REQUEST,
     )
-
-    provide_view_player = provide(ViewPlayer, scope=Scope.REQUEST)
+    provide_player_fsm = provide(
+        AiogramTrustingPlayerFsm,
+        provides=PlayerFsm,
+        scope=Scope.REQUEST,
+    )
 
     @provide(scope=Scope.REQUEST)
     async def unkillable_tasks(

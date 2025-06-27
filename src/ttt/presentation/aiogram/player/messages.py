@@ -1,7 +1,10 @@
 from collections.abc import Sequence
 
+from aiogram import Bot
 from aiogram.types.message import Message
 from aiogram.utils.formatting import Bold, Text, as_list
+
+from ttt.entities.core.player.stars import Stars
 
 
 async def profile_message(  # noqa: PLR0913, PLR0917
@@ -33,19 +36,17 @@ async def profile_message(  # noqa: PLR0913, PLR0917
             else Text(emoji)
             for emoji in emojis
         )
-        emoji_text_values = as_list(emoji_value_texts, sep="")
-
-        preview_emoji = "🎭" if selected_emoji is None else selected_emoji
-        emoji_texts = [Text(f"{preview_emoji} Эмоджи: ", emoji_text_values)]
+        emoji_text_values = as_list(*emoji_value_texts, sep="")
+        emoji_texts = [Text("🎭 Эмоджи: ", emoji_text_values)]
     else:
         emoji_texts = []
 
     content = as_list(
         f"🌟 Звёзд: {stars}",
+        *emoji_texts,
         f"🏆 Побед: {number_of_wins}",
         f"💀 Поражений: {number_of_defeats}",
         f"🕊️ Ничьих: {number_of_draws}",
-        *emoji_texts,
         *(
             []
             if winning_percentage_text is None
@@ -54,3 +55,29 @@ async def profile_message(  # noqa: PLR0913, PLR0917
         "⚔️ Сейчас в игре" if is_in_game else "💤 Сейчас не в игре",
     )
     await message.answer(**content.as_kwargs())
+
+
+async def wait_emoji_to_buy_message(bot: Bot, chat_id: int) -> None:
+    await bot.send_message(chat_id, "🎭 Введите эмоджи")
+
+
+async def not_enough_stars_to_buy_emoji_message(
+    bot: Bot, chat_id: int, stars_to_become_enough: Stars,
+) -> None:
+    await bot.send_message(
+        chat_id, f"😞 Нужно ещё {stars_to_become_enough} 🌟 для покупки",
+    )
+
+
+async def emoji_already_purchased_message(bot: Bot, chat_id: int) -> None:
+    await bot.send_message(chat_id, "🎭 Уже куплено")
+
+
+async def invalid_emoji_to_buy_message(bot: Bot, chat_id: int) -> None:
+    await bot.send_message(
+        chat_id, "❌ Эмоджи должен состоять из одного символа. Попробуйте ещё",
+    )
+
+
+async def emoji_was_purchased_message(bot: Bot, chat_id: int) -> None:
+    await bot.send_message(chat_id, "🌟 Куплено!")

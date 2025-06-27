@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
@@ -18,8 +19,12 @@ from ttt.application.game.ports.games import Games
 from ttt.application.game.ports.waiting_locations import WaitingLocations
 from ttt.application.game.start_game import StartGame
 from ttt.application.game.wait_game import WaitGame
+from ttt.application.player.buy_emoji import BuyEmoji
 from ttt.application.player.ports.players import Players
 from ttt.application.player.register_player import RegisterPlayer
+from ttt.application.player.view_player import ViewPlayer
+from ttt.application.player.wait_emoji_to_buy import WaitEmojiToBuy
+from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
 from ttt.infrastructure.adapters.players import InPostgresPlayers
@@ -128,6 +133,12 @@ class CommonProvider(Provider):
         scope=Scope.APP,
     )
 
+    provide_clock = provide(
+        NotMonotonicUtcClock,
+        provides=Clock,
+        scope=Scope.APP,
+    )
+
     @provide(scope=Scope.APP)
     def provide_randoms(self) -> Randoms:
         return MersenneTwisterRandoms()
@@ -147,7 +158,10 @@ class CommonProvider(Provider):
             ),
         )
 
+    provide_view_player = provide(ViewPlayer, scope=Scope.REQUEST)
     provide_register_player = provide(RegisterPlayer, scope=Scope.REQUEST)
+    provide_buy_emoji = provide(BuyEmoji, scope=Scope.REQUEST)
+    provide_wait_emoji_to_buy = provide(WaitEmojiToBuy, scope=Scope.REQUEST)
 
     provide_start_game = provide(StartGame, scope=Scope.REQUEST)
     provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)

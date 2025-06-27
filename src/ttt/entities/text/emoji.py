@@ -8,6 +8,10 @@ class InvalidEmojiError(Exception): ...
 
 @dataclass(frozen=True)
 class Emoji:
+    """
+    :raises ttt.entities.text.emoji.InvalidEmojiError:
+    """
+
     str_: str
 
     def __post_init__(self) -> None:
