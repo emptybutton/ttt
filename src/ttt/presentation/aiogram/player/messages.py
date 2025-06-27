@@ -1,10 +1,14 @@
+from collections.abc import Sequence
+
 from aiogram.types.message import Message
-from aiogram.utils.formatting import as_list
+from aiogram.utils.formatting import Bold, Text, as_list
 
 
 async def profile_message(  # noqa: PLR0913, PLR0917
     message: Message,
     stars: int,
+    emojis: Sequence[str],
+    selected_emoji: str | None,
     number_of_wins: int,
     number_of_draws: int,
     number_of_defeats: int,
@@ -22,11 +26,26 @@ async def profile_message(  # noqa: PLR0913, PLR0917
     else:
         winning_percentage_text = None
 
+    if emojis:
+        emoji_value_texts = (
+            Text(Bold("<", selected_emoji, ">"))
+            if emoji == selected_emoji
+            else Text(emoji)
+            for emoji in emojis
+        )
+        emoji_text_values = as_list(emoji_value_texts, sep="")
+
+        preview_emoji = "🎭" if selected_emoji is None else selected_emoji
+        emoji_texts = [Text(f"{preview_emoji} Эмоджи: ", emoji_text_values)]
+    else:
+        emoji_texts = []
+
     content = as_list(
         f"🌟 Звёзд: {stars}",
         f"🏆 Побед: {number_of_wins}",
         f"💀 Поражений: {number_of_defeats}",
         f"🕊️ Ничьих: {number_of_draws}",
+        *emoji_texts,
         *(
             []
             if winning_percentage_text is None
