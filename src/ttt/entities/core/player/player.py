@@ -148,6 +148,9 @@ class Player:
         tracking.register_new(new_emoji)
         self.emojis.append(new_emoji)
 
+        self.selected_emoji_id = new_emoji.id
+        tracking.register_mutated(self)
+
     def emoji(self, random_emoji: Emoji) -> Emoji:
         if self.selected_emoji_id is None:
             return random_emoji

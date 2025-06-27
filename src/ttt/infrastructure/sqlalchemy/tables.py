@@ -64,7 +64,7 @@ class TablePlayer(Base):
     id: Mapped[int] = mapped_column(BigInteger(), primary_key=True)
     account_stars: Mapped[int] = mapped_column(server_default="0")
     selected_emoji_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("player_emojis.id"),
+        ForeignKey("player_emojis.id", deferrable=True, initially="DEFERRED"),
     )
     number_of_wins: Mapped[int]
     number_of_draws: Mapped[int]
