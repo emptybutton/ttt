@@ -73,7 +73,7 @@ async def emoji_already_purchased_message(bot: Bot, chat_id: int) -> None:
     await bot.send_message(chat_id, "🎭 Уже куплено")
 
 
-async def invalid_emoji_to_buy_message(bot: Bot, chat_id: int) -> None:
+async def invalid_emoji_message(bot: Bot, chat_id: int) -> None:
     await bot.send_message(
         chat_id, "❌ Эмоджи должен состоять из одного символа. Попробуйте ещё",
     )
@@ -81,3 +81,15 @@ async def invalid_emoji_to_buy_message(bot: Bot, chat_id: int) -> None:
 
 async def emoji_was_purchased_message(bot: Bot, chat_id: int) -> None:
     await bot.send_message(chat_id, "🌟 Куплено!")
+
+
+async def emoji_not_purchased_to_select_message(bot: Bot, chat_id: int) -> None:
+    await bot.send_message(chat_id, "❌ Эмоджи ещё не куплен!")
+
+
+async def emoji_selected_message(bot: Bot, chat_id: int) -> None:
+    await bot.send_message(chat_id, "🎭 Эмоджи выбран")
+
+
+async def selected_emoji_removed_message(bot: Bot, chat_id: int) -> None:
+    await bot.send_message(chat_id, "🎭 Эмоджи убран")

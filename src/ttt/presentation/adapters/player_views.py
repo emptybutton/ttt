@@ -1,4 +1,3 @@
-from asyncio import gather
 from dataclasses import dataclass
 
 from aiogram.types.message import Message
@@ -16,10 +15,13 @@ from ttt.presentation.aiogram.common.messages import (
 )
 from ttt.presentation.aiogram.player.messages import (
     emoji_already_purchased_message,
+    emoji_not_purchased_to_select_message,
+    emoji_selected_message,
     emoji_was_purchased_message,
-    invalid_emoji_to_buy_message,
+    invalid_emoji_message,
     not_enough_stars_to_buy_emoji_message,
     profile_message,
+    selected_emoji_removed_message,
     wait_emoji_to_buy_message,
 )
 
@@ -125,6 +127,34 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews):
     async def render_invalid_emoji_to_buy_view(
         self, location: PlayerLocation, /,
     ) -> None:
-        await invalid_emoji_to_buy_message(
+        await invalid_emoji_message(
+            not_none(self._message.bot), self._message.chat.id,
+        )
+
+    async def render_invalid_emoji_to_select_view(
+        self, location: PlayerLocation, /,
+    ) -> None:
+        await invalid_emoji_message(
+            not_none(self._message.bot), self._message.chat.id,
+        )
+
+    async def render_emoji_not_purchased_to_select_view(
+        self, location: PlayerLocation, /,
+    ) -> None:
+        await emoji_not_purchased_to_select_message(
+            not_none(self._message.bot), self._message.chat.id,
+        )
+
+    async def render_emoji_selected_view(
+        self, location: PlayerLocation, /,
+    ) -> None:
+        await emoji_selected_message(
+            not_none(self._message.bot), self._message.chat.id,
+        )
+
+    async def render_selected_emoji_removed_view(
+        self, location: PlayerLocation, /,
+    ) -> None:
+        await selected_emoji_removed_message(
             not_none(self._message.bot), self._message.chat.id,
         )

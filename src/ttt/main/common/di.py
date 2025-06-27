@@ -22,8 +22,11 @@ from ttt.application.game.wait_game import WaitGame
 from ttt.application.player.buy_emoji import BuyEmoji
 from ttt.application.player.ports.players import Players
 from ttt.application.player.register_player import RegisterPlayer
+from ttt.application.player.remove_emoji import RemoveEmoji
+from ttt.application.player.select_emoji import SelectEmoji
 from ttt.application.player.view_player import ViewPlayer
 from ttt.application.player.wait_emoji_to_buy import WaitEmojiToBuy
+from ttt.application.player.wait_emoji_to_select import WaitEmojiToSelect
 from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
@@ -162,6 +165,11 @@ class CommonProvider(Provider):
     provide_register_player = provide(RegisterPlayer, scope=Scope.REQUEST)
     provide_buy_emoji = provide(BuyEmoji, scope=Scope.REQUEST)
     provide_wait_emoji_to_buy = provide(WaitEmojiToBuy, scope=Scope.REQUEST)
+    provide_select_emoji = provide(SelectEmoji, scope=Scope.REQUEST)
+    provide_wait_emoji_to_select = provide(
+        WaitEmojiToSelect, scope=Scope.REQUEST,
+    )
+    provide_remove_emoji = provide(RemoveEmoji, scope=Scope.REQUEST)
 
     provide_start_game = provide(StartGame, scope=Scope.REQUEST)
     provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import cast
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.context import FSMContext
@@ -78,7 +79,7 @@ class AiogramProvider(Provider):
     def provide_fsm_context(
         self, middleware_data: AiogramMiddlewareData,
     ) -> FSMContext:
-        return middleware_data["state"]
+        return cast(FSMContext, middleware_data["state"])
 
     provide_emoji = provide(
         PictographsAsEmojis,

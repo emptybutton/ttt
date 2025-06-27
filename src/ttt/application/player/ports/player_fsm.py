@@ -7,7 +7,11 @@ from typing import overload
 class WaitingEmojiToBuyState: ...
 
 
-type PlayerFsmState = WaitingEmojiToBuyState
+@dataclass(frozen=True)
+class WaitingEmojiToSelectState: ...
+
+
+type PlayerFsmState = WaitingEmojiToBuyState | WaitingEmojiToSelectState
 
 
 class InvalidPlayerFsmStateError(Exception): ...

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import overload
+from typing import cast, overload
 
 from aiogram.fsm.context import FSMContext
 
@@ -7,6 +7,7 @@ from ttt.application.player.ports.player_fsm import (
     PlayerFsm,
     PlayerFsmState,
     WaitingEmojiToBuyState,
+    WaitingEmojiToSelectState,
 )
 from ttt.presentation.aiogram.player.fsm import AiogramPlayerFsmState
 
@@ -28,12 +29,13 @@ class AiogramTrustingPlayerFsm(PlayerFsm):
     async def state[T: PlayerFsmState](
         self, type_: type[T] | None,
     ) -> T | None:
-        if type_ is None:
-            return None
+        if type_ is WaitingEmojiToSelectState:
+            return cast(T, WaitingEmojiToSelectState())
 
-        match type_:
-            case WaitingEmojiToBuyState:
-                return WaitingEmojiToBuyState()
+        if type_ is WaitingEmojiToBuyState:
+            return cast(T, WaitingEmojiToBuyState())
+
+        return None
 
     async def set(self, state: PlayerFsmState | None) -> None:
         match state:
@@ -42,4 +44,8 @@ class AiogramTrustingPlayerFsm(PlayerFsm):
             case WaitingEmojiToBuyState():
                 await self._context.set_state(
                     AiogramPlayerFsmState.waiting_emoji_to_buy,
+                )
+            case WaitingEmojiToSelectState():
+                await self._context.set_state(
+                    AiogramPlayerFsmState.waiting_emoji_to_select,
                 )

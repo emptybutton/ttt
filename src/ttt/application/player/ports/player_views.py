@@ -48,3 +48,23 @@ class PlayerViews(ABC):
     async def render_invalid_emoji_to_buy_view(
         self, location: PlayerLocation, /,
     ) -> None: ...
+
+    @abstractmethod
+    async def render_invalid_emoji_to_select_view(
+        self, location: PlayerLocation, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def render_emoji_not_purchased_to_select_view(
+        self, location: PlayerLocation, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def render_emoji_selected_view(
+        self, location: PlayerLocation, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def render_selected_emoji_removed_view(
+        self, location: PlayerLocation, /,
+    ) -> None: ...
