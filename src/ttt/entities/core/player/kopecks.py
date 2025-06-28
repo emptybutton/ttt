@@ -1,0 +1,1 @@
+type Kopecks = int

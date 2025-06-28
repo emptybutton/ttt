@@ -5,8 +5,10 @@ from uuid import UUID
 
 from ttt.entities.core.player.account import Account
 from ttt.entities.core.player.emoji import PlayerEmoji
+from ttt.entities.core.player.kopecks import Kopecks
 from ttt.entities.core.player.location import PlayerGameLocation
-from ttt.entities.core.player.stars import Stars
+from ttt.entities.core.player.stars import Stars, purchased_stars_for_kopecks
+from ttt.entities.core.player.stars_purchase import StarsPurchase
 from ttt.entities.core.player.win import Win
 from ttt.entities.math.random import Random, deviated_int
 from ttt.entities.text.emoji import Emoji
@@ -35,11 +37,15 @@ class EmojiAlreadyPurchasedError(Exception): ...
 class EmojiNotPurchasedError(Exception): ...
 
 
+class StarsPurchaseHasAlreadyHappenedError(Exception): ...
+
+
 @dataclass
 class Player:
     id: int
     account: Account
     emojis: list[PlayerEmoji]
+    stars_purchases: list[StarsPurchase]
     selected_emoji_id: UUID | None
 
     number_of_wins: int
@@ -178,14 +184,72 @@ class Player:
         self.selected_emoji_id = None
         tracking.register_mutated(self)
 
+    def ensure_can_buy_stars(self, kopecks: Kopecks) -> None:
+        """
+        :raises ttt.entities.core.player.stars.NonExchangeableKopecksForStarsError:
+        """  # noqa: E501
 
-type PlayerAggregate = Player | PlayerEmoji
+        purchased_stars_for_kopecks(kopecks)
+
+    def buy_stars(
+        self,
+        purchase_id: str,
+        purchase_payment_gateway_id: str,
+        purchase_kopecks: Kopecks,
+        current_datetime: datetime,
+        tracking: Tracking,
+    ) -> None:
+        """
+        :raises ttt.entities.core.player.player.StarsPurchaseHasAlreadyHappenedError:
+        :raises ttt.entities.core.player.stars.NonExchangeableKopecksForStarsError:
+        """  # noqa: E501
+
+        assert_(
+            not self._is_stars_purchase_happened(
+                purchase_id, purchase_payment_gateway_id,
+            ),
+            else_=StarsPurchaseHasAlreadyHappenedError,
+        )
+
+        stars_purchase = StarsPurchase(
+            id_=purchase_id,
+            payment_gateway_id=purchase_payment_gateway_id,
+            player_id=self.id,
+            stars=purchased_stars_for_kopecks(purchase_kopecks),
+            kopecks=purchase_kopecks,
+            datetime_=current_datetime,
+        )
+        tracking.register_new(stars_purchase)
+        self.stars_purchases.append(stars_purchase)
+
+        self.account = self.account.map(
+            lambda stars: stars + stars_purchase.stars,
+        )
+        tracking.register_mutated(self)
+
+    def _is_stars_purchase_happened(
+        self, purchase_id: str, purchase_payment_gateway_id: str,
+    ) -> bool:
+        for purchase in self.stars_purchases:
+            is_id_same = purchase.id_ == purchase_id
+            is_purchase_payment_gateway_id_same = (
+                purchase.payment_gateway_id == purchase_payment_gateway_id
+            )
+
+            if is_id_same or is_purchase_payment_gateway_id_same:
+                return True
+
+        return False
+
+
+type PlayerAggregate = Player | PlayerEmoji | StarsPurchase
 
 
 def register_player(player_id: int, tracking: Tracking) -> Player:
     player = Player(
         id=player_id,
         account=Account(0),
+        stars_purchases=[],
         emojis=[],
         selected_emoji_id=None,
         number_of_wins=0,

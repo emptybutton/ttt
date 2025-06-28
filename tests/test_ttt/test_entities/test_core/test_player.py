@@ -10,7 +10,7 @@ def test_create_player(tracking: Tracking, object_: str) -> None:
     player = register_player(42, tracking)
 
     if object_ == "player":
-        assert player == Player(42, Account(0), [], None, 0, 0, 0, None)
+        assert player == Player(42, Account(0), [], [], None, 0, 0, 0, None)
 
     if object_ == "tracking":
         assert len(tracking) == 1

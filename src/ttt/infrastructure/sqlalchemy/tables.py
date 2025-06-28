@@ -23,6 +23,7 @@ from ttt.entities.core.player.account import Account
 from ttt.entities.core.player.emoji import PlayerEmoji
 from ttt.entities.core.player.location import PlayerGameLocation
 from ttt.entities.core.player.player import Player
+from ttt.entities.core.player.stars_purchase import StarsPurchase
 from ttt.entities.core.player.win import Win
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.text.emoji import Emoji
@@ -36,7 +37,7 @@ class TablePlayerEmoji(Base):
     __tablename__ = "player_emojis"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    player_id: Mapped[int] = mapped_column(ForeignKey("players.id"))
+    player_id: Mapped[int] = mapped_column(ForeignKey("players.id"), index=True)
     emoji_str: Mapped[str] = mapped_column(CHAR(1))
     datetime_of_purchase: Mapped[datetime]
 
@@ -55,6 +56,38 @@ class TablePlayerEmoji(Base):
             player_id=it.player_id,
             emoji_str=it.emoji.str_,
             datetime_of_purchase=it.datetime_of_purchase,
+        )
+
+
+class TableStarsPurchase(Base):
+    __tablename__ = "stars_purchases"
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    payment_gateway_id: Mapped[str] = mapped_column(primary_key=True)
+    player_id: Mapped[int] = mapped_column(ForeignKey("players.id"))
+    stars: Mapped[int]
+    kopecks: Mapped[int]
+    datetime_: Mapped[datetime]
+
+    def entity(self) -> StarsPurchase:
+        return StarsPurchase(
+            id_=self.id,
+            payment_gateway_id=self.payment_gateway_id,
+            player_id=self.player_id,
+            stars=self.stars,
+            kopecks=self.kopecks,
+            datetime_=self.datetime_,
+        )
+
+    @classmethod
+    def of(cls, it: StarsPurchase) -> "TableStarsPurchase":
+        return TableStarsPurchase(
+            id=it.id_,
+            payment_gateway_id=it.payment_gateway_id,
+            player_id=it.player_id,
+            stars=it.stars,
+            kopecks=it.kopecks,
+            datetime_=it.datetime_,
         )
 
 
@@ -78,6 +111,10 @@ class TablePlayer(Base):
         lazy="selectin",
         foreign_keys=[TablePlayerEmoji.player_id],
     )
+    stars_purchases: Mapped[list[TableStarsPurchase]] = relationship(
+        lazy="selectin",
+        foreign_keys=[TableStarsPurchase.player_id],
+    )
 
     def entity(self) -> Player:
         if (
@@ -95,7 +132,8 @@ class TablePlayer(Base):
         return Player(
             self.id,
             Account(self.account_stars),
-            [emoji.entity() for emoji in self.emojis],
+            [it.entity() for it in self.emojis],
+            [it.entity() for it in self.stars_purchases],
             self.selected_emoji_id,
             self.number_of_wins,
             self.number_of_draws,
@@ -334,7 +372,7 @@ class TableGame(Base):
         return Matrix(lines)
 
 
-type TablePlayerAggregate = TablePlayer | TablePlayerEmoji
+type TablePlayerAggregate = TablePlayer | TablePlayerEmoji | TableStarsPurchase
 type TableGameAggregate = TableGame | TableGameResult | TableCell
 
 type TableAggregate = TablePlayerAggregate | TableGameAggregate
@@ -346,6 +384,8 @@ def table_entity(entity: Aggregate) -> TableAggregate:
             return TablePlayer.of(entity)
         case PlayerEmoji():
             return TablePlayerEmoji.of(entity)
+        case StarsPurchase():
+            return TableStarsPurchase.of(entity)
 
         case Game():
             return TableGame.of(entity)
