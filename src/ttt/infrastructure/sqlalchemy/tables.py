@@ -37,7 +37,7 @@ class TablePlayerEmoji(Base):
     __tablename__ = "player_emojis"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    player_id: Mapped[int] = mapped_column(ForeignKey("players.id"), index=True)
+    player_id: Mapped[int] = mapped_column(ForeignKey("players.id"))
     emoji_str: Mapped[str] = mapped_column(CHAR(1))
     datetime_of_purchase: Mapped[datetime]
 
