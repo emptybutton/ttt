@@ -37,7 +37,10 @@ class TablePlayerEmoji(Base):
     __tablename__ = "player_emojis"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    player_id: Mapped[int] = mapped_column(ForeignKey("players.id"))
+    player_id: Mapped[int] = mapped_column(
+        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+        index=True,
+    )
     emoji_str: Mapped[str] = mapped_column(CHAR(1))
     datetime_of_purchase: Mapped[datetime]
 
@@ -64,7 +67,10 @@ class TableStarsPurchase(Base):
 
     id: Mapped[str] = mapped_column(primary_key=True)
     payment_gateway_id: Mapped[str] = mapped_column(primary_key=True)
-    player_id: Mapped[int] = mapped_column(ForeignKey("players.id"))
+    player_id: Mapped[int] = mapped_column(
+        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+        index=True,
+    )
     stars: Mapped[int]
     kopecks: Mapped[int]
     datetime_: Mapped[datetime]
@@ -98,12 +104,14 @@ class TablePlayer(Base):
     account_stars: Mapped[int] = mapped_column(server_default="0")
     selected_emoji_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("player_emojis.id", deferrable=True, initially="DEFERRED"),
+        index=True,
     )
     number_of_wins: Mapped[int]
     number_of_draws: Mapped[int]
     number_of_defeats: Mapped[int]
     game_location_game_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
+        index=True,
     )
     game_location_chat_id: Mapped[int | None] = mapped_column(BigInteger())
 
@@ -174,18 +182,23 @@ class TableGameResult(Base):
     __tablename__ = "game_results"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    game_id: Mapped[UUID] = mapped_column(ForeignKey("games.id"), unique=True)
+    game_id: Mapped[UUID] = mapped_column(
+        ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
+        unique=True,
+    )
     type: Mapped[TableGameResultType] = mapped_column(game_result_type)
 
     win_winner_id: Mapped[int | None] = mapped_column(
         BigInteger(),
-        ForeignKey("players.id"),
+        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+        index=True,
     )
     win_new_stars: Mapped[int | None]
 
     canceler_id: Mapped[int | None] = mapped_column(
         BigInteger(),
-        ForeignKey("players.id"),
+        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+        index=True,
     )
 
     def entity(self) -> GameResult:
@@ -243,12 +256,16 @@ class TableCell(Base):
     __tablename__ = "cells"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    game_id: Mapped[UUID] = mapped_column(ForeignKey("games.id"))
+    game_id: Mapped[UUID] = mapped_column(
+        ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
+        index=True,
+    )
     board_position_x: Mapped[int]
     board_position_y: Mapped[int]
     filler_id: Mapped[int | None] = mapped_column(
         BigInteger(),
-        ForeignKey("players.id"),
+        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+        index=True,
     )
 
     def entity(self) -> Cell:
@@ -308,11 +325,13 @@ class TableGame(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True)
     player1_id: Mapped[int] = mapped_column(
         BigInteger(),
-        ForeignKey("players.id"),
+        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+        index=True,
     )
     player2_id: Mapped[int] = mapped_column(
         BigInteger(),
-        ForeignKey("players.id"),
+        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+        index=True,
     )
     state: Mapped[TableGameState] = mapped_column(game_state)
 
