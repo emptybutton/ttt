@@ -194,7 +194,7 @@ class Player:
     def buy_stars(
         self,
         purchase_id: str,
-        purchase_payment_gateway_id: str,
+        purchase_gateway_id: str,
         purchase_kopecks: Kopecks,
         current_datetime: datetime,
         tracking: Tracking,
@@ -206,14 +206,14 @@ class Player:
 
         assert_(
             not self._is_stars_purchase_happened(
-                purchase_id, purchase_payment_gateway_id,
+                purchase_id, purchase_gateway_id,
             ),
             else_=StarsPurchaseHasAlreadyHappenedError,
         )
 
         stars_purchase = StarsPurchase(
             id_=purchase_id,
-            payment_gateway_id=purchase_payment_gateway_id,
+            gateway_id=purchase_gateway_id,
             player_id=self.id,
             stars=purchased_stars_for_kopecks(purchase_kopecks),
             kopecks=purchase_kopecks,
@@ -228,15 +228,15 @@ class Player:
         tracking.register_mutated(self)
 
     def _is_stars_purchase_happened(
-        self, purchase_id: str, purchase_payment_gateway_id: str,
+        self, purchase_id: str, purchase_gateway_id: str,
     ) -> bool:
         for purchase in self.stars_purchases:
             is_id_same = purchase.id_ == purchase_id
-            is_purchase_payment_gateway_id_same = (
-                purchase.payment_gateway_id == purchase_payment_gateway_id
+            is_purchase_gateway_id_same = (
+                purchase.gateway_id == purchase_gateway_id
             )
 
-            if is_id_same or is_purchase_payment_gateway_id_same:
+            if is_id_same or is_purchase_gateway_id_same:
                 return True
 
         return False

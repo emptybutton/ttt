@@ -66,7 +66,7 @@ class TableStarsPurchase(Base):
     __tablename__ = "stars_purchases"
 
     id: Mapped[str] = mapped_column(primary_key=True)
-    payment_gateway_id: Mapped[str] = mapped_column(primary_key=True)
+    gateway_id: Mapped[str] = mapped_column(primary_key=True)
     player_id: Mapped[int] = mapped_column(
         ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
         index=True,
@@ -78,7 +78,7 @@ class TableStarsPurchase(Base):
     def entity(self) -> StarsPurchase:
         return StarsPurchase(
             id_=self.id,
-            payment_gateway_id=self.payment_gateway_id,
+            gateway_id=self.gateway_id,
             player_id=self.player_id,
             stars=self.stars,
             kopecks=self.kopecks,
@@ -89,7 +89,7 @@ class TableStarsPurchase(Base):
     def of(cls, it: StarsPurchase) -> "TableStarsPurchase":
         return TableStarsPurchase(
             id=it.id_,
-            payment_gateway_id=it.payment_gateway_id,
+            gateway_id=it.gateway_id,
             player_id=it.player_id,
             stars=it.stars,
             kopecks=it.kopecks,

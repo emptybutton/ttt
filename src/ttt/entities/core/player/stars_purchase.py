@@ -20,7 +20,7 @@ class StarsPurchase:
     """
 
     id_: str
-    payment_gateway_id: str
+    gateway_id: str
     player_id: int
     stars: Stars
     kopecks: Kopecks
