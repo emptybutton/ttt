@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from ttt.entities.core.player.location import PlayerLocation
-from ttt.entities.core.player.stars import Stars
+from ttt.entities.core.stars import Stars
 
 
 class PlayerViews(ABC):

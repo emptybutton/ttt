@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from ttt.entities.core.player.kopecks import Kopecks
-from ttt.entities.core.player.stars import Stars
+from ttt.entities.core.stars import Stars
+from ttt.entities.finance.kopecks import Kopecks
 from ttt.entities.tools.assertion import assert_
 
 

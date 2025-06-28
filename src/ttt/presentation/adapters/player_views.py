@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.player.ports.player_views import PlayerViews
 from ttt.entities.core.player.location import PlayerLocation
-from ttt.entities.core.player.stars import Stars
+from ttt.entities.core.stars import Stars
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.sqlalchemy.tables import TablePlayer, TablePlayerEmoji
 from ttt.presentation.aiogram.common.messages import (

@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from ttt.entities.core.player.stars import Stars
+from ttt.entities.core.stars import Stars
 from ttt.entities.tools.assertion import assert_
 
 

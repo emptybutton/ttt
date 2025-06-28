@@ -1,4 +1,4 @@
-from ttt.entities.core.player.kopecks import Kopecks
+from ttt.entities.finance.kopecks import Kopecks
 
 
 type Stars = int
@@ -9,7 +9,7 @@ class NonExchangeableKopecksForStarsError(Exception): ...
 
 def purchased_stars_for_kopecks(kopecks: Kopecks) -> Stars:
     """
-    :raises ttt.entities.core.player.stars.NonExchangeableKopecksForStarsError:
+    :raises ttt.entities.core.stars.NonExchangeableKopecksForStarsError:
     """
 
     match kopecks:

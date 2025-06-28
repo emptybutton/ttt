@@ -4,7 +4,7 @@ from aiogram import Bot
 from aiogram.types.message import Message
 from aiogram.utils.formatting import Bold, Text, as_list
 
-from ttt.entities.core.player.stars import Stars
+from ttt.entities.core.stars import Stars
 
 
 async def profile_message(  # noqa: PLR0913, PLR0917

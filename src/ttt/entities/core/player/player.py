@@ -5,11 +5,11 @@ from uuid import UUID
 
 from ttt.entities.core.player.account import Account
 from ttt.entities.core.player.emoji import PlayerEmoji
-from ttt.entities.core.player.kopecks import Kopecks
 from ttt.entities.core.player.location import PlayerGameLocation
-from ttt.entities.core.player.stars import Stars, purchased_stars_for_kopecks
 from ttt.entities.core.player.stars_purchase import StarsPurchase
 from ttt.entities.core.player.win import Win
+from ttt.entities.core.stars import Stars, purchased_stars_for_kopecks
+from ttt.entities.finance.kopecks import Kopecks
 from ttt.entities.math.random import Random, deviated_int
 from ttt.entities.text.emoji import Emoji
 from ttt.entities.tools.assertion import assert_
@@ -186,8 +186,8 @@ class Player:
 
     def ensure_can_buy_stars(self, kopecks: Kopecks) -> None:
         """
-        :raises ttt.entities.core.player.stars.NonExchangeableKopecksForStarsError:
-        """  # noqa: E501
+        :raises ttt.entities.core.stars.NonExchangeableKopecksForStarsError:
+        """
 
         purchased_stars_for_kopecks(kopecks)
 

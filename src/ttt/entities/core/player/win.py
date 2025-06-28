@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ttt.entities.core.player.stars import Stars
+from ttt.entities.core.stars import Stars
 
 
 @dataclass(frozen=True)
