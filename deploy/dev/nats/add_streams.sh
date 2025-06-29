@@ -1,3 +1,3 @@
 #!/bin/bash
 
-nats stream add --config /mnt/streams/player.json
+nats -s nats://nats:4222 stream add --config /mnt/streams/player.json
