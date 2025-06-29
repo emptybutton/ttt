@@ -1,4 +1,3 @@
-from typing import cast
 
 from aiogram import Router
 from aiogram.types import ContentType, Message
@@ -14,7 +13,6 @@ from ttt.infrastructure.nats.paid_stars_purchase_payment_inbox import (
     InNatsPaidStarsPurchasePaymentInbox,
 )
 from ttt.presentation.aiogram.player.invoices import (
-    InvocePayload,
     StarsPurshaseInvoicePayload,
     invoce_payload_adapter,
 )
