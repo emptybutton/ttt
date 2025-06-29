@@ -5,6 +5,7 @@ from aiogram.types.message import Message
 from aiogram.utils.formatting import Bold, Text, as_list
 
 from ttt.entities.core.stars import Stars
+from ttt.presentation.aiogram.player.keyboards import stars_prices_keyboard
 
 
 async def profile_message(  # noqa: PLR0913, PLR0917
@@ -93,3 +94,19 @@ async def emoji_selected_message(bot: Bot, chat_id: int) -> None:
 
 async def selected_emoji_removed_message(bot: Bot, chat_id: int) -> None:
     await bot.send_message(chat_id, "🎭 Эмоджи убран")
+
+
+async def wait_rubles_to_start_stars_purshase_message(
+    bot: Bot, chat_id: int,
+) -> None:
+    await bot.send_message(
+        chat_id,
+        "🌟💸 Сколько звёзд хотите купить?",
+        reply_markup=stars_prices_keyboard(),
+    )
+
+
+async def completed_stars_purshase_message(
+    bot: Bot, chat_id: int,
+) -> None:
+    await bot.send_message(chat_id, "🌟💸 Оплата прошла!")

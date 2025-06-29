@@ -5,11 +5,12 @@ from uuid import UUID
 
 from ttt.entities.core.player.account import Account
 from ttt.entities.core.player.emoji import PlayerEmoji
-from ttt.entities.core.player.location import PlayerGameLocation
+from ttt.entities.core.player.location import PlayerGameLocation, PlayerLocation
 from ttt.entities.core.player.stars_purchase import StarsPurchase
 from ttt.entities.core.player.win import Win
-from ttt.entities.core.stars import Stars, purchased_stars_for_kopecks
-from ttt.entities.finance.kopecks import Kopecks
+from ttt.entities.core.stars import Stars
+from ttt.entities.finance.payment.success import PaymentSuccess
+from ttt.entities.finance.rubles import Rubles
 from ttt.entities.math.random import Random, deviated_int
 from ttt.entities.text.emoji import Emoji
 from ttt.entities.tools.assertion import assert_
@@ -37,7 +38,7 @@ class EmojiAlreadyPurchasedError(Exception): ...
 class EmojiNotPurchasedError(Exception): ...
 
 
-class StarsPurchaseHasAlreadyHappenedError(Exception): ...
+class NoPurchaseError(Exception): ...
 
 
 @dataclass
@@ -184,62 +185,73 @@ class Player:
         self.selected_emoji_id = None
         tracking.register_mutated(self)
 
-    def ensure_can_buy_stars(self, kopecks: Kopecks) -> None:
-        """
-        :raises ttt.entities.core.stars.NonExchangeableKopecksForStarsError:
-        """
-
-        purchased_stars_for_kopecks(kopecks)
-
-    def buy_stars(
+    def initiate_stars_purchase_payment(  # noqa: PLR0913, PLR0917
         self,
-        purchase_id: str,
-        purchase_gateway_id: str,
-        purchase_kopecks: Kopecks,
+        purchase_id: UUID,
+        purchase_chat_id: int,
+        payment_id: UUID,
+        paid_rubles: Rubles,
         current_datetime: datetime,
         tracking: Tracking,
     ) -> None:
         """
-        :raises ttt.entities.core.player.player.StarsPurchaseHasAlreadyHappenedError:
-        :raises ttt.entities.core.player.stars.NonExchangeableKopecksForStarsError:
-        """  # noqa: E501
+        :raises ttt.entities.core.stars.NonExchangeableRublesForStarsError:
+        """
 
-        assert_(
-            not self._is_stars_purchase_happened(
-                purchase_id, purchase_gateway_id,
-            ),
-            else_=StarsPurchaseHasAlreadyHappenedError,
+        stars_purchase = StarsPurchase.initiate_payment(
+            purchase_id,
+            PlayerLocation(self.id, purchase_chat_id),
+            payment_id,
+            paid_rubles,
+            current_datetime,
+            tracking,
         )
-
-        stars_purchase = StarsPurchase(
-            id_=purchase_id,
-            gateway_id=purchase_gateway_id,
-            player_id=self.id,
-            stars=purchased_stars_for_kopecks(purchase_kopecks),
-            kopecks=purchase_kopecks,
-            datetime_=current_datetime,
-        )
-        tracking.register_new(stars_purchase)
         self.stars_purchases.append(stars_purchase)
 
+    def complete_stars_purchase(
+        self,
+        purchase_id: UUID,
+        payment_success: PaymentSuccess,
+        current_datetime: datetime,
+        tracking: Tracking,
+    ) -> None:
+        """
+        :raises ttt.entities.player.player.NoPurchaseError:
+        :raises ttt.entities.finance.payment.payment.PaymentAlreadyCompletedError:
+        """  # noqa: E501
+
+        purchase = self._stars_purchase(purchase_id)
+
         self.account = self.account.map(
-            lambda stars: stars + stars_purchase.stars,
+            lambda stars: stars + purchase.new_stars,
         )
         tracking.register_mutated(self)
+        purchase.payment.complete(payment_success, current_datetime, tracking)
 
-    def _is_stars_purchase_happened(
-        self, purchase_id: str, purchase_gateway_id: str,
-    ) -> bool:
+    def cancel_stars_purchase(
+        self,
+        purchase_id: UUID,
+        current_datetime: datetime,
+        tracking: Tracking,
+    ) -> None:
+        """
+        :raises ttt.entities.player.player.NoPurchaseError:
+        :raises ttt.entities.finance.payment.payment.PaymentAlreadyCompletedError:
+        """  # noqa: E501
+
+        purchase = self._stars_purchase(purchase_id)
+        purchase.payment.cancel(current_datetime, tracking)
+
+    def _stars_purchase(self, purchase_id: UUID) -> StarsPurchase:
+        """
+        :raises ttt.entities.player.player.NoPurchaseError:
+        """
+
         for purchase in self.stars_purchases:
-            is_id_same = purchase.id_ == purchase_id
-            is_purchase_gateway_id_same = (
-                purchase.gateway_id == purchase_gateway_id
-            )
+            if purchase.id_ == purchase_id:
+                return purchase
 
-            if is_id_same or is_purchase_gateway_id_same:
-                return True
-
-        return False
+        raise NoPurchaseError
 
 
 type PlayerAggregate = Player | PlayerEmoji | StarsPurchase

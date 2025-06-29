@@ -16,6 +16,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      nats:
+        condition: service_healthy
+      nats_streams:
+        condition: service_completed_successfully
     environment:
       TTT_POSTGRES_URL: postgresql+psycopg://root:root@postgres/root
       TTT_POSTGRES_POOL_SIZE: 8
@@ -26,6 +30,8 @@ services:
 
       TTT_REDIS_URL: redis://redis:6379/0
       TTT_REDIS_POOL_SIZE: 16
+
+      TTT_NATS_URL: nats://nats:4222
 
       TTT_GAME_WAITING_QUEUE_PULLING_TIMEOUT_MIN_MS: 100
       TTT_GAME_WAITING_QUEUE_PULLING_TIMEOUT_SALT_MS: 100
@@ -64,10 +70,36 @@ services:
       interval: 3s
     command: redis-server /mnt/dev/redis.conf
 
+  nats:
+    image: nats:2.11.5-alpine3.22
+    container_name: ttt-nats
+    volumes:
+      - nats-data:/data
+    ports:
+      - 4222:4222
+    command: nats-server -js
+    healthcheck:
+      test: wget http://nats:8222/healthz -q -O /dev/null
+      start_period: 2m
+      start_interval: 0.5s
+      interval: 3s
+
+  nats_streams:
+    image: bitnami/natscli:0.2.3-debian-12-r4
+    container_name: ttt-nats-streams
+    depends_on:
+      nats:
+        condition: service_healthy
+    volumes:
+      - ./nats:/mnt
+    entrypoint: null
+    command: ["bash", "/mnt/add_streams.sh"]
+
 volumes:
   backend-data: null
   postgres-data: null
   redis-data: null
+  nats-data: null
 
 secrets:
   secrets:

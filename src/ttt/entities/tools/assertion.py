@@ -35,13 +35,13 @@ def assert_(
 
 @overload
 def assert_(
-    assertion: bool,  # noqa: FBT001
+    assertion: Any,  # noqa: ANN401
     else_: Exception | type[Exception] = ValueError,
 ) -> None: ...
 
 
 def assert_(
-    assertion: bool,  # noqa: FBT001
+    assertion: Any,
     else_: Exception | type[Exception] = ValueError,
 ) -> None:
     if not assertion:

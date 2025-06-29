@@ -1,18 +1,18 @@
-from ttt.entities.finance.kopecks import Kopecks
+from ttt.entities.finance.rubles import Rubles
 
 
 type Stars = int
 
 
-class NonExchangeableKopecksForStarsError(Exception): ...
+class NonExchangeableRublesForStarsError(Exception): ...
 
 
-def purchased_stars_for_kopecks(kopecks: Kopecks) -> Stars:
+def purchased_stars_for_rubles(rubles: Rubles) -> Stars:
     """
-    :raises ttt.entities.core.stars.NonExchangeableKopecksForStarsError:
+    :raises ttt.entities.core.stars.NonExchangeableRublesForStarsError:
     """
 
-    match kopecks:
+    match rubles.total_kopecks():
         case 8_00:
             return 256
         case 64_00:
@@ -26,4 +26,4 @@ def purchased_stars_for_kopecks(kopecks: Kopecks) -> Stars:
         case 1024_00:
             return 131072
         case _:
-            raise NonExchangeableKopecksForStarsError
+            raise NonExchangeableRublesForStarsError

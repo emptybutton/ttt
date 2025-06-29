@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
+from uuid import UUID
 
 from ttt.entities.core.player.location import PlayerLocation
+from ttt.entities.core.player.player import Player
 from ttt.entities.core.stars import Stars
 
 
@@ -67,4 +69,19 @@ class PlayerViews(ABC):
     @abstractmethod
     async def render_selected_emoji_removed_view(
         self, location: PlayerLocation, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def render_wait_rubles_to_start_stars_purshase_view(
+        self, location: PlayerLocation, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def render_non_exchangeable_rubles_for_stars_view(
+        self, location: PlayerLocation, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def render_completed_stars_purshase_view(
+        self, player: Player, purshase_id: UUID, location: PlayerLocation, /,
     ) -> None: ...

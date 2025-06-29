@@ -18,6 +18,7 @@ from redis.asyncio import Redis
 from ttt.application.common.ports.emojis import Emojis
 from ttt.application.game.ports.game_views import GameViews
 from ttt.application.game.start_game import StartGame
+from ttt.application.player.complete_stars_purshase import CompleteStarsPurshase
 from ttt.application.player.ports.player_fsm import PlayerFsm
 from ttt.application.player.ports.player_views import PlayerViews
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
@@ -106,10 +107,13 @@ class AiogramProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     async def unkillable_tasks(
-        self, start_game: StartGame,
+        self,
+        start_game: StartGame,
+        complete_stars_purshase: CompleteStarsPurshase,
     ) -> UnkillableTasks:
         tasks = UnkillableTasks()
         tasks.add(start_game)
+        tasks.add(complete_stars_purshase)
 
         return tasks
 

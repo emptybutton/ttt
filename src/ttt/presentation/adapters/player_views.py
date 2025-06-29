@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from uuid import UUID
 
 from aiogram.types.message import Message
 from sqlalchemy import select
@@ -6,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.player.ports.player_views import PlayerViews
 from ttt.entities.core.player.location import PlayerLocation
+from ttt.entities.core.player.player import Player
 from ttt.entities.core.stars import Stars
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.sqlalchemy.tables import TablePlayer, TablePlayerEmoji
@@ -14,6 +16,7 @@ from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
 from ttt.presentation.aiogram.player.messages import (
+    completed_stars_purshase_message,
     emoji_already_purchased_message,
     emoji_not_purchased_to_select_message,
     emoji_selected_message,
@@ -23,6 +26,7 @@ from ttt.presentation.aiogram.player.messages import (
     profile_message,
     selected_emoji_removed_message,
     wait_emoji_to_buy_message,
+    wait_rubles_to_start_stars_purshase_message,
 )
 
 
@@ -156,5 +160,24 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews):
         self, location: PlayerLocation, /,
     ) -> None:
         await selected_emoji_removed_message(
+            not_none(self._message.bot), self._message.chat.id,
+        )
+
+    async def render_wait_rubles_to_start_stars_purshase_view(
+        self, location: PlayerLocation, /,
+    ) -> None:
+        await wait_rubles_to_start_stars_purshase_message(
+            not_none(self._message.bot), self._message.chat.id,
+        )
+
+    async def render_non_exchangeable_rubles_for_stars_view(
+        self, location: PlayerLocation, /,
+    ) -> None:
+        raise NotImplementedError
+
+    async def render_completed_stars_purshase_view(
+        self, player: Player, purshase_id: UUID, location: PlayerLocation, /,
+    ) -> None:
+        await completed_stars_purshase_message(
             not_none(self._message.bot), self._message.chat.id,
         )

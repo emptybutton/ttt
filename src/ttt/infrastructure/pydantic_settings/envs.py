@@ -1,4 +1,4 @@
-from pydantic import PositiveInt, PostgresDsn, RedisDsn
+from pydantic import NatsDsn, PositiveInt, PostgresDsn, RedisDsn
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -18,6 +18,8 @@ class Envs(BaseSettings):
 
     redis_url: RedisDsn
     redis_pool_size: PositiveInt
+
+    nats_url: NatsDsn
 
     game_waiting_queue_pulling_timeout_min_ms: int
     game_waiting_queue_pulling_timeout_salt_ms: int

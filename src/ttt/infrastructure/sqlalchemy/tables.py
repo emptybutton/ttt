@@ -21,16 +21,65 @@ from ttt.entities.core.game.game import (
 )
 from ttt.entities.core.player.account import Account
 from ttt.entities.core.player.emoji import PlayerEmoji
-from ttt.entities.core.player.location import PlayerGameLocation
+from ttt.entities.core.player.location import PlayerGameLocation, PlayerLocation
 from ttt.entities.core.player.player import Player
 from ttt.entities.core.player.stars_purchase import StarsPurchase
 from ttt.entities.core.player.win import Win
+from ttt.entities.finance.payment.payment import Payment
+from ttt.entities.finance.payment.success import PaymentSuccess
+from ttt.entities.finance.rubles import Rubles
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.text.emoji import Emoji
 from ttt.entities.tools.assertion import not_none
 
 
 class Base(DeclarativeBase): ...
+
+
+class TablePayment(Base):
+    __tablename__ = "payments"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    paid_rubles_total_kopecks: Mapped[int] = mapped_column(BigInteger())
+    start_datetime: Mapped[datetime]
+    completion_datetime: Mapped[datetime | None]
+    success_id: Mapped[str | None]
+    success_gateway_id: Mapped[str | None]
+    is_cancelled: Mapped[bool]
+
+    def entity(self) -> Payment:
+        if self.success_id is None or self.success_gateway_id is None:
+            success = None
+        else:
+            success = PaymentSuccess(self.success_id, self.success_gateway_id)
+
+        return Payment(
+            self.id,
+            Rubles.with_total_kopecks(self.paid_rubles_total_kopecks),
+            self.start_datetime,
+            self.completion_datetime,
+            success,
+            self.is_cancelled,
+        )
+
+    @classmethod
+    def of(cls, it: Payment) -> "TablePayment":
+        if it.success is None:
+            success_id = None
+            success_gateway_id = None
+        else:
+            success_id = it.success.id
+            success_gateway_id = it.success.gateway_id
+
+        return TablePayment(
+            id=it.id_,
+            paid_rubles_total_kopecks=it.paid_rubles.total_kopecks(),
+            start_datetime=it.start_datetime,
+            completion_datetime=it.completion_datetime,
+            success_id=success_id,
+            success_gateway_id=success_gateway_id,
+            is_cancelled=it.is_cancelled,
+        )
 
 
 class TablePlayerEmoji(Base):
@@ -65,35 +114,39 @@ class TablePlayerEmoji(Base):
 class TableStarsPurchase(Base):
     __tablename__ = "stars_purchases"
 
-    id: Mapped[str] = mapped_column(primary_key=True)
-    gateway_id: Mapped[str] = mapped_column(primary_key=True)
-    player_id: Mapped[int] = mapped_column(
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    location_player_id: Mapped[int] = mapped_column(
         ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
-    stars: Mapped[int]
-    kopecks: Mapped[int]
-    datetime_: Mapped[datetime]
+    location_chat_id: Mapped[int] = mapped_column(BigInteger())
+    new_stars: Mapped[int]
+    payment_id: Mapped[UUID] = mapped_column(
+        ForeignKey("payments.id", deferrable=True, initially="DEFERRED"),
+        index=True,
+    )
+
+    payment = relationship(TablePayment)
 
     def entity(self) -> StarsPurchase:
         return StarsPurchase(
             id_=self.id,
-            gateway_id=self.gateway_id,
-            player_id=self.player_id,
-            stars=self.stars,
-            kopecks=self.kopecks,
-            datetime_=self.datetime_,
+            location=PlayerLocation(
+                self.location_player_id,
+                self.location_chat_id,
+            ),
+            new_stars=self.new_stars,
+            payment=self.payment.entity(),
         )
 
     @classmethod
     def of(cls, it: StarsPurchase) -> "TableStarsPurchase":
         return TableStarsPurchase(
             id=it.id_,
-            gateway_id=it.gateway_id,
-            player_id=it.player_id,
-            stars=it.stars,
-            kopecks=it.kopecks,
-            datetime_=it.datetime_,
+            location_player_id=it.location.player_id,
+            location_chat_id=it.location.chat_id,
+            new_stars=it.new_stars,
+            payment_id=it.payment.id_,
         )
 
 
@@ -121,7 +174,7 @@ class TablePlayer(Base):
     )
     stars_purchases: Mapped[list[TableStarsPurchase]] = relationship(
         lazy="selectin",
-        foreign_keys=[TableStarsPurchase.player_id],
+        foreign_keys=[TableStarsPurchase.location_player_id],
     )
 
     def entity(self) -> Player:
@@ -393,11 +446,16 @@ class TableGame(Base):
 
 type TablePlayerAggregate = TablePlayer | TablePlayerEmoji | TableStarsPurchase
 type TableGameAggregate = TableGame | TableGameResult | TableCell
+type TablePaymentAggregate = TablePayment
 
-type TableAggregate = TablePlayerAggregate | TableGameAggregate
+type TableAggregate = (
+    TablePlayerAggregate
+    | TableGameAggregate
+    | TablePaymentAggregate
+)
 
 
-def table_entity(entity: Aggregate) -> TableAggregate:
+def table_entity(entity: Aggregate) -> TableAggregate:  # noqa: PLR0911
     match entity:
         case Player():
             return TablePlayer.of(entity)
@@ -412,3 +470,6 @@ def table_entity(entity: Aggregate) -> TableAggregate:
             return TableGameResult.of(entity)
         case Cell():
             return TableCell.of(entity)
+
+        case Payment():
+            return TablePayment.of(entity)

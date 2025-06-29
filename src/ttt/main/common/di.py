@@ -1,6 +1,9 @@
 from collections.abc import AsyncIterator
 
 from dishka import Provider, Scope, provide
+from nats import connect as connect_to_nats
+from nats.aio.client import Client as Nats
+from nats.js import JetStreamContext
 from redis.asyncio import ConnectionPool, Redis
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -20,6 +23,10 @@ from ttt.application.game.ports.waiting_locations import WaitingLocations
 from ttt.application.game.start_game import StartGame
 from ttt.application.game.wait_game import WaitGame
 from ttt.application.player.buy_emoji import BuyEmoji
+from ttt.application.player.complete_stars_purshase import CompleteStarsPurshase
+from ttt.application.player.initiate_stars_purchase_payment import (
+    InitiateStarsPurchasePayment,
+)
 from ttt.application.player.ports.players import Players
 from ttt.application.player.register_player import RegisterPlayer
 from ttt.application.player.remove_emoji import RemoveEmoji
@@ -27,6 +34,9 @@ from ttt.application.player.select_emoji import SelectEmoji
 from ttt.application.player.view_player import ViewPlayer
 from ttt.application.player.wait_emoji_to_buy import WaitEmojiToBuy
 from ttt.application.player.wait_emoji_to_select import WaitEmojiToSelect
+from ttt.application.player.wait_rubles_to_start_stars_purshase import (
+    WaitRublesToStartStarsPurshase,
+)
 from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
@@ -38,6 +48,9 @@ from ttt.infrastructure.adapters.waiting_locations import (
     InRedisFixedBatchesWaitingLocations,
 )
 from ttt.infrastructure.background_tasks import BackgroundTasks
+from ttt.infrastructure.nats.paid_stars_purchase_payment_inbox import (
+    InNatsPaidStarsPurchasePaymentInbox,
+)
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.infrastructure.redis.batches import InRedisFixedBatches
@@ -106,6 +119,27 @@ class CommonProvider(Provider):
         async with Redis.from_url(str(envs.redis_url)) as redis:
             yield redis
 
+    @provide(scope=Scope.APP)
+    async def provide_nats(
+        self,
+        envs: Envs,
+    ) -> AsyncIterator[Nats]:
+        nats = await connect_to_nats(str(envs.nats_url))
+
+        async with nats:
+            yield nats
+
+    @provide(scope=Scope.APP)
+    async def provide_jetstream(self, nats: Nats) -> JetStreamContext:
+        return nats.jetstream()
+
+    @provide(scope=Scope.APP)
+    async def provide_in_nats_paid_stars_purchase_payment_inbox(
+        self, jetstream: JetStreamContext,
+    ) -> AsyncIterator[InNatsPaidStarsPurchasePaymentInbox]:
+        async with InNatsPaidStarsPurchasePaymentInbox(jetstream) as inbox:
+            yield inbox
+
     provide_transaction = provide(
         InPostgresTransaction,
         provides=Transaction,
@@ -170,6 +204,15 @@ class CommonProvider(Provider):
         WaitEmojiToSelect, scope=Scope.REQUEST,
     )
     provide_remove_emoji = provide(RemoveEmoji, scope=Scope.REQUEST)
+    probide_wait_rubles_to_start_stars_purshase = provide(
+        WaitRublesToStartStarsPurshase, scope=Scope.REQUEST,
+    )
+    probide_initiate_stars_purchase_payment = provide(
+        InitiateStarsPurchasePayment, scope=Scope.REQUEST,
+    )
+    probide_complete_stars_purshase = provide(
+        CompleteStarsPurshase, scope=Scope.REQUEST,
+    )
 
     provide_start_game = provide(StartGame, scope=Scope.REQUEST)
     provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
