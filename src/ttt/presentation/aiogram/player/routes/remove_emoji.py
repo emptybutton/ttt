@@ -6,6 +6,7 @@ from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.player.remove_emoji import RemoveEmoji
 from ttt.entities.core.player.location import PlayerLocation
+from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
 
@@ -18,7 +19,9 @@ async def _(
     message: Message, remove_emoji: FromDishka[RemoveEmoji],
 ) -> None:
     if message.from_user is None:
-        await anons_are_rohibited_message(message)
+        await anons_are_rohibited_message(
+            not_none(message.bot), message.chat.id,
+        )
         return
 
     await remove_emoji(PlayerLocation(message.from_user.id, message.chat.id))

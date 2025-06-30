@@ -20,7 +20,9 @@ async def _(
     make_move_in_game: FromDishka[MakeMoveInGame],
 ) -> None:
     if message.from_user is None:
-        await anons_are_rohibited_message(message)
+        await anons_are_rohibited_message(
+            not_none(message.bot), message.chat.id,
+        )
         return
 
     cell_number_int = int(not_none(message.text))

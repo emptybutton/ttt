@@ -56,7 +56,7 @@ from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.infrastructure.redis.batches import InRedisFixedBatches
 
 
-class CommonProvider(Provider):
+class InfrastructureProvider(Provider):
     provide_envs = provide(source=Envs.load, scope=Scope.APP)
     provide_secrets = provide(source=Secrets.load, scope=Scope.APP)
 
@@ -194,27 +194,3 @@ class CommonProvider(Provider):
                 envs.game_waiting_queue_pulling_timeout_salt_ms,
             ),
         )
-
-    provide_view_player = provide(ViewPlayer, scope=Scope.REQUEST)
-    provide_register_player = provide(RegisterPlayer, scope=Scope.REQUEST)
-    provide_buy_emoji = provide(BuyEmoji, scope=Scope.REQUEST)
-    provide_wait_emoji_to_buy = provide(WaitEmojiToBuy, scope=Scope.REQUEST)
-    provide_select_emoji = provide(SelectEmoji, scope=Scope.REQUEST)
-    provide_wait_emoji_to_select = provide(
-        WaitEmojiToSelect, scope=Scope.REQUEST,
-    )
-    provide_remove_emoji = provide(RemoveEmoji, scope=Scope.REQUEST)
-    probide_wait_rubles_to_start_stars_purshase = provide(
-        WaitRublesToStartStarsPurshase, scope=Scope.REQUEST,
-    )
-    probide_initiate_stars_purchase_payment = provide(
-        InitiateStarsPurchasePayment, scope=Scope.REQUEST,
-    )
-    probide_complete_stars_purshase = provide(
-        CompleteStarsPurshase, scope=Scope.REQUEST,
-    )
-
-    provide_start_game = provide(StartGame, scope=Scope.REQUEST)
-    provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
-    provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
-    provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)

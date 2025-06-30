@@ -1,4 +1,4 @@
-from aiogram.types.message import Message
+from aiogram import Bot
 from aiogram.utils.formatting import (
     Bold,
     Italic,
@@ -9,15 +9,15 @@ from aiogram.utils.formatting import (
 )
 
 
-async def anons_are_rohibited_message(message: Message) -> None:
-    await message.answer("❌ Анонимам вход запрещён.")
+async def anons_are_rohibited_message(bot: Bot, chat_id: int) -> None:
+    await bot.send_message(chat_id, "❌ Анонимам вход запрещён.")
 
 
-async def need_to_start_message(message: Message) -> None:
-    await message.answer("❌ Для начала необходимо начать: /start")
+async def need_to_start_message(bot: Bot, chat_id: int) -> None:
+    await bot.send_message(chat_id, "❌ Для начала необходимо начать: /start")
 
 
-async def help_message(message: Message) -> None:
+async def help_message(bot: Bot, chat_id: int) -> None:
     description = Text(
         Underline(Italic(Bold("ttt!"))),
         " — многопользовательские онлайн-крестики-нолики в Telegram.",
@@ -40,4 +40,4 @@ async def help_message(message: Message) -> None:
         ),
         sep="\n\n",
     )
-    await message.answer(**content.as_kwargs())
+    await bot.send_message(chat_id, **content.as_kwargs())

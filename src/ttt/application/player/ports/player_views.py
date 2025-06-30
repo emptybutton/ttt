@@ -8,7 +8,9 @@ from ttt.entities.core.stars import Stars
 
 class PlayerViews(ABC):
     @abstractmethod
-    async def render_view_of_player_with_id(self, player_id: int, /) -> None:
+    async def render_view_of_player_with_id(
+        self, location: PlayerLocation, /,
+    ) -> None:
         ...
 
     @abstractmethod

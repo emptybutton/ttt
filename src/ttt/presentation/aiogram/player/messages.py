@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 
 from aiogram import Bot
-from aiogram.types.message import Message
 from aiogram.utils.formatting import Bold, Text, as_list
 
 from ttt.entities.core.stars import Stars
@@ -9,7 +8,8 @@ from ttt.presentation.aiogram.player.keyboards import stars_prices_keyboard
 
 
 async def profile_message(  # noqa: PLR0913, PLR0917
-    message: Message,
+    bot: Bot,
+    chat_id: int,
     stars: int,
     emojis: Sequence[str],
     selected_emoji: str | None,
@@ -55,7 +55,7 @@ async def profile_message(  # noqa: PLR0913, PLR0917
         ),
         "⚔️ Сейчас в игре" if is_in_game else "💤 Сейчас не в игре",
     )
-    await message.answer(**content.as_kwargs())
+    await bot.send_message(chat_id, **content.as_kwargs())
 
 
 async def wait_emoji_to_buy_message(bot: Bot, chat_id: int) -> None:

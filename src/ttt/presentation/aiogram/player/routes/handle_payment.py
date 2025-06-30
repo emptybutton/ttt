@@ -1,5 +1,5 @@
 
-from aiogram import Router
+from aiogram import F, Router
 from aiogram.types import ContentType, Message
 from dishka.integrations.aiogram import FromDishka, inject
 
@@ -21,12 +21,12 @@ from ttt.presentation.aiogram.player.invoices import (
 handle_payment_router = Router(name=__name__)
 
 
-@handle_payment_router.message(content_types=ContentType.SUCCESSFUL_PAYMENT)
+@handle_payment_router.message(F.content_type == ContentType.SUCCESSFUL_PAYMENT)
 @inject
 async def _(
     message: Message,
     paid_stars_purchase_payment_inbox: FromDishka[
-        InNatsPaidStarsPurchasePaymentInbox,
+        InNatsPaidStarsPurchasePaymentInbox
     ],
 ) -> None:
     payment = not_none(message.successful_payment)

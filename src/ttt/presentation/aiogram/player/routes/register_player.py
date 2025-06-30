@@ -5,6 +5,7 @@ from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.player.register_player import RegisterPlayer
+from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
 
@@ -17,7 +18,9 @@ async def _(
     message: Message, register_player: FromDishka[RegisterPlayer],
 ) -> None:
     if message.from_user is None:
-        await anons_are_rohibited_message(message)
+        await anons_are_rohibited_message(
+            not_none(message.bot), message.chat.id,
+        )
         return
 
     await register_player(message.from_user.id, message.chat.id)

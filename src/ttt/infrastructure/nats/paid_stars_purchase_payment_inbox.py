@@ -9,7 +9,6 @@ from pydantic import TypeAdapter
 from ttt.application.player.ports.stars_purchase_payment_gateway import (
     PaidStarsPurchasePayment,
 )
-from ttt.infrastructure.nats.subscription import pull_subscription
 
 
 @dataclass
@@ -18,12 +17,12 @@ class InNatsPaidStarsPurchasePaymentInbox:
 
     _subscription: JetStreamContext.PullSubscription = field(init=False)
     _adapter: ClassVar = TypeAdapter(PaidStarsPurchasePayment)
-    _subject: ClassVar = "player.stars_purchase.payment_paid"
+    _subject: ClassVar = "player.stars_purchase.paid_payment_inbox"
 
     async def __aenter__(self) -> Self:
-        self._subscription = await pull_subscription(
-            self._js,
+        self._subscription = await self._js.pull_subscribe(
             self._subject,
+            "ttt-player-stars_purchase-paid_payment_inbox",
             "PLAYER",
         )
         return self
@@ -47,5 +46,10 @@ class InNatsPaidStarsPurchasePaymentInbox:
                 PaidStarsPurchasePayment,
                 self._adapter.validate_json(message.data),
             )
-            yield paid_payment
-            await message.ack()
+            try:
+                yield paid_payment
+            except BaseException as error:
+                await message.nak()
+                raise error from error
+            else:
+                await message.ack()
