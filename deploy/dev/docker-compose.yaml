@@ -62,13 +62,12 @@ services:
     volumes:
       - redis-data:/data
       - ./redis:/mnt/dev
-      - ../common/redis:/mnt/common
+    command: redis-server /mnt/dev/redis.conf
     healthcheck:
       test: echo PING | redis-cli | grep -qF PONG
       start_period: 2m
       start_interval: 0.5s
       interval: 3s
-    command: redis-server /mnt/dev/redis.conf
 
   nats:
     image: nats:2.11.5-alpine3.22
