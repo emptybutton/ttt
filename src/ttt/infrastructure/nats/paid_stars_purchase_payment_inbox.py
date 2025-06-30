@@ -9,6 +9,7 @@ from pydantic import TypeAdapter
 from ttt.application.player.ports.stars_purchase_payment_gateway import (
     PaidStarsPurchasePayment,
 )
+from ttt.infrastructure.nats.messages import at_least_once_messages
 
 
 @dataclass
@@ -39,17 +40,8 @@ class InNatsPaidStarsPurchasePaymentInbox:
         await self._js.publish(self._subject, json)
 
     async def __aiter__(self) -> AsyncIterator[PaidStarsPurchasePayment]:
-        messages = await self._subscription.fetch()
-
-        for message in messages:
-            paid_payment = cast(
+        async for message in at_least_once_messages(self._subscription):
+            yield cast(
                 PaidStarsPurchasePayment,
                 self._adapter.validate_json(message.data),
             )
-            try:
-                yield paid_payment
-            except BaseException as error:
-                await message.nak()
-                raise error from error
-            else:
-                await message.ack()
