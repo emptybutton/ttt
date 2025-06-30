@@ -31,6 +31,6 @@ class Rubles:
     @classmethod
     def with_total_kopecks(cls, total_kopecks: Kopecks) -> "Rubles":
         amount = total_kopecks // 100
-        kopecks = total_kopecks - amount
+        kopecks = total_kopecks - amount * 100
 
         return Rubles(amount, kopecks)

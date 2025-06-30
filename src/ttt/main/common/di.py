@@ -16,27 +16,9 @@ from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
-from ttt.application.game.cancel_game import CancelGame
-from ttt.application.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.ports.games import Games
 from ttt.application.game.ports.waiting_locations import WaitingLocations
-from ttt.application.game.start_game import StartGame
-from ttt.application.game.wait_game import WaitGame
-from ttt.application.player.buy_emoji import BuyEmoji
-from ttt.application.player.complete_stars_purshase import CompleteStarsPurshase
-from ttt.application.player.initiate_stars_purchase_payment import (
-    InitiateStarsPurchasePayment,
-)
 from ttt.application.player.ports.players import Players
-from ttt.application.player.register_player import RegisterPlayer
-from ttt.application.player.remove_emoji import RemoveEmoji
-from ttt.application.player.select_emoji import SelectEmoji
-from ttt.application.player.view_player import ViewPlayer
-from ttt.application.player.wait_emoji_to_buy import WaitEmojiToBuy
-from ttt.application.player.wait_emoji_to_select import WaitEmojiToSelect
-from ttt.application.player.wait_rubles_to_start_stars_purshase import (
-    WaitRublesToStartStarsPurshase,
-)
 from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres

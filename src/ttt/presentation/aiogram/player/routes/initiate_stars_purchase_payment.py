@@ -1,5 +1,6 @@
 from aiogram import F, Router
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery
+from aiogram.types.message import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.player.initiate_stars_purchase_payment import (
@@ -8,32 +9,9 @@ from ttt.application.player.initiate_stars_purchase_payment import (
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.finance.rubles import Rubles
 from ttt.entities.tools.assertion import not_none
-from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
 
 initiate_stars_purchase_payment_router = Router(name=__name__)
-
-
-@initiate_stars_purchase_payment_router.callback_query(
-    F.data == "8_rub_for_stars",
-)
-@inject
-async def _(
-    callback: CallbackQuery,
-    initiate_stars_purchase_payment: FromDishka[InitiateStarsPurchasePayment],
-) -> None:
-    await _route(initiate_stars_purchase_payment, callback, Rubles(8, 0))
-
-
-@initiate_stars_purchase_payment_router.callback_query(
-    F.data == "64_rub_for_stars",
-)
-@inject
-async def _(
-    callback: CallbackQuery,
-    initiate_stars_purchase_payment: FromDishka[InitiateStarsPurchasePayment],
-) -> None:
-    await _route(initiate_stars_purchase_payment, callback, Rubles(64, 0))
 
 
 @initiate_stars_purchase_payment_router.callback_query(
@@ -85,16 +63,11 @@ async def _route(
     callback: CallbackQuery,
     rubles: Rubles,
 ) -> None:
-    message = callback.message
-
-    if not isinstance(message, Message):
+    if not isinstance(callback.message, Message):
         raise TypeError
 
-    if message.from_user is None:
-        await anons_are_rohibited_message(
-            not_none(message.bot), message.chat.id,
-        )
-        return
+    player_id = callback.from_user.id
+    chat_id = callback.message.chat.id
+    location = PlayerLocation(player_id, chat_id)
 
-    location = PlayerLocation(message.from_user.id, message.chat.id)
     await initiate_stars_purchase_payment(location, rubles)

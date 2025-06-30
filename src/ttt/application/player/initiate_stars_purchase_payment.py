@@ -2,6 +2,7 @@ from asyncio import gather
 from dataclasses import dataclass
 
 from ttt.application.common.ports.clock import Clock
+from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.player.ports.player_fsm import PlayerFsm
@@ -26,6 +27,7 @@ class InitiateStarsPurchasePayment:
     clock: Clock
     player_views: PlayerViews
     payment_gateway: StarsPurchasePaymentGateway
+    map_: Map
 
     async def __call__(
         self, location: PlayerLocation, rubles: Rubles,
@@ -56,6 +58,7 @@ class InitiateStarsPurchasePayment:
                 )
                 return
 
+            await self.map_(tracking)
             await self.fsm.set(None)
             await gather(*[
                 self.payment_gateway.process_payment(it, location)

@@ -15,17 +15,10 @@ from dishka.integrations.aiogram import AiogramMiddlewareData
 from dishka.integrations.aiogram import AiogramProvider as DishkaAiogramProvider
 from redis.asyncio import Redis
 
-from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.emojis import Emojis
-from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.randoms import Randoms
-from ttt.application.common.ports.transaction import Transaction
-from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.cancel_game import CancelGame
 from ttt.application.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.ports.game_views import GameViews
-from ttt.application.game.ports.games import Games
-from ttt.application.game.ports.waiting_locations import WaitingLocations
 from ttt.application.game.start_game import StartGame
 from ttt.application.game.wait_game import WaitGame
 from ttt.application.player.buy_emoji import BuyEmoji
@@ -35,7 +28,6 @@ from ttt.application.player.initiate_stars_purchase_payment import (
 )
 from ttt.application.player.ports.player_fsm import PlayerFsm
 from ttt.application.player.ports.player_views import PlayerViews
-from ttt.application.player.ports.players import Players
 from ttt.application.player.ports.stars_purchase_payment_gateway import (
     StarsPurchasePaymentGateway,
 )

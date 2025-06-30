@@ -26,6 +26,9 @@ from ttt.presentation.aiogram.player.routes.wait_emoji_to_buy import (
 from ttt.presentation.aiogram.player.routes.wait_emoji_to_select import (
     wait_emoji_to_buy_select_router,
 )
+from ttt.presentation.aiogram.player.routes.wait_rubles_to_start_stars_purshase import (  # noqa: E501
+    wait_rubles_to_start_stars_purshase_router,
+)
 
 
 player_routers = (
@@ -39,4 +42,5 @@ player_routers = (
     initiate_stars_purchase_payment_router,
     handle_payment_router,
     handle_pre_checkout_query_router,
+    wait_rubles_to_start_stars_purshase_router,
 )

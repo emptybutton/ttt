@@ -35,6 +35,7 @@ async def help_message(bot: Bot, chat_id: int) -> None:
             Text(Bold("/select_emoji"), " — выбрать эмоджи"),
             Text(Bold("/remove_emoji"), " — убрать выбранный эмоджи"),
             Text(Bold("/buy_emoji"), " — купить эмоджи"),
+            Text(Bold("/buy_stars"), " — купить звёзды"),
             Text(Bold("/help"), " — вывести это сообщение"),
             marker="  ",
         ),

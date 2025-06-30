@@ -1,4 +1,5 @@
 import logging
+from asyncio import gather
 
 from aiogram import Bot, Dispatcher
 from dishka.integrations.aiogram import setup_dishka
@@ -21,5 +22,12 @@ async def start_aiogram() -> None:
 
     bot = await container_with_request_data.get(Bot)
 
-    async with tasks:
-        await dp.start_polling(bot)
+    try:
+        async with tasks:
+            await dp.start_polling(bot)
+    finally:
+        await gather(
+            container_with_request_data.close(),
+            container_without_request_data.close(),
+            return_exceptions=True,
+        )

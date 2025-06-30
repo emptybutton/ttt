@@ -6,7 +6,7 @@ from typing import overload
 from ttt.entities.core.player.player import Player
 
 
-@dataclass(frozen=True)
+@dataclass
 class NoPlayerWithIDError(Exception):
     player_id: int
 

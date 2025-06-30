@@ -101,7 +101,7 @@ async def wait_rubles_to_start_stars_purshase_message(
 ) -> None:
     await bot.send_message(
         chat_id,
-        "🌟💸 Сколько звёзд хотите купить?",
+        "🌟 Сколько звёзд хотите купить?",
         reply_markup=stars_prices_keyboard(),
     )
 

@@ -126,7 +126,7 @@ class TableStarsPurchase(Base):
         index=True,
     )
 
-    payment = relationship(TablePayment)
+    payment = relationship(TablePayment, lazy="joined")
 
     def entity(self) -> StarsPurchase:
         return StarsPurchase(

@@ -49,7 +49,7 @@ async def stars_invoce(
     await bot.send_invoice(
         location.chat_id,
         title="Звёзды",
-        description="Покупка игровой валюты",
+        description="Покупка звёзд",
         payload=payload,
         currency="RUB",
         prices=[price],
