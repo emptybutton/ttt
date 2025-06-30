@@ -18,10 +18,16 @@ from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.ports.games import Games
 from ttt.application.game.ports.waiting_locations import WaitingLocations
+from ttt.application.player.ports.paid_stars_purchase_payment_inbox import (
+    PaidStarsPurchasePaymentInbox,
+)
 from ttt.application.player.ports.players import Players
 from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
+from ttt.infrastructure.adapters.paid_stars_purchase_payment_inbox import (
+    InNatsPaidStarsPurchasePaymentInbox,
+)
 from ttt.infrastructure.adapters.players import InPostgresPlayers
 from ttt.infrastructure.adapters.randoms import MersenneTwisterRandoms
 from ttt.infrastructure.adapters.transaction import InPostgresTransaction
@@ -31,7 +37,7 @@ from ttt.infrastructure.adapters.waiting_locations import (
 )
 from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.infrastructure.nats.paid_stars_purchase_payment_inbox import (
-    InNatsPaidStarsPurchasePaymentInbox,
+    InNatsPaidStarsPurchasePaymentInbox as OriginalInNatsPaidStarsPurchasePaymentInbox,  # noqa: E501
 )
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
@@ -116,11 +122,18 @@ class InfrastructureProvider(Provider):
         return nats.jetstream()
 
     @provide(scope=Scope.APP)
-    async def provide_in_nats_paid_stars_purchase_payment_inbox(
+    async def provide_original_in_nats_paid_stars_purchase_payment_inbox(
         self, jetstream: JetStreamContext,
-    ) -> AsyncIterator[InNatsPaidStarsPurchasePaymentInbox]:
-        async with InNatsPaidStarsPurchasePaymentInbox(jetstream) as inbox:
+    ) -> AsyncIterator[OriginalInNatsPaidStarsPurchasePaymentInbox]:
+        inbox = OriginalInNatsPaidStarsPurchasePaymentInbox(jetstream)
+        async with inbox:
             yield inbox
+
+    provide_in_nats_paid_stars_purchase_payment_inbox = provide(
+        InNatsPaidStarsPurchasePaymentInbox,
+        provides=PaidStarsPurchasePaymentInbox,
+        scope=Scope.APP,
+    )
 
     provide_transaction = provide(
         InPostgresTransaction,

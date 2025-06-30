@@ -3,23 +3,21 @@ from dataclasses import dataclass, field
 
 from aiogram import Bot
 
+from ttt.application.player.dto.common import PaidStarsPurchasePayment
 from ttt.application.player.ports.stars_purchase_payment_gateway import (
-    PaidStarsPurchasePayment,
     StarsPurchasePaymentGateway,
 )
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.core.player.stars_purchase import StarsPurchase
-from ttt.infrastructure.nats.paid_stars_purchase_payment_inbox import (
-    InNatsPaidStarsPurchasePaymentInbox,
-)
+from ttt.infrastructure.buffer import Buffer
 from ttt.presentation.aiogram.player.invoices import stars_invoce
 
 
 @dataclass
-class AiogramInAndNatsOutStarsPurchasePaymentGateway(
+class AiogramInAndBufferOutStarsPurchasePaymentGateway(
     StarsPurchasePaymentGateway,
 ):
-    _paid_purchase_payment_inbox: InNatsPaidStarsPurchasePaymentInbox
+    _buffer: Buffer[PaidStarsPurchasePayment]
     _bot: Bot
     _payments_token: str = field(repr=False)
 
@@ -33,5 +31,5 @@ class AiogramInAndNatsOutStarsPurchasePaymentGateway(
     async def paid_payment_stream(
         self,
     ) -> AsyncIterable[PaidStarsPurchasePayment]:
-        async for payment in self._paid_purchase_payment_inbox:
+        async for payment in self._buffer.stream():
             yield payment

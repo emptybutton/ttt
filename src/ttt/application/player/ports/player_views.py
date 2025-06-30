@@ -84,6 +84,11 @@ class PlayerViews(ABC):
     ) -> None: ...
 
     @abstractmethod
+    async def render_stars_purchase_will_be_completed_view(
+        self, location: PlayerLocation, /,
+    ) -> None: ...
+
+    @abstractmethod
     async def render_completed_stars_purshase_view(
         self, player: Player, purshase_id: UUID, location: PlayerLocation, /,
     ) -> None: ...

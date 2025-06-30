@@ -6,9 +6,7 @@ from typing import ClassVar, Self, cast
 from nats.js import JetStreamContext
 from pydantic import TypeAdapter
 
-from ttt.application.player.ports.stars_purchase_payment_gateway import (
-    PaidStarsPurchasePayment,
-)
+from ttt.application.player.dto.common import PaidStarsPurchasePayment
 from ttt.infrastructure.nats.messages import at_least_once_messages
 
 

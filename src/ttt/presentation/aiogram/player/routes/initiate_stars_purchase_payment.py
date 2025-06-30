@@ -8,7 +8,6 @@ from ttt.application.player.initiate_stars_purchase_payment import (
 )
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.finance.rubles import Rubles
-from ttt.entities.tools.assertion import not_none
 
 
 initiate_stars_purchase_payment_router = Router(name=__name__)

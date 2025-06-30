@@ -106,7 +106,13 @@ async def wait_rubles_to_start_stars_purshase_message(
     )
 
 
-async def completed_stars_purshase_message(
+async def stars_will_be_added_message(
     bot: Bot, chat_id: int,
 ) -> None:
-    await bot.send_message(chat_id, "🌟💸 Оплата прошла!")
+    await bot.send_message(chat_id, "🌟 Звёзды скоро начислятся!")
+
+
+async def stars_added_message(
+    bot: Bot, chat_id: int,
+) -> None:
+    await bot.send_message(chat_id, "🌟 Звезды начислились!")

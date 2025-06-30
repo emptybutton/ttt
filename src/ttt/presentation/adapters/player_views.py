@@ -15,7 +15,6 @@ from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
 from ttt.presentation.aiogram.player.messages import (
-    completed_stars_purshase_message,
     emoji_already_purchased_message,
     emoji_not_purchased_to_select_message,
     emoji_selected_message,
@@ -24,6 +23,8 @@ from ttt.presentation.aiogram.player.messages import (
     not_enough_stars_to_buy_emoji_message,
     profile_message,
     selected_emoji_removed_message,
+    stars_added_message,
+    stars_will_be_added_message,
     wait_emoji_to_buy_message,
     wait_rubles_to_start_stars_purshase_message,
 )
@@ -159,7 +160,12 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews):
     ) -> None:
         raise NotImplementedError
 
+    async def render_stars_purchase_will_be_completed_view(
+        self, location: PlayerLocation, /,
+    ) -> None:
+        await stars_will_be_added_message(self._bot, location.chat_id)
+
     async def render_completed_stars_purshase_view(
         self, player: Player, purshase_id: UUID, location: PlayerLocation, /,
     ) -> None:
-        await completed_stars_purshase_message(self._bot, location.chat_id)
+        await stars_added_message(self._bot, location.chat_id)

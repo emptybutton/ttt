@@ -10,9 +10,8 @@ from aiogram.types import (
     Message,
     TelegramObject,
 )
-from dishka import Provider, Scope, make_async_container, provide
+from dishka import Provider, Scope, from_context, provide
 from dishka.integrations.aiogram import AiogramMiddlewareData
-from dishka.integrations.aiogram import AiogramProvider as DishkaAiogramProvider
 from redis.asyncio import Redis
 
 from ttt.application.common.ports.emojis import Emojis
@@ -23,6 +22,7 @@ from ttt.application.game.start_game import StartGame
 from ttt.application.game.wait_game import WaitGame
 from ttt.application.player.buy_emoji import BuyEmoji
 from ttt.application.player.complete_stars_purshase import CompleteStarsPurshase
+from ttt.application.player.dto.common import PaidStarsPurchasePayment
 from ttt.application.player.initiate_stars_purchase_payment import (
     InitiateStarsPurchasePayment,
 )
@@ -34,17 +34,17 @@ from ttt.application.player.ports.stars_purchase_payment_gateway import (
 from ttt.application.player.register_player import RegisterPlayer
 from ttt.application.player.remove_emoji import RemoveEmoji
 from ttt.application.player.select_emoji import SelectEmoji
+from ttt.application.player.start_stars_purshase_completion import (
+    StartStarsPurshaseCompletion,
+)
 from ttt.application.player.view_player import ViewPlayer
 from ttt.application.player.wait_emoji_to_buy import WaitEmojiToBuy
 from ttt.application.player.wait_emoji_to_select import WaitEmojiToSelect
 from ttt.application.player.wait_rubles_to_start_stars_purshase import (
     WaitRublesToStartStarsPurshase,
 )
-from ttt.infrastructure.nats.paid_stars_purchase_payment_inbox import (
-    InNatsPaidStarsPurchasePaymentInbox,
-)
+from ttt.infrastructure.buffer import Buffer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
-from ttt.main.common.di import InfrastructureProvider
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
     BackroundAiogramMessagesAsGameViews,
@@ -54,7 +54,7 @@ from ttt.presentation.adapters.player_views import (
     AiogramMessagesFromPostgresAsPlayerViews,
 )
 from ttt.presentation.adapters.stars_purchase_payment_gateway import (
-    AiogramInAndNatsOutStarsPurchasePaymentGateway,
+    AiogramInAndBufferOutStarsPurchasePaymentGateway,
 )
 from ttt.presentation.aiogram.common.bots import ttt_bot
 from ttt.presentation.aiogram.common.routes.all import common_routers
@@ -69,6 +69,11 @@ class NoMessageInEventError(Exception):
 
 
 class AiogramProvider(Provider):
+    provide_paid_stars_purchase_payment_buffer = from_context(
+        provides=Buffer[PaidStarsPurchasePayment],
+        scope=Scope.APP,
+    )
+
     @provide(scope=Scope.APP)
     def provide_strage(self, redis: Redis) -> BaseStorage:
         return RedisStorage(redis)
@@ -114,10 +119,10 @@ class AiogramProvider(Provider):
         self,
         secrets: Secrets,
         bot: Bot,
-        inbox: InNatsPaidStarsPurchasePaymentInbox,
+        buffer: Buffer[PaidStarsPurchasePayment],
     ) -> StarsPurchasePaymentGateway:
-        return AiogramInAndNatsOutStarsPurchasePaymentGateway(
-            inbox,
+        return AiogramInAndBufferOutStarsPurchasePaymentGateway(
+            buffer,
             bot,
             secrets.payments_token,
         )
@@ -126,16 +131,23 @@ class AiogramProvider(Provider):
     async def unkillable_tasks(
         self,
         start_game: StartGame,
+        start_stars_purshase_completion: StartStarsPurshaseCompletion,
         complete_stars_purshase: CompleteStarsPurshase,
     ) -> UnkillableTasks:
         tasks = UnkillableTasks()
         tasks.add(start_game)
+        tasks.add(start_stars_purshase_completion)
         tasks.add(complete_stars_purshase)
 
         return tasks
 
 
 class AiogramRequestDataProvider(Provider):
+    provide_paid_stars_purchase_payment_buffer = from_context(
+        provides=Buffer[PaidStarsPurchasePayment],
+        scope=Scope.APP,
+    )
+
     @provide(scope=Scope.REQUEST)
     def provide_message(self, event: TelegramObject) -> Message:
         match event:
@@ -181,24 +193,11 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
     probide_complete_stars_purshase = provide(
         CompleteStarsPurshase, scope=Scope.REQUEST,
     )
+    probide_start_stars_purshase_completion = provide(
+        StartStarsPurshaseCompletion, scope=Scope.REQUEST,
+    )
 
     provide_start_game = provide(StartGame, scope=Scope.REQUEST)
     provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
     provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
     provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)
-
-
-container_with_request_data = make_async_container(
-    DishkaAiogramProvider(),
-    AiogramProvider(),
-    AiogramRequestDataProvider(),
-    ApplicationWithAiogramRequestDataProvider(),
-    ApplicationWithoutAiogramRequestDataProvider(),
-    InfrastructureProvider(),
-)
-container_without_request_data = make_async_container(
-    DishkaAiogramProvider(),
-    AiogramProvider(),
-    ApplicationWithoutAiogramRequestDataProvider(),
-    InfrastructureProvider(),
-)
