@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
 from uuid import UUID
 
 from ttt.entities.core.player.location import PlayerLocation

@@ -61,9 +61,7 @@ class InitiateStarsPurchasePayment:
             await self.map_(tracking)
             await self.fsm.set(None)
             await gather(*[
-                self.player_views.render_stars_purchase_invoice_view(
-                    location, it.new_stars, it.payment.paid_rubles,
-                )
+                self.payment_gateway.process_payment(it, location)
                 for it in tracking.new
                 if isinstance(it, StarsPurchase)
             ])

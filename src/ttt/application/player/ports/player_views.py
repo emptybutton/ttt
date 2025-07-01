@@ -3,9 +3,7 @@ from uuid import UUID
 
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.core.player.player import Player
-from ttt.entities.core.player.stars_purchase import StarsPurchase
 from ttt.entities.core.stars import Stars
-from ttt.entities.finance.rubles import Rubles
 
 
 class PlayerViews(ABC):
@@ -94,9 +92,3 @@ class PlayerViews(ABC):
     async def render_completed_stars_purshase_view(
         self, player: Player, purshase_id: UUID, location: PlayerLocation, /,
     ) -> None: ...
-
-    @abstractmethod
-    async def render_stars_purchase_invoice_view(
-        self, location: PlayerLocation, stars: Stars, rubles: Rubles, /,
-    ) -> None:
-        ...
