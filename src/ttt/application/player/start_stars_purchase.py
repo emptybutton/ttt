@@ -12,14 +12,16 @@ from ttt.application.player.ports.stars_purchase_payment_gateway import (
     StarsPurchasePaymentGateway,
 )
 from ttt.entities.core.player.location import PlayerLocation
-from ttt.entities.core.player.stars_purchase import StarsPurchase
-from ttt.entities.core.stars import NonExchangeableRublesForStarsError
-from ttt.entities.finance.rubles import Rubles
+from ttt.entities.core.player.stars_purchase import (
+    InvalidStarsForStarsPurchaseError,
+    StarsPurchase,
+)
+from ttt.entities.core.stars import Stars
 from ttt.entities.tools.tracking import Tracking
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class InitiateStarsPurchasePayment:
+class StartStarsPurchase:
     fsm: PlayerFsm
     transaction: Transaction
     players: Players
@@ -29,39 +31,33 @@ class InitiateStarsPurchasePayment:
     payment_gateway: StarsPurchasePaymentGateway
     map_: Map
 
-    async def __call__(
-        self, location: PlayerLocation, rubles: Rubles,
-    ) -> None:
+    async def __call__(self, location: PlayerLocation, stars: Stars) -> None:
         async with self.transaction:
-            player, purchase_id, payment_id, current_datetime = await gather(
+            player, purchase_id = await gather(
                 self.players.player_with_id(location.player_id),
                 self.uuids.random_uuid(),
-                self.uuids.random_uuid(),
-                self.clock.current_datetime(),
             )
 
             tracking = Tracking()
             try:
-                player.initiate_stars_purchase_payment(
+                player.start_stars_purchase(
                     purchase_id,
                     location.chat_id,
-                    payment_id,
-                    rubles,
-                    current_datetime,
+                    stars,
                     tracking,
                 )
-            except NonExchangeableRublesForStarsError:
+            except InvalidStarsForStarsPurchaseError:
                 await self.fsm.set(None)
                 await (
                     self.player_views
-                    .render_non_exchangeable_rubles_for_stars_view(location)
+                    .render_invalid_stars_for_stars_purchase_view(location)
                 )
                 return
 
             await self.map_(tracking)
             await self.fsm.set(None)
             await gather(*[
-                self.payment_gateway.process_payment(it, location)
+                self.payment_gateway.send_invoice(it, location)
                 for it in tracking.new
                 if isinstance(it, StarsPurchase)
             ])

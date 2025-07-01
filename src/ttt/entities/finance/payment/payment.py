@@ -1,19 +1,30 @@
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum, auto
 from uuid import UUID
 
 from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.finance.rubles import Rubles
-from ttt.entities.tools.assertion import assert_
+from ttt.entities.tools.assertion import assert_, not_none
 from ttt.entities.tools.tracking import Tracking
 
 
 class NoPaidRublesForPaymentError(Exception): ...
 
 
-@dataclass(frozen=True)
-class PaymentAlreadyCompletedError(Exception):
-    is_cancelled: bool
+class NoPaymentError(Exception): ...
+
+
+class PaymentIsNotInProcessError(Exception): ...
+
+
+class PaymentIsAlreadyBeingMadeError(Exception): ...
+
+
+class PaymentState(Enum):
+    in_process = auto()
+    cancelled = auto()
+    completed = auto()
 
 
 @dataclass
@@ -25,69 +36,82 @@ class Payment:
 
     id_: UUID
     paid_rubles: Rubles
+    state: PaymentState
     start_datetime: datetime
     completion_datetime: datetime | None
     success: PaymentSuccess | None
-    is_cancelled: bool
 
     def __post_init__(self) -> None:
         assert_(self.paid_rubles, else_=NoPaidRublesForPaymentError)
 
-    def is_completed(self) -> bool:
-        return self.success is not None or self.is_cancelled
-
-    def complete(
-        self,
-        success: PaymentSuccess,
-        current_datetime: datetime,
-        tracking: Tracking,
-    ) -> None:
-        """
-        :raises ttt.entities.finance.payment.payment.PaymentAlreadyCompletedError:
-        """  # noqa: E501
-
-        assert_(
-            not self.is_completed(),
-            else_=PaymentAlreadyCompletedError(self.is_cancelled),
-        )
-
-        self.success = success
-        self.completion_datetime = current_datetime
-        tracking.register_mutated(self)
-
-    def cancel(self, current_datetime: datetime, tracking: Tracking) -> None:
-        """
-        :raises ttt.entities.finance.payment.payment.PaymentAlreadyCompletedError:
-        """  # noqa: E501
-
-        assert_(
-            not self.is_completed(),
-            else_=PaymentAlreadyCompletedError(self.is_cancelled),
-        )
-
-        self.is_cancelled = True
-        self.completion_datetime = current_datetime
-        tracking.register_mutated(self)
-
     @classmethod
-    def initiate(
+    def start(
         cls,
+        payment: "Payment | None",
         payment_id: UUID,
         payment_paid_rubles: Rubles,
         current_datetime: datetime,
         tracking: Tracking,
     ) -> "Payment":
+        """
+        :raises ttt.entities.finance.payment.payment.PaymentIsAlreadyBeingMadeError:
+        """  # noqa: E501
+
+        assert_(payment is None, else_=PaymentIsAlreadyBeingMadeError)
+
         payment = Payment(
             id_=payment_id,
             paid_rubles=payment_paid_rubles,
             start_datetime=current_datetime,
+            state=PaymentState.in_process,
             success=None,
             completion_datetime=None,
-            is_cancelled=False,
         )
         tracking.register_new(payment)
 
         return payment
+
+
+def complete_payment(
+    payment: Payment | None,
+    success: PaymentSuccess,
+    current_datetime: datetime,
+    tracking: Tracking,
+) -> None:
+    """
+    :raises ttt.entities.finance.payment.payment.NoPaymentError:
+    :raises ttt.entities.finance.payment.payment.PaymentIsNotInProcessError:
+    """
+
+    payment = not_none(payment, else_=NoPaymentError)
+    assert_(
+        payment.state is PaymentState.in_process,
+        else_=PaymentIsNotInProcessError,
+    )
+
+    payment.state = PaymentState.completed
+    payment.completion_datetime = current_datetime
+    payment.success = success
+    tracking.register_mutated(payment)
+
+
+def cancel_payment(
+    payment: Payment | None, current_datetime: datetime, tracking: Tracking,
+) -> None:
+    """
+    :raises ttt.entities.finance.payment.payment.NoPaymentError:
+    :raises ttt.entities.finance.payment.payment.PaymentIsNotInProcessError:
+    """
+
+    payment = not_none(payment, else_=NoPaymentError)
+    assert_(
+        payment.state is PaymentState.in_process,
+        else_=PaymentIsNotInProcessError,
+    )
+
+    payment.state = PaymentState.cancelled
+    payment.completion_datetime = current_datetime
+    tracking.register_mutated(payment)
 
 
 type PaymentAggregate = Payment

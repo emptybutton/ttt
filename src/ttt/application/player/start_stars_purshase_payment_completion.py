@@ -10,7 +10,7 @@ from ttt.application.player.ports.stars_purchase_payment_gateway import (
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class StartStarsPurshaseCompletion:
+class StartStarsPurshasePaymentCompletion:
     inbox: PaidStarsPurchasePaymentInbox
     payment_gateway: StarsPurchasePaymentGateway
     player_views: PlayerViews

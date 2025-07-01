@@ -21,10 +21,10 @@ from ttt.application.game.ports.game_views import GameViews
 from ttt.application.game.start_game import StartGame
 from ttt.application.game.wait_game import WaitGame
 from ttt.application.player.buy_emoji import BuyEmoji
-from ttt.application.player.complete_stars_purshase import CompleteStarsPurshase
+from ttt.application.player.complete_stars_purshase_payment import CompleteStarsPurshasePayment
 from ttt.application.player.dto.common import PaidStarsPurchasePayment
-from ttt.application.player.initiate_stars_purchase_payment import (
-    InitiateStarsPurchasePayment,
+from ttt.application.player.start_stars_purchase import (
+    StartStarsPurchase,
 )
 from ttt.application.player.ports.player_fsm import PlayerFsm
 from ttt.application.player.ports.player_views import PlayerViews
@@ -34,14 +34,14 @@ from ttt.application.player.ports.stars_purchase_payment_gateway import (
 from ttt.application.player.register_player import RegisterPlayer
 from ttt.application.player.remove_emoji import RemoveEmoji
 from ttt.application.player.select_emoji import SelectEmoji
-from ttt.application.player.start_stars_purshase_completion import (
-    StartStarsPurshaseCompletion,
+from ttt.application.player.start_stars_purshase_payment_completion import (
+    StartStarsPurshasePaymentCompletion,
 )
 from ttt.application.player.view_player import ViewPlayer
 from ttt.application.player.wait_emoji_to_buy import WaitEmojiToBuy
 from ttt.application.player.wait_emoji_to_select import WaitEmojiToSelect
-from ttt.application.player.wait_rubles_to_start_stars_purshase import (
-    WaitRublesToStartStarsPurshase,
+from ttt.application.player.wait_stars_to_start_stars_purshase import (
+    WaitStarsToStartStarsPurshase,
 )
 from ttt.infrastructure.buffer import Buffer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
@@ -131,13 +131,13 @@ class AiogramProvider(Provider):
     async def unkillable_tasks(
         self,
         start_game: StartGame,
-        start_stars_purshase_completion: StartStarsPurshaseCompletion,
-        complete_stars_purshase: CompleteStarsPurshase,
+        start_stars_purshase_payment_completion: StartStarsPurshasePaymentCompletion,
+        complete_stars_purshase_payment: CompleteStarsPurshasePayment,
     ) -> UnkillableTasks:
         tasks = UnkillableTasks()
         tasks.add(start_game)
-        tasks.add(start_stars_purshase_completion)
-        tasks.add(complete_stars_purshase)
+        tasks.add(start_stars_purshase_payment_completion)
+        tasks.add(complete_stars_purshase_payment)
 
         return tasks
 
@@ -178,11 +178,11 @@ class ApplicationWithAiogramRequestDataProvider(Provider):
     provide_wait_emoji_to_select = provide(
         WaitEmojiToSelect, scope=Scope.REQUEST,
     )
-    probide_wait_rubles_to_start_stars_purshase = provide(
-        WaitRublesToStartStarsPurshase, scope=Scope.REQUEST,
+    probide_wait_stars_to_start_stars_purshase = provide(
+        WaitStarsToStartStarsPurshase, scope=Scope.REQUEST,
     )
-    probide_initiate_stars_purchase_payment = provide(
-        InitiateStarsPurchasePayment, scope=Scope.REQUEST,
+    probide_start_stars_purchase = provide(
+        StartStarsPurchase, scope=Scope.REQUEST,
     )
 
 
@@ -190,11 +190,11 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
     provide_view_player = provide(ViewPlayer, scope=Scope.REQUEST)
     provide_register_player = provide(RegisterPlayer, scope=Scope.REQUEST)
     provide_remove_emoji = provide(RemoveEmoji, scope=Scope.REQUEST)
-    probide_complete_stars_purshase = provide(
-        CompleteStarsPurshase, scope=Scope.REQUEST,
+    probide_complete_stars_purshase_payment = provide(
+        CompleteStarsPurshasePayment, scope=Scope.REQUEST,
     )
-    probide_start_stars_purshase_completion = provide(
-        StartStarsPurshaseCompletion, scope=Scope.REQUEST,
+    probide_start_stars_purshase_payment_completion = provide(
+        StartStarsPurshasePaymentCompletion, scope=Scope.REQUEST,
     )
 
     provide_start_game = provide(StartGame, scope=Scope.REQUEST)

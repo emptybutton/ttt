@@ -8,12 +8,12 @@ from ttt.application.player.ports.paid_stars_purchase_payment_inbox import (
 )
 from ttt.application.player.ports.player_views import PlayerViews
 from ttt.application.player.ports.players import Players
-from ttt.entities.finance.payment.payment import PaymentAlreadyCompletedError
+from ttt.entities.finance.payment.payment import PaymentIsNotInProcessError
 from ttt.entities.tools.tracking import Tracking
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class CompleteStarsPurshase:
+class CompleteStarsPurshasePayment:
     clock: Clock
     inbox: PaidStarsPurchasePaymentInbox
     players: Players
@@ -32,13 +32,13 @@ class CompleteStarsPurshase:
 
                 tracking = Tracking()
                 try:
-                    player.complete_stars_purchase(
+                    player.complete_stars_purchase_payment(
                         paid_payment.purshase_id,
                         paid_payment.success,
                         current_datetime,
                         tracking,
                     )
-                except (PaymentAlreadyCompletedError):
+                except (PaymentIsNotInProcessError):
                     ...
                 else:
                     await self.map_(tracking)

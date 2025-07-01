@@ -9,6 +9,7 @@ from ttt.entities.core.player.location import PlayerGameLocation, PlayerLocation
 from ttt.entities.core.player.stars_purchase import StarsPurchase
 from ttt.entities.core.player.win import Win
 from ttt.entities.core.stars import Stars
+from ttt.entities.finance.payment.payment import cancel_payment, complete_payment
 from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.finance.rubles import Rubles
 from ttt.entities.math.random import Random, deviated_int
@@ -185,30 +186,41 @@ class Player:
         self.selected_emoji_id = None
         tracking.register_mutated(self)
 
-    def initiate_stars_purchase_payment(  # noqa: PLR0913, PLR0917
+    def start_stars_purchase(
         self,
         purchase_id: UUID,
         purchase_chat_id: int,
-        payment_id: UUID,
-        paid_rubles: Rubles,
-        current_datetime: datetime,
+        purchase_stars: Stars,
         tracking: Tracking,
     ) -> None:
         """
-        :raises ttt.entities.core.stars.NonExchangeableRublesForStarsError:
+        :raises ttt.entities.core.stars.InvalidStarsForStarsPurchaseError:
         """
 
-        stars_purchase = StarsPurchase.initiate_payment(
+        stars_purchase = StarsPurchase.start(
             purchase_id,
             PlayerLocation(self.id, purchase_chat_id),
-            payment_id,
-            paid_rubles,
-            current_datetime,
+            purchase_stars,
             tracking,
         )
         self.stars_purchases.append(stars_purchase)
 
-    def complete_stars_purchase(
+    def process_stars_purchase_payment(
+        self,
+        purchase_id: UUID,
+        payment_id: UUID,
+        current_datetime: datetime,
+        tracking: Tracking,
+    ) -> None:
+        """
+        :raises ttt.entities.player.player.NoPurchaseError:
+        :raises ttt.entities.finance.payment.payment.PaymentIsAlreadyBeingMadeError:
+        """  # noqa: E501
+
+        purchase = self._stars_purchase(purchase_id)
+        purchase.start_payment(payment_id, current_datetime, tracking)
+
+    def complete_stars_purchase_payment(
         self,
         purchase_id: UUID,
         payment_success: PaymentSuccess,
@@ -217,16 +229,17 @@ class Player:
     ) -> None:
         """
         :raises ttt.entities.player.player.NoPurchaseError:
-        :raises ttt.entities.finance.payment.payment.PaymentAlreadyCompletedError:
-        """  # noqa: E501
+        :raises ttt.entities.finance.payment.payment.NoPaymentError:
+        :raises ttt.entities.finance.payment.payment.PaymentIsNotInProcessError:
+        """
 
         purchase = self._stars_purchase(purchase_id)
 
-        self.account = self.account.map(
-            lambda stars: stars + purchase.new_stars,
-        )
+        self.account = self.account.map(lambda stars: stars + purchase.stars)
         tracking.register_mutated(self)
-        purchase.payment.complete(payment_success, current_datetime, tracking)
+        complete_payment(
+            purchase.payment, payment_success, current_datetime, tracking,
+        )
 
     def cancel_stars_purchase(
         self,
@@ -236,11 +249,12 @@ class Player:
     ) -> None:
         """
         :raises ttt.entities.player.player.NoPurchaseError:
-        :raises ttt.entities.finance.payment.payment.PaymentAlreadyCompletedError:
-        """  # noqa: E501
+        :raises ttt.entities.finance.payment.payment.NoPaymentError:
+        :raises ttt.entities.finance.payment.payment.PaymentIsNotInProcessError:
+        """
 
         purchase = self._stars_purchase(purchase_id)
-        purchase.payment.cancel(current_datetime, tracking)
+        cancel_payment(purchase.payment, current_datetime, tracking)
 
     def _stars_purchase(self, purchase_id: UUID) -> StarsPurchase:
         """

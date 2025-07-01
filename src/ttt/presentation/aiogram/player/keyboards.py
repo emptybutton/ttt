@@ -6,21 +6,21 @@ def stars_prices_keyboard() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(
                 text="8192 🌟 (128₽)",
-                callback_data="128_rub_for_stars",
+                callback_data="8192_stars_purchase",
             ),
             InlineKeyboardButton(
                 text="16384 🌟 (256₽)",
-                callback_data="256_rub_for_stars",
+                callback_data="16384_stars_purchase",
             ),
         ],
         [
             InlineKeyboardButton(
                 text="32768 🌟 (512₽)",
-                callback_data="512_rub_for_stars",
+                callback_data="32768_stars_purchase",
             ),
             InlineKeyboardButton(
                 text="65536 🌟 (1024₽)",
-                callback_data="1024_rub_for_stars",
+                callback_data="65536_stars_purchase",
             ),
         ],
     ]

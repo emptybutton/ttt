@@ -26,7 +26,7 @@ from ttt.presentation.aiogram.player.messages import (
     stars_added_message,
     stars_will_be_added_message,
     wait_emoji_to_buy_message,
-    wait_rubles_to_start_stars_purshase_message,
+    wait_stars_to_start_stars_purshase_message,
 )
 
 
@@ -148,10 +148,10 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews):
     ) -> None:
         await selected_emoji_removed_message(self._bot, location.chat_id)
 
-    async def render_wait_rubles_to_start_stars_purshase_view(
+    async def render_wait_stars_to_start_stars_purshase_view(
         self, location: PlayerLocation, /,
     ) -> None:
-        await wait_rubles_to_start_stars_purshase_message(
+        await wait_stars_to_start_stars_purshase_message(
             self._bot, location.chat_id,
         )
 

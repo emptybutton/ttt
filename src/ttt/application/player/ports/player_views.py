@@ -74,12 +74,12 @@ class PlayerViews(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def render_wait_rubles_to_start_stars_purshase_view(
+    async def render_wait_stars_to_start_stars_purshase_view(
         self, location: PlayerLocation, /,
     ) -> None: ...
 
     @abstractmethod
-    async def render_non_exchangeable_rubles_for_stars_view(
+    async def render_invalid_stars_for_stars_purchase_view(
         self, location: PlayerLocation, /,
     ) -> None: ...
 
