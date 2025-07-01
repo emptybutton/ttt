@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from uuid import UUID
 
 from aiogram import Bot
@@ -9,11 +9,13 @@ from ttt.application.player.ports.player_views import PlayerViews
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.core.player.player import Player
 from ttt.entities.core.stars import Stars
+from ttt.entities.finance.rubles import Rubles
 from ttt.infrastructure.sqlalchemy.tables import TablePlayer, TablePlayerEmoji
 from ttt.presentation.aiogram.common.messages import (
     help_message,
     need_to_start_message,
 )
+from ttt.presentation.aiogram.player.invoices import stars_invoce
 from ttt.presentation.aiogram.player.messages import (
     emoji_already_purchased_message,
     emoji_not_purchased_to_select_message,
@@ -34,6 +36,7 @@ from ttt.presentation.aiogram.player.messages import (
 class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews):
     _bot: Bot
     _session: AsyncSession
+    _payments_token: str = field(repr=False)
 
     async def render_view_of_player_with_id(
         self,
@@ -169,3 +172,10 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews):
         self, player: Player, purshase_id: UUID, location: PlayerLocation, /,
     ) -> None:
         await stars_added_message(self._bot, location.chat_id)
+
+    async def render_stars_purchase_invoice_view(
+        self, location: PlayerLocation, stars: Stars, rubles: Rubles, /,
+    ) -> None:
+        await stars_invoce(
+            self._bot, location, stars, rubles, self._payments_token,
+        )

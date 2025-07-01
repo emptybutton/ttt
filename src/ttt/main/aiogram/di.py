@@ -8,11 +8,13 @@ from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import (
     CallbackQuery,
     Message,
+    PreCheckoutQuery,
     TelegramObject,
 )
 from dishka import Provider, Scope, from_context, provide
 from dishka.integrations.aiogram import AiogramMiddlewareData
 from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.common.ports.emojis import Emojis
 from ttt.application.game.cancel_game import CancelGame
@@ -23,9 +25,6 @@ from ttt.application.game.wait_game import WaitGame
 from ttt.application.player.buy_emoji import BuyEmoji
 from ttt.application.player.complete_stars_purshase import CompleteStarsPurshase
 from ttt.application.player.dto.common import PaidStarsPurchasePayment
-from ttt.application.player.initiate_stars_purchase_payment import (
-    InitiateStarsPurchasePayment,
-)
 from ttt.application.player.ports.player_fsm import PlayerFsm
 from ttt.application.player.ports.player_views import PlayerViews
 from ttt.application.player.ports.stars_purchase_payment_gateway import (
@@ -38,10 +37,13 @@ from ttt.application.player.start_stars_purshase_completion import (
     StartStarsPurshaseCompletion,
 )
 from ttt.application.player.view_player import ViewPlayer
+from ttt.application.player.view_stars_purchase_invoice import (
+    ViewStarsPurchaseInvoice,
+)
 from ttt.application.player.wait_emoji_to_buy import WaitEmojiToBuy
 from ttt.application.player.wait_emoji_to_select import WaitEmojiToSelect
-from ttt.application.player.wait_rubles_to_start_stars_purshase import (
-    WaitRublesToStartStarsPurshase,
+from ttt.application.player.wait_rubles_to_view_stars_purchase_invoice import (
+    WaitRublesToViewStarsPurchaseInvoice,
 )
 from ttt.infrastructure.buffer import Buffer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
@@ -54,7 +56,7 @@ from ttt.presentation.adapters.player_views import (
     AiogramMessagesFromPostgresAsPlayerViews,
 )
 from ttt.presentation.adapters.stars_purchase_payment_gateway import (
-    AiogramInAndBufferOutStarsPurchasePaymentGateway,
+    AiogramStarsPurchasePaymentGateway,
 )
 from ttt.presentation.aiogram.common.bots import ttt_bot
 from ttt.presentation.aiogram.common.routes.all import common_routers
@@ -64,7 +66,7 @@ from ttt.presentation.unkillable_tasks import UnkillableTasks
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class NoMessageInEventError(Exception):
+class InvalidEventError(Exception):
     event: TelegramObject
 
 
@@ -108,23 +110,12 @@ class AiogramProvider(Provider):
         scope=Scope.APP,
     )
 
-    provide_player_views = provide(
-        AiogramMessagesFromPostgresAsPlayerViews,
-        provides=PlayerViews,
-        scope=Scope.REQUEST,
-    )
-
-    @provide(scope=Scope.APP)
-    def provide_stars_purchase_payment_gateway(
-        self,
-        secrets: Secrets,
-        bot: Bot,
-        buffer: Buffer[PaidStarsPurchasePayment],
-    ) -> StarsPurchasePaymentGateway:
-        return AiogramInAndBufferOutStarsPurchasePaymentGateway(
-            buffer,
-            bot,
-            secrets.payments_token,
+    @provide(scope=Scope.REQUEST)
+    def provide_player_views(
+        self, bot: Bot, session: AsyncSession, secrets: Secrets,
+    ) -> PlayerViews:
+        return AiogramMessagesFromPostgresAsPlayerViews(
+            bot, session, secrets.payments_token,
         )
 
     @provide(scope=Scope.REQUEST)
@@ -156,7 +147,17 @@ class AiogramRequestDataProvider(Provider):
             case CallbackQuery(message=Message() as message):
                 return message
             case _:
-                raise NoMessageInEventError(event)
+                raise InvalidEventError(event)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_pre_checkout_query(
+        self, event: TelegramObject,
+    ) -> PreCheckoutQuery:
+        match event:
+            case PreCheckoutQuery():
+                return event
+            case _:
+                raise InvalidEventError(event)
 
     @provide(scope=Scope.REQUEST)
     def provide_fsm_context(
@@ -170,6 +171,17 @@ class AiogramRequestDataProvider(Provider):
         scope=Scope.REQUEST,
     )
 
+    @provide(scope=Scope.REQUEST)
+    def provide_stars_purchase_payment_gateway(
+        self,
+        pre_checkout_query: PreCheckoutQuery,
+        bot: Bot,
+        buffer: Buffer[PaidStarsPurchasePayment],
+    ) -> StarsPurchasePaymentGateway:
+        return AiogramStarsPurchasePaymentGateway(
+            buffer, bot, pre_checkout_query,
+        )
+
 
 class ApplicationWithAiogramRequestDataProvider(Provider):
     provide_buy_emoji = provide(BuyEmoji, scope=Scope.REQUEST)
@@ -179,10 +191,10 @@ class ApplicationWithAiogramRequestDataProvider(Provider):
         WaitEmojiToSelect, scope=Scope.REQUEST,
     )
     probide_wait_rubles_to_start_stars_purshase = provide(
-        WaitRublesToStartStarsPurshase, scope=Scope.REQUEST,
+        WaitRublesToViewStarsPurchaseInvoice, scope=Scope.REQUEST,
     )
-    probide_initiate_stars_purchase_payment = provide(
-        InitiateStarsPurchasePayment, scope=Scope.REQUEST,
+    probide_view_stars_purchase_invoice = provide(
+        ViewStarsPurchaseInvoice, scope=Scope.REQUEST,
     )
 
 

@@ -8,7 +8,7 @@ from ttt.application.player.ports.paid_stars_purchase_payment_inbox import (
 )
 from ttt.application.player.ports.player_views import PlayerViews
 from ttt.application.player.ports.players import Players
-from ttt.entities.finance.payment.payment import PaymentAlreadyCompletedError
+from ttt.entities.finance.payment.payment import PaymentIsNotInProgressError
 from ttt.entities.tools.tracking import Tracking
 
 
@@ -38,7 +38,7 @@ class CompleteStarsPurshase:
                         current_datetime,
                         tracking,
                     )
-                except (PaymentAlreadyCompletedError):
+                except (PaymentIsNotInProgressError):
                     ...
                 else:
                     await self.map_(tracking)

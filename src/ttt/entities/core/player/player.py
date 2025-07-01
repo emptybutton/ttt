@@ -217,7 +217,27 @@ class Player:
     ) -> None:
         """
         :raises ttt.entities.player.player.NoPurchaseError:
-        :raises ttt.entities.finance.payment.payment.PaymentAlreadyCompletedError:
+        :raises ttt.entities.finance.payment.payment.PaymentIsNotInProgressError:
+        """  # noqa: E501
+
+        purchase = self._stars_purchase(purchase_id)
+
+        self.account = self.account.map(
+            lambda stars: stars + purchase.new_stars,
+        )
+        tracking.register_mutated(self)
+        purchase.payment.complete(payment_success, current_datetime, tracking)
+
+    def complete_stars_purchase(
+        self,
+        purchase_id: UUID,
+        payment_success: PaymentSuccess,
+        current_datetime: datetime,
+        tracking: Tracking,
+    ) -> None:
+        """
+        :raises ttt.entities.player.player.NoPurchaseError:
+        :raises ttt.entities.finance.payment.payment.PaymentIsNotInProgressError:
         """  # noqa: E501
 
         purchase = self._stars_purchase(purchase_id)
@@ -236,7 +256,7 @@ class Player:
     ) -> None:
         """
         :raises ttt.entities.player.player.NoPurchaseError:
-        :raises ttt.entities.finance.payment.payment.PaymentAlreadyCompletedError:
+        :raises ttt.entities.finance.payment.payment.PaymentIsNotInProgressError:
         """  # noqa: E501
 
         purchase = self._stars_purchase(purchase_id)

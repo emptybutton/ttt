@@ -7,6 +7,5 @@ from ttt.entities.finance.payment.success import PaymentSuccess
 
 @dataclass(frozen=True)
 class PaidStarsPurchasePayment:
-    purshase_id: UUID
     location: PlayerLocation
     success: PaymentSuccess
