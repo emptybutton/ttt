@@ -16,6 +16,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      nats:
+        condition: service_healthy
+      nats_streams:
+        condition: service_completed_successfully
     environment:
       TTT_POSTGRES_URL: postgresql+psycopg://ttt:${POSTGRES_TTT_PASSWORD}@postgres_master:5432/ttt
       TTT_POSTGRES_POOL_SIZE: 8
@@ -27,6 +31,8 @@ services:
       TTT_REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       TTT_REDIS_POOL_SIZE: 16
 
+      TTT_NATS_URL: nats://${NATS_TOKEN}@nats:4222
+
       TTT_GAME_WAITING_QUEUE_PULLING_TIMEOUT_MIN_MS: 100
       TTT_GAME_WAITING_QUEUE_PULLING_TIMEOUT_SALT_MS: 200
     secrets:
@@ -34,6 +40,7 @@ services:
     networks:
       - postgres
       - redis
+      - nats
     command: ttt
     mem_limit: 200mb
 
@@ -111,6 +118,40 @@ services:
       start_interval: 1s
       interval: 5s
 
+  nats:
+    image: nats:2.11.5-alpine3.22
+    container_name: ttt-nats
+    volumes:
+      - ./nats:/mnt
+      - nats-data:/data
+    networks:
+      - nats
+    environment:
+      NATS_TOKEN: ${NATS_TOKEN}
+    command: nats-server -c /mnt/nats.conf
+    mem_limit: 30mb
+    restart: always
+    healthcheck:
+      test: wget http://localhost:8222/healthz -q -O /dev/null
+      start_period: 2m
+      start_interval: 0.5s
+      interval: 3s
+
+  nats_streams:
+    image: bitnami/natscli:0.2.3-debian-12-r4
+    container_name: ttt-nats-streams
+    depends_on:
+      nats:
+        condition: service_healthy
+    volumes:
+      - ./nats:/mnt
+    networks:
+      - nats
+    environment:
+      NATS_TOKEN: ${NATS_TOKEN}
+    entrypoint: [""]
+    command: ["bash", "/mnt/add_streams.sh"]
+
 volumes:
   postgres-replica1-data:
     name: "ttt-prod-postgres-replica1-data"
@@ -118,10 +159,13 @@ volumes:
     name: "ttt-prod-postgres-master-data"
   redis-data:
     name: "ttt-prod-redis-data"
+  nats-data:
+    name: "ttt-prod-nats-data"
 
 networks:
   postgres: null
   redis: null
+  nats: null
 
 secrets:
   secrets:
