@@ -12,6 +12,7 @@ from ttt.application.player.common.ports.stars_purchase_payment_gateway import (
 )
 from ttt.entities.core.player.player import NoPurchaseError
 from ttt.entities.finance.payment.payment import PaymentIsAlreadyBeingMadeError
+from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
 
 
@@ -31,6 +32,7 @@ class StartStarsPurchasePayment:
                 self.uuids.random_uuid(),
                 self.clock.current_datetime(),
             )
+            player = not_none(player)
 
             tracking = Tracking()
             try:

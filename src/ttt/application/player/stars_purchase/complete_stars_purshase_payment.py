@@ -30,6 +30,14 @@ class CompleteStarsPurshasePayment:
                     paid_payment.location.player_id,
                 )
 
+                if player is None:
+                    await (
+                        self.player_views.render_player_is_not_registered_view(
+                            paid_payment.location,
+                        )
+                    )
+                    continue
+
                 tracking = Tracking()
                 try:
                     player.complete_stars_purchase_payment(

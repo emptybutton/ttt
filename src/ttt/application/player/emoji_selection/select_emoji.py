@@ -44,6 +44,13 @@ class SelectEmoji:
         async with self.transaction:
             player = await self.players.player_with_id(location.player_id)
 
+            if player is None:
+                await self.player_views.render_player_is_not_registered_view(
+                    location,
+                )
+                await self.fsm.set(None)
+                return
+
             tracking = Tracking()
             try:
                 player.select_emoji(emoji, tracking)

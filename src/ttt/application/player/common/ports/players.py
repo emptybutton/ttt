@@ -1,14 +1,8 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from dataclasses import dataclass
 from typing import overload
 
 from ttt.entities.core.player.player import Player
-
-
-@dataclass
-class NoPlayerWithIDError(Exception):
-    player_id: int
 
 
 class Players(ABC):
@@ -19,24 +13,21 @@ class Players(ABC):
         ...
 
     @abstractmethod
-    async def player_with_id(self, id_: int, /) -> Player: ...
+    async def player_with_id(self, id_: int, /) -> Player | None: ...
 
     @abstractmethod
     @overload
     async def players_with_ids(
         self, ids: Sequence[int], /,
-    ) -> tuple[Player, ...]: ...
+    ) -> tuple[Player | None, ...]: ...
 
     @abstractmethod
     @overload
     async def players_with_ids(  # type: ignore[overload-cannot-match]
         self, ids: tuple[int, int], /,
-    ) -> tuple[Player, Player]: ...
+    ) -> tuple[Player | None, Player | None]: ...
 
     @abstractmethod
     async def players_with_ids(
         self, ids: Sequence[int], /,
-    ) -> tuple[Player, ...]:
-        """
-        :raises ttt.application.player.common.ports.players.NoPlayerWithIDError:
-        """
+    ) -> tuple[Player | None, ...]: ...

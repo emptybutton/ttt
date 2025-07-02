@@ -1,4 +1,3 @@
-from asyncio import gather
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import overload
@@ -6,10 +5,7 @@ from typing import overload
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ttt.application.player.common.ports.players import (
-    NoPlayerWithIDError,
-    Players,
-)
+from ttt.application.player.common.ports.players import Players
 from ttt.entities.core.player.player import Player
 from ttt.infrastructure.sqlalchemy.tables import TablePlayer
 
@@ -28,16 +24,16 @@ class InPostgresPlayers(Players):
     @overload
     async def players_with_ids(
         self, ids: Sequence[int], /,
-    ) -> tuple[Player, ...]: ...
+    ) -> tuple[Player | None, ...]: ...
 
     @overload
     async def players_with_ids(  # type: ignore[overload-cannot-match]
         self, ids: tuple[int, int], /,
-    ) -> tuple[Player, Player]: ...
+    ) -> tuple[Player | None, Player | None]: ...
 
     async def players_with_ids(
         self, ids: Sequence[int],
-    ) -> tuple[Player, ...]:
+    ) -> tuple[Player | None, ...]:
         players = list()
 
         for id_ in ids:
@@ -46,10 +42,7 @@ class InPostgresPlayers(Players):
 
         return tuple(players)
 
-    async def player_with_id(self, id_: int, /) -> Player:
+    async def player_with_id(self, id_: int, /) -> Player | None:
         table_player = await self._session.get(TablePlayer, id_)
 
-        if table_player is None:
-            raise NoPlayerWithIDError(id_)
-
-        return table_player.entity()
+        return None if table_player is None else table_player.entity()
