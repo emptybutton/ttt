@@ -6,7 +6,10 @@ from typing import overload
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ttt.application.player.ports.players import NoPlayerWithIDError, Players
+from ttt.application.player.common.ports.players import (
+    NoPlayerWithIDError,
+    Players,
+)
 from ttt.entities.core.player.player import Player
 from ttt.infrastructure.sqlalchemy.tables import TablePlayer
 

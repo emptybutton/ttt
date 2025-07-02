@@ -3,7 +3,7 @@ from typing import cast, overload
 
 from aiogram.fsm.context import FSMContext
 
-from ttt.application.player.ports.player_fsm import (
+from ttt.application.player.common.ports.player_fsm import (
     PlayerFsm,
     PlayerFsmState,
     WaitingEmojiToBuyState,

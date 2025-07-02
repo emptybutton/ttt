@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from ttt.application.common.ports.map import Map, NotUniquePlayerIdError
 from ttt.application.common.ports.transaction import Transaction
-from ttt.application.player.ports.player_views import PlayerViews
+from ttt.application.player.common.ports.player_views import PlayerViews
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.core.player.player import register_player
 from ttt.entities.tools.tracking import Tracking

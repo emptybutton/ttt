@@ -1,8 +1,8 @@
 from collections.abc import AsyncIterable
 from dataclasses import dataclass
 
-from ttt.application.player.dto.common import PaidStarsPurchasePayment
-from ttt.application.player.ports.paid_stars_purchase_payment_inbox import (
+from ttt.application.player.common.dto.common import PaidStarsPurchasePayment
+from ttt.application.player.common.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
     PaidStarsPurchasePaymentInbox,
 )
 from ttt.infrastructure.nats.paid_stars_purchase_payment_inbox import (

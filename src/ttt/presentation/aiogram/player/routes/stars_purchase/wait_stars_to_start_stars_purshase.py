@@ -4,20 +4,26 @@ from aiogram.fsm.state import any_state
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
-from ttt.application.game.game.wait_game import WaitGame
+from ttt.application.player.stars_purchase.wait_stars_to_start_stars_purshase import (  # noqa: E501
+    WaitStarsToStartStarsPurshase,
+)
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
 
-wait_game_router = Router(name=__name__)
+wait_stars_to_start_stars_purshase_router = Router(name=__name__)
 
 
-@wait_game_router.message(any_state, Command("game"))
+@wait_stars_to_start_stars_purshase_router.message(
+    any_state, Command("buy_stars"),
+)
 @inject
 async def _(
     message: Message,
-    wait_game: FromDishka[WaitGame],
+    wait_stars_to_start_stars_purshase: FromDishka[
+        WaitStarsToStartStarsPurshase
+    ],
 ) -> None:
     if message.from_user is None:
         await anons_are_rohibited_message(
@@ -25,4 +31,5 @@ async def _(
         )
         return
 
-    await wait_game(PlayerLocation(message.from_user.id, message.chat.id))
+    location = PlayerLocation(message.from_user.id, message.chat.id)
+    await wait_stars_to_start_stars_purshase(location)

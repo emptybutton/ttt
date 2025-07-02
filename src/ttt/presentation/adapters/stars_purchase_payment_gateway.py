@@ -5,8 +5,8 @@ from uuid import UUID
 from aiogram import Bot
 from aiogram.types import PreCheckoutQuery
 
-from ttt.application.player.dto.common import PaidStarsPurchasePayment
-from ttt.application.player.ports.stars_purchase_payment_gateway import (
+from ttt.application.player.common.dto.common import PaidStarsPurchasePayment
+from ttt.application.player.common.ports.stars_purchase_payment_gateway import (
     StarsPurchasePaymentGateway,
 )
 from ttt.entities.core.player.location import PlayerLocation

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ttt.application.game.ports.games import Games
+from ttt.application.game.common.ports.games import Games
 from ttt.entities.core.game.game import Game
 from ttt.infrastructure.sqlalchemy.tables import TableGame, TablePlayer
 

@@ -5,7 +5,7 @@ from aiogram import Bot
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ttt.application.player.ports.player_views import PlayerViews
+from ttt.application.player.common.ports.player_views import PlayerViews
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.core.player.player import Player
 from ttt.entities.core.stars import Stars

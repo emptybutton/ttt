@@ -16,12 +16,12 @@ from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
-from ttt.application.game.ports.games import Games
-from ttt.application.game.ports.waiting_locations import WaitingLocations
-from ttt.application.player.ports.paid_stars_purchase_payment_inbox import (
+from ttt.application.game.common.ports.games import Games
+from ttt.application.game.common.ports.waiting_locations import WaitingLocations
+from ttt.application.player.common.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
     PaidStarsPurchasePaymentInbox,
 )
-from ttt.application.player.ports.players import Players
+from ttt.application.player.common.ports.players import Players
 from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres

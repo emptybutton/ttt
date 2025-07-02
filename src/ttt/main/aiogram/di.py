@@ -16,39 +16,43 @@ from dishka.integrations.aiogram import AiogramMiddlewareData
 from redis.asyncio import Redis
 
 from ttt.application.common.ports.emojis import Emojis
-from ttt.application.game.cancel_game import CancelGame
-from ttt.application.game.make_move_in_game import MakeMoveInGame
-from ttt.application.game.ports.game_views import GameViews
-from ttt.application.game.start_game import StartGame
-from ttt.application.game.wait_game import WaitGame
-from ttt.application.player.buy_emoji import BuyEmoji
-from ttt.application.player.complete_stars_purshase_payment import (
-    CompleteStarsPurshasePayment,
-)
-from ttt.application.player.dto.common import PaidStarsPurchasePayment
-from ttt.application.player.ports.player_fsm import PlayerFsm
-from ttt.application.player.ports.player_views import PlayerViews
-from ttt.application.player.ports.stars_purchase_payment_gateway import (
+from ttt.application.game.common.ports.game_views import GameViews
+from ttt.application.game.game.cancel_game import CancelGame
+from ttt.application.game.game.make_move_in_game import MakeMoveInGame
+from ttt.application.game.game.start_game import StartGame
+from ttt.application.game.game.wait_game import WaitGame
+from ttt.application.player.common.dto.common import PaidStarsPurchasePayment
+from ttt.application.player.common.ports.player_fsm import PlayerFsm
+from ttt.application.player.common.ports.player_views import PlayerViews
+from ttt.application.player.common.ports.stars_purchase_payment_gateway import (
     StarsPurchasePaymentGateway,
+)
+from ttt.application.player.emoji_purchase.buy_emoji import BuyEmoji
+from ttt.application.player.emoji_purchase.wait_emoji_to_buy import (
+    WaitEmojiToBuy,
+)
+from ttt.application.player.emoji_selection.select_emoji import SelectEmoji
+from ttt.application.player.emoji_selection.wait_emoji_to_select import (
+    WaitEmojiToSelect,
 )
 from ttt.application.player.register_player import RegisterPlayer
 from ttt.application.player.remove_emoji import RemoveEmoji
-from ttt.application.player.select_emoji import SelectEmoji
-from ttt.application.player.start_stars_purchase import (
+from ttt.application.player.stars_purchase.complete_stars_purshase_payment import (  # noqa: E501
+    CompleteStarsPurshasePayment,
+)
+from ttt.application.player.stars_purchase.start_stars_purchase import (
     StartStarsPurchase,
 )
-from ttt.application.player.start_stars_purchase_payment import (
+from ttt.application.player.stars_purchase.start_stars_purchase_payment import (
     StartStarsPurchasePayment,
 )
-from ttt.application.player.start_stars_purshase_payment_completion import (
+from ttt.application.player.stars_purchase.start_stars_purshase_payment_completion import (  # noqa: E501
     StartStarsPurshasePaymentCompletion,
 )
-from ttt.application.player.view_player import ViewPlayer
-from ttt.application.player.wait_emoji_to_buy import WaitEmojiToBuy
-from ttt.application.player.wait_emoji_to_select import WaitEmojiToSelect
-from ttt.application.player.wait_stars_to_start_stars_purshase import (
+from ttt.application.player.stars_purchase.wait_stars_to_start_stars_purshase import (  # noqa: E501
     WaitStarsToStartStarsPurshase,
 )
+from ttt.application.player.view_player import ViewPlayer
 from ttt.infrastructure.buffer import Buffer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.presentation.adapters.emojis import PictographsAsEmojis

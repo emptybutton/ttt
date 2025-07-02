@@ -4,7 +4,7 @@ from aiogram.types import ContentType, Message
 from dishka import AsyncContainer
 from dishka.integrations.aiogram import inject
 
-from ttt.application.player.dto.common import PaidStarsPurchasePayment
+from ttt.application.player.common.dto.common import PaidStarsPurchasePayment
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.tools.assertion import not_none

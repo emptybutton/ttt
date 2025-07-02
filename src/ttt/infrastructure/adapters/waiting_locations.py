@@ -4,7 +4,7 @@ from typing import ClassVar, cast
 
 from pydantic import TypeAdapter
 
-from ttt.application.game.ports.waiting_locations import (
+from ttt.application.game.common.ports.waiting_locations import (
     WaitingLocations,
     WaitingLocationsPush,
 )
