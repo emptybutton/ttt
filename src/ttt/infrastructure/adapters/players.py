@@ -38,7 +38,13 @@ class InPostgresPlayers(Players):
     async def players_with_ids(
         self, ids: Sequence[int],
     ) -> tuple[Player, ...]:
-        return tuple(await gather(*map(self.player_with_id, ids)))
+        players = list()
+
+        for id_ in ids:
+            player = await self.player_with_id(id_)
+            players.append(player)
+
+        return tuple(players)
 
     async def player_with_id(self, id_: int, /) -> Player:
         table_player = await self._session.get(TablePlayer, id_)
