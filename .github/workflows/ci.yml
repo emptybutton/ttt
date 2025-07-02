@@ -9,7 +9,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: add secrets
-        run: echo ${{ secrets.CONFIG }} > deploy/dev/ttt/secrets.yaml
+        run: |
+          echo "bot_token: ${{ secrets.BOT_TOKEN }}" > deploy/dev/ttt/secrets.yaml
+          echo "payments_token: ${{ secrets.PAYMENTS_TOKEN }}" >> deploy/dev/ttt/secrets.yaml
 
       - name: ruff
         run: docker compose -f deploy/dev/docker-compose.yaml run ttt ruff check src tests

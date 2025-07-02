@@ -13,7 +13,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: add secrets
-        run: echo ${{ secrets.PROD_CONFIG }} > deploy/prod/ttt/secrets.yaml
+        run: |
+          echo "bot_token: ${{ secrets.BOT_TOKEN }}" > deploy/prod/ttt/secrets.yaml
+          echo "payments_token: ${{ secrets.PAYMENTS_TOKEN }}" >> deploy/prod/ttt/secrets.yaml
 
       - name: deploy
         run: bash ./deploy/prod/deploy.sh
@@ -22,3 +24,5 @@ jobs:
 
             POSTGRES_TTT_PASSWORD: ${{ secrets.POSTGRES_TTT_PASSWORD }}
             POSTGRES_REPLICA_PASSWORD: ${{ secrets.POSTGRES_REPLICA_PASSWORD }}
+
+            NATS_TOKEN: ${{ secrets.NATS_TOKEN }}
