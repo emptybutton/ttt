@@ -1,6 +1,6 @@
 from aiogram.client.bot import Bot
 from aiogram.types import ReplyKeyboardRemove
-from aiogram.utils.formatting import Bold, BotCommand, Text, as_list
+from aiogram.utils.formatting import Bold, BotCommand, Text, Underline, as_list
 
 from ttt.entities.core.game.game import (
     Game,
@@ -20,13 +20,17 @@ async def started_game_message(
     player_id: int,
 ) -> None:
     if player_id == game.player1.id:
-        about_players = (
-            f"Вы — {game.player1_emoji.str_}, враг — {game.player2_emoji.str_}"
+        about_players = Text(
+            Underline("Вы"),
+            f" — {game.player1_emoji.str_}",
+            f", Враг — {game.player2_emoji.str_}",
         )
         about_move = "Ходите"
     else:
-        about_players = (
-            f"Враг — {game.player1_emoji.str_}, вы — {game.player2_emoji.str_}"
+        about_players = Text(
+            f"Враг — {game.player1_emoji.str_}, ",
+            Underline("Вы"),
+            f" — {game.player2_emoji.str_}",
         )
         about_move = "Ждите хода врага"
 
@@ -88,10 +92,14 @@ async def completed_game_messages(
         case _:
             raise ValueError
 
-    board_content = as_list(*(
-        as_list(*(game_cell(cell, game, " ") for cell in line), sep="")
-        for line in game.board
-    ))
+    board_content = as_list(
+        *(
+            as_list(*(game_cell(cell, game, "░░") for cell in line), sep="░░")
+            for line in game.board
+        ),
+        sep="\n░░░░░░░░░░\n",
+    )
+
     content = as_list(about_result, board_content, sep="\n\n")
 
     await bot.send_message(chat_id, result_emoji)
