@@ -1,6 +1,6 @@
 from aiogram.client.bot import Bot
 from aiogram.types import ReplyKeyboardRemove
-from aiogram.utils.formatting import Bold, BotCommand, Text, Underline, as_list
+from aiogram.utils.formatting import Bold, Text, Underline, as_list
 
 from ttt.entities.core.game.game import (
     Game,
@@ -123,7 +123,7 @@ async def double_waiting_for_game_message(bot: Bot, chat_id: int) -> None:
 
 
 async def no_game_message(bot: Bot, chat_id: int) -> None:
-    text = Text("❌ Игры нет. Для поиска введите: ", Bold(BotCommand("game")))
+    text = Text("❌ Игры нет. Для поиска введите: ", Bold("/game"))
     await bot.send_message(chat_id, **text.as_kwargs())
 
 
