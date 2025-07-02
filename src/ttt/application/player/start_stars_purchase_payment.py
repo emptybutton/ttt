@@ -34,7 +34,7 @@ class StartStarsPurchasePayment:
 
             tracking = Tracking()
             try:
-                player.process_stars_purchase_payment(
+                player.start_stars_purchase_payment(
                     purchase_id, payment_id, current_datetime, tracking,
                 )
             except PaymentIsAlreadyBeingMadeError:

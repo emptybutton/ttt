@@ -9,9 +9,11 @@ from ttt.entities.core.player.location import PlayerGameLocation, PlayerLocation
 from ttt.entities.core.player.stars_purchase import StarsPurchase
 from ttt.entities.core.player.win import Win
 from ttt.entities.core.stars import Stars
-from ttt.entities.finance.payment.payment import cancel_payment, complete_payment
+from ttt.entities.finance.payment.payment import (
+    cancel_payment,
+    complete_payment,
+)
 from ttt.entities.finance.payment.success import PaymentSuccess
-from ttt.entities.finance.rubles import Rubles
 from ttt.entities.math.random import Random, deviated_int
 from ttt.entities.text.emoji import Emoji
 from ttt.entities.tools.assertion import assert_
@@ -205,7 +207,7 @@ class Player:
         )
         self.stars_purchases.append(stars_purchase)
 
-    def process_stars_purchase_payment(
+    def start_stars_purchase_payment(
         self,
         purchase_id: UUID,
         payment_id: UUID,

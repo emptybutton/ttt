@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import CHAR, BigInteger, ForeignKey
+from sqlalchemy import CHAR, BigInteger, ForeignKey, Index
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -25,7 +25,7 @@ from ttt.entities.core.player.location import PlayerGameLocation, PlayerLocation
 from ttt.entities.core.player.player import Player
 from ttt.entities.core.player.stars_purchase import StarsPurchase
 from ttt.entities.core.player.win import Win
-from ttt.entities.finance.payment.payment import Payment
+from ttt.entities.finance.payment.payment import Payment, PaymentState
 from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.finance.rubles import Rubles
 from ttt.entities.math.matrix import Matrix
@@ -34,6 +34,34 @@ from ttt.entities.tools.assertion import not_none
 
 
 class Base(DeclarativeBase): ...
+
+
+class TablePaymentState(StrEnum):
+    in_process = "in_process"
+    cancelled = "cancelled"
+    completed = "completed"
+
+    def entity(self) -> PaymentState:
+        match self:
+            case TablePaymentState.in_process:
+                return PaymentState.in_process
+            case TablePaymentState.cancelled:
+                return PaymentState.cancelled
+            case TablePaymentState.completed:
+                return PaymentState.completed
+
+    @classmethod
+    def of(cls, it: PaymentState) -> "TablePaymentState":
+        match it:
+            case PaymentState.in_process:
+                return TablePaymentState.in_process
+            case PaymentState.cancelled:
+                return TablePaymentState.cancelled
+            case PaymentState.completed:
+                return TablePaymentState.completed
+
+
+payment_state = postgresql.ENUM(TablePaymentState, name="payment_state")
 
 
 class TablePayment(Base):
@@ -45,7 +73,7 @@ class TablePayment(Base):
     completion_datetime: Mapped[datetime | None]
     success_id: Mapped[str | None]
     success_gateway_id: Mapped[str | None]
-    is_cancelled: Mapped[bool]
+    state: Mapped[TablePaymentState] = mapped_column(payment_state)
 
     def entity(self) -> Payment:
         if self.success_id is None or self.success_gateway_id is None:
@@ -53,13 +81,17 @@ class TablePayment(Base):
         else:
             success = PaymentSuccess(self.success_id, self.success_gateway_id)
 
+        paid_rubles = Rubles.with_total_kopecks(
+            self.paid_rubles_total_kopecks,
+        )
+
         return Payment(
-            self.id,
-            Rubles.with_total_kopecks(self.paid_rubles_total_kopecks),
-            self.start_datetime,
-            self.completion_datetime,
-            success,
-            self.is_cancelled,
+            id_=self.id,
+            paid_rubles=paid_rubles,
+            start_datetime=self.start_datetime,
+            completion_datetime=self.completion_datetime,
+            success=success,
+            state=self.state.entity(),
         )
 
     @classmethod
@@ -78,7 +110,7 @@ class TablePayment(Base):
             completion_datetime=it.completion_datetime,
             success_id=success_id,
             success_gateway_id=success_gateway_id,
-            is_cancelled=it.is_cancelled,
+            state=TablePaymentState.of(it.state),
         )
 
 
@@ -120,13 +152,23 @@ class TableStarsPurchase(Base):
         index=True,
     )
     location_chat_id: Mapped[int] = mapped_column(BigInteger())
-    new_stars: Mapped[int]
-    payment_id: Mapped[UUID] = mapped_column(
+    stars: Mapped[int]
+    payment_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("payments.id", deferrable=True, initially="DEFERRED"),
-        index=True,
     )
 
-    payment = relationship(TablePayment, lazy="joined")
+    payment: Mapped[TablePayment | None] = relationship(
+        TablePayment,
+        lazy="joined",
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_stars_purchases_payment_id",
+            payment_id,
+            postgresql_where=(payment_id.is_not(None)),
+        ),
+    )
 
     def entity(self) -> StarsPurchase:
         return StarsPurchase(
@@ -135,8 +177,8 @@ class TableStarsPurchase(Base):
                 self.location_player_id,
                 self.location_chat_id,
             ),
-            new_stars=self.new_stars,
-            payment=self.payment.entity(),
+            stars=self.stars,
+            payment=None if self.payment is None else self.payment.entity(),
         )
 
     @classmethod
@@ -145,8 +187,8 @@ class TableStarsPurchase(Base):
             id=it.id_,
             location_player_id=it.location.player_id,
             location_chat_id=it.location.chat_id,
-            new_stars=it.new_stars,
-            payment_id=it.payment.id_,
+            stars=it.stars,
+            payment_id=None if it.payment is None else it.payment.id_,
         )
 
 

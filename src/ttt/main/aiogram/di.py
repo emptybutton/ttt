@@ -8,6 +8,7 @@ from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import (
     CallbackQuery,
     Message,
+    PreCheckoutQuery,
     TelegramObject,
 )
 from dishka import Provider, Scope, from_context, provide
@@ -21,11 +22,10 @@ from ttt.application.game.ports.game_views import GameViews
 from ttt.application.game.start_game import StartGame
 from ttt.application.game.wait_game import WaitGame
 from ttt.application.player.buy_emoji import BuyEmoji
-from ttt.application.player.complete_stars_purshase_payment import CompleteStarsPurshasePayment
-from ttt.application.player.dto.common import PaidStarsPurchasePayment
-from ttt.application.player.start_stars_purchase import (
-    StartStarsPurchase,
+from ttt.application.player.complete_stars_purshase_payment import (
+    CompleteStarsPurshasePayment,
 )
+from ttt.application.player.dto.common import PaidStarsPurchasePayment
 from ttt.application.player.ports.player_fsm import PlayerFsm
 from ttt.application.player.ports.player_views import PlayerViews
 from ttt.application.player.ports.stars_purchase_payment_gateway import (
@@ -34,6 +34,12 @@ from ttt.application.player.ports.stars_purchase_payment_gateway import (
 from ttt.application.player.register_player import RegisterPlayer
 from ttt.application.player.remove_emoji import RemoveEmoji
 from ttt.application.player.select_emoji import SelectEmoji
+from ttt.application.player.start_stars_purchase import (
+    StartStarsPurchase,
+)
+from ttt.application.player.start_stars_purchase_payment import (
+    StartStarsPurchasePayment,
+)
 from ttt.application.player.start_stars_purshase_payment_completion import (
     StartStarsPurshasePaymentCompletion,
 )
@@ -122,6 +128,7 @@ class AiogramProvider(Provider):
         buffer: Buffer[PaidStarsPurchasePayment],
     ) -> StarsPurchasePaymentGateway:
         return AiogramInAndBufferOutStarsPurchasePaymentGateway(
+            None,
             buffer,
             bot,
             secrets.payments_token,
@@ -131,7 +138,9 @@ class AiogramProvider(Provider):
     async def unkillable_tasks(
         self,
         start_game: StartGame,
-        start_stars_purshase_payment_completion: StartStarsPurshasePaymentCompletion,
+        start_stars_purshase_payment_completion: (
+            StartStarsPurshasePaymentCompletion
+        ),
         complete_stars_purshase_payment: CompleteStarsPurshasePayment,
     ) -> UnkillableTasks:
         tasks = UnkillableTasks()
@@ -159,6 +168,16 @@ class AiogramRequestDataProvider(Provider):
                 raise NoMessageInEventError(event)
 
     @provide(scope=Scope.REQUEST)
+    def provide_pre_checkout_query(
+        self, event: TelegramObject,
+    ) -> PreCheckoutQuery | None:
+        match event:
+            case PreCheckoutQuery():
+                return event
+            case _:
+                return None
+
+    @provide(scope=Scope.REQUEST)
     def provide_fsm_context(
         self, middleware_data: AiogramMiddlewareData,
     ) -> FSMContext:
@@ -169,6 +188,21 @@ class AiogramRequestDataProvider(Provider):
         provides=PlayerFsm,
         scope=Scope.REQUEST,
     )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_stars_purchase_payment_gateway(
+        self,
+        pre_checkout_query: PreCheckoutQuery | None,
+        secrets: Secrets,
+        bot: Bot,
+        buffer: Buffer[PaidStarsPurchasePayment],
+    ) -> StarsPurchasePaymentGateway:
+        return AiogramInAndBufferOutStarsPurchasePaymentGateway(
+            pre_checkout_query,
+            buffer,
+            bot,
+            secrets.payments_token,
+        )
 
 
 class ApplicationWithAiogramRequestDataProvider(Provider):
@@ -181,8 +215,11 @@ class ApplicationWithAiogramRequestDataProvider(Provider):
     probide_wait_stars_to_start_stars_purshase = provide(
         WaitStarsToStartStarsPurshase, scope=Scope.REQUEST,
     )
-    probide_start_stars_purchase = provide(
+    provide_start_stars_purchase = provide(
         StartStarsPurchase, scope=Scope.REQUEST,
+    )
+    provide_start_stars_purchase_payment = provide(
+        StartStarsPurchasePayment, scope=Scope.REQUEST,
     )
 
 

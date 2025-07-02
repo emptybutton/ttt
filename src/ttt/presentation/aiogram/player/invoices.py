@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, TypeAdapter
 
 from ttt.entities.core.player.location import PlayerLocation
 from ttt.entities.core.player.stars_purchase import StarsPurchase
+from ttt.entities.core.stars import price_of_stars
 
 
 class StarsPurshaseInvoicePayload(BaseModel):
@@ -39,8 +40,8 @@ async def stars_invoce(
     payments_token: str,
 ) -> None:
     price = LabeledPrice(
-        label=f"{purshase.new_stars} звёзд",
-        amount=purshase.payment.paid_rubles.total_kopecks(),
+        label=f"{purshase.stars} звёзд",
+        amount=price_of_stars(purshase.stars).total_kopecks(),
     )
 
     payload_model = StarsPurshaseInvoicePayload.of(purshase.id_, location)

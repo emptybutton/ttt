@@ -155,7 +155,7 @@ class AiogramMessagesFromPostgresAsPlayerViews(PlayerViews):
             self._bot, location.chat_id,
         )
 
-    async def render_non_exchangeable_rubles_for_stars_view(
+    async def render_invalid_stars_for_stars_purchase_view(
         self, location: PlayerLocation, /,
     ) -> None:
         raise NotImplementedError

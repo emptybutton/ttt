@@ -2,10 +2,9 @@ from aiogram import Router
 from aiogram.types import PreCheckoutQuery
 from dishka import AsyncContainer
 
-from ttt.application.player.process_stars_purchase_payment import (
+from ttt.application.player.start_stars_purchase_payment import (
     StartStarsPurchasePayment,
 )
-from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.player.invoices import (
     StarsPurshaseInvoicePayload,
     invoce_payload_adapter,

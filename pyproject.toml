@@ -107,7 +107,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "src/ttt/infrastructure/adapters/*" = ["ARG002"]
 "src/ttt/presentation/adapters/*" = ["ARG002"]
-"src/ttt/presentation/aiogram/*" = ["RUF001"]
+"src/ttt/presentation/*" = ["RUF001"]
 "tests/*" = ["S101", "PT013", "PLR2004", "D400", "D415"]
 "tests/test_tgdb/test_entities/test_horizon.py" = ["D400", "D415"]
 

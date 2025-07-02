@@ -5,9 +5,6 @@ from ttt.presentation.aiogram.player.routes.handle_payment import (
 from ttt.presentation.aiogram.player.routes.handle_pre_checkout_query import (
     handle_pre_checkout_query_router,
 )
-from ttt.presentation.aiogram.player.routes.start_stars_purchase import (  # noqa: E501
-    start_stars_purchase_router,
-)
 from ttt.presentation.aiogram.player.routes.register_player import (
     register_player_router,
 )
@@ -16,6 +13,9 @@ from ttt.presentation.aiogram.player.routes.remove_emoji import (
 )
 from ttt.presentation.aiogram.player.routes.select_emoji import (
     select_emoji_router,
+)
+from ttt.presentation.aiogram.player.routes.start_stars_purchase import (
+    start_stars_purchase_router,
 )
 from ttt.presentation.aiogram.player.routes.view_player import (
     view_player_router,
