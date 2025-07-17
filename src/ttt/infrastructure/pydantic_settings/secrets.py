@@ -9,6 +9,7 @@ from pydantic_settings import (
 class Secrets(BaseSettings):
     bot_token: str = Field(repr=False)
     payments_token: str = Field(repr=False)
+    gemini_api_key: str = Field(repr=False)
 
     @classmethod
     def settings_customise_sources(

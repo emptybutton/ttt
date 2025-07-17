@@ -21,6 +21,8 @@ class Envs(BaseSettings):
 
     nats_url: NatsDsn
 
+    gemini_url: str
+
     game_waiting_queue_pulling_timeout_min_ms: int
     game_waiting_queue_pulling_timeout_salt_ms: int
 

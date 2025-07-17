@@ -33,6 +33,8 @@ services:
 
       TTT_NATS_URL: nats://nats:4222
 
+      TTT_GEMINI_URL: https://my-openai-gemini-sigma-sandy.vercel.app
+
       TTT_GAME_WAITING_QUEUE_PULLING_TIMEOUT_MIN_MS: 100
       TTT_GAME_WAITING_QUEUE_PULLING_TIMEOUT_SALT_MS: 100
     secrets:
