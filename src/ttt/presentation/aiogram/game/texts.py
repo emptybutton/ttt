@@ -7,7 +7,7 @@ def game_cell(
     game: Game,
     default: str,
 ) -> str:
-    match cell.filler_id:
+    match cell.filler_id():
         case game.player1.id:
             return game.player1_emoji.str_
         case game.player2.id:

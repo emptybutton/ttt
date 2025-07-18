@@ -12,9 +12,10 @@ from ttt.entities.core.game.cell import AlreadyFilledCellError
 from ttt.entities.core.game.game import (
     AlreadyCompletedGameError,
     NoCellError,
-    NotCurrentUserError,
+    NotCurrentPlayerError,
 )
 from ttt.entities.core.user.location import UserLocation
+from ttt.entities.core.user.user import User
 from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
 
@@ -44,6 +45,7 @@ class MakeMoveInGame:
             locations = tuple(
                 not_none(user.game_location)
                 for user in (game.player1, game.player2)
+                if isinstance(user, User)
             )
             game_result_id, random = await gather(
                 self.uuids.random_uuid(),
@@ -63,7 +65,7 @@ class MakeMoveInGame:
                 await self.game_views.render_game_already_complteted_view(
                     location, game,
                 )
-            except NotCurrentUserError:
+            except NotCurrentPlayerError:
                 await self.game_views.render_not_current_user_view(
                     location, game,
                 )

@@ -8,7 +8,7 @@ from ttt.entities.core.user.account import Account
 from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.location import UserGameLocation, UserLocation
 from ttt.entities.core.user.stars_purchase import StarsPurchase
-from ttt.entities.core.user.win import Win
+from ttt.entities.core.user.win import UserWin
 from ttt.entities.finance.payment.payment import (
     cancel_payment,
     complete_payment,
@@ -87,7 +87,7 @@ class User:
         self.number_of_defeats += 1
         tracking.register_mutated(self)
 
-    def win(self, random: Random, tracking: Tracking) -> Win:
+    def win(self, random: Random, tracking: Tracking) -> UserWin:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
         """
@@ -100,7 +100,7 @@ class User:
         self.account = self.account.map(lambda stars: stars + new_stars)
 
         tracking.register_mutated(self)
-        return Win(self.id, new_stars)
+        return UserWin(self.id, new_stars)
 
     def be_draw(self, tracking: Tracking) -> None:
         """

@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from ttt.entities.tools.assertion import assert_
@@ -27,3 +28,8 @@ def randrange(stop: int, *, random: Random) -> int:
 
 def deviated_int(base: int, deviating: int, *, random: Random) -> int:
     return base - deviating // 2 + randrange(deviating, random=random)
+
+
+def choice[T](values: Sequence[T], *, random: Random) -> T:
+    index = randrange(len(values) - 1, random=random)
+    return values[index]

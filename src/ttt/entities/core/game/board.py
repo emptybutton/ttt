@@ -30,7 +30,7 @@ def create_empty_board(
 
     board = Matrix([
         [
-            Cell(cell_id_matrix[x, y], game_id, (x, y), None)
+            Cell(cell_id_matrix[x, y], game_id, (x, y), None, None)
             for x in range(3)
         ]
         for y in range(3)

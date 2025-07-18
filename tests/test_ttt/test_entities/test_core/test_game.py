@@ -11,15 +11,15 @@ from ttt.entities.core.game.game import (
     GameState,
     InvalidCellOrderError,
     NoCellError,
-    NotCurrentUserError,
+    NotCurrentPlayerError,
+    NotPlayerError,
     NotStandardBoardError,
-    NotUserError,
     OneEmojiError,
     OneUserError,
 )
 from ttt.entities.core.user.account import Account
 from ttt.entities.core.user.user import User
-from ttt.entities.core.user.win import Win
+from ttt.entities.core.user.win import UserWin
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.math.random import Random
 from ttt.entities.text.emoji import Emoji
@@ -36,46 +36,46 @@ def not_standard_board(request: FixtureRequest) -> Board:
 
     if request.param == 2:
         return Matrix([
-            [Cell(UUID(int=1), UUID(int=0), (0, 0), None)],
+            [Cell(UUID(int=1), UUID(int=0), (0, 0), None, None)],
         ])
 
     if request.param == 3:
         return Matrix([
-            [Cell(UUID(int=0), UUID(int=0), (0, 0), None)],
-            [Cell(UUID(int=0), UUID(int=0), (0, 1), None)],
+            [Cell(UUID(int=0), UUID(int=0), (0, 0), None, None)],
+            [Cell(UUID(int=0), UUID(int=0), (0, 1), None, None)],
         ])
 
     if request.param == 4:
         return Matrix([
             [
-                Cell(UUID(int=0), UUID(int=0), (0, 0), None),
-                Cell(UUID(int=0), UUID(int=0), (1, 0), None),
+                Cell(UUID(int=0), UUID(int=0), (0, 0), None, None),
+                Cell(UUID(int=0), UUID(int=0), (1, 0), None, None),
             ],
             [
-                Cell(UUID(int=0), UUID(int=0), (0, 1), None),
-                Cell(UUID(int=0), UUID(int=0), (1, 1), None),
+                Cell(UUID(int=0), UUID(int=0), (0, 1), None, None),
+                Cell(UUID(int=0), UUID(int=0), (1, 1), None, None),
             ],
         ])
 
     if request.param == 5:
         return Matrix([
             [
-                Cell(UUID(int=0), UUID(int=0), (0, 0), None),
-                Cell(UUID(int=0), UUID(int=0), (1, 0), None),
-                Cell(UUID(int=0), UUID(int=0), (2, 0), None),
-                Cell(UUID(int=0), UUID(int=0), (3, 0), None),
+                Cell(UUID(int=0), UUID(int=0), (0, 0), None, None),
+                Cell(UUID(int=0), UUID(int=0), (1, 0), None, None),
+                Cell(UUID(int=0), UUID(int=0), (2, 0), None, None),
+                Cell(UUID(int=0), UUID(int=0), (3, 0), None, None),
             ],
             [
-                Cell(UUID(int=0), UUID(int=0), (0, 1), None),
-                Cell(UUID(int=0), UUID(int=0), (1, 1), None),
-                Cell(UUID(int=0), UUID(int=0), (2, 1), None),
-                Cell(UUID(int=0), UUID(int=0), (3, 1), None),
+                Cell(UUID(int=0), UUID(int=0), (0, 1), None, None),
+                Cell(UUID(int=0), UUID(int=0), (1, 1), None, None),
+                Cell(UUID(int=0), UUID(int=0), (2, 1), None, None),
+                Cell(UUID(int=0), UUID(int=0), (3, 1), None, None),
             ],
             [
-                Cell(UUID(int=0), UUID(int=0), (0, 2), None),
-                Cell(UUID(int=0), UUID(int=0), (1, 2), None),
-                Cell(UUID(int=0), UUID(int=0), (2, 2), None),
-                Cell(UUID(int=0), UUID(int=0), (3, 2), None),
+                Cell(UUID(int=0), UUID(int=0), (0, 2), None, None),
+                Cell(UUID(int=0), UUID(int=0), (1, 2), None, None),
+                Cell(UUID(int=0), UUID(int=0), (2, 2), None, None),
+                Cell(UUID(int=0), UUID(int=0), (3, 2), None, None),
             ],
         ])
 
@@ -86,19 +86,19 @@ def not_standard_board(request: FixtureRequest) -> Board:
 def standard_board() -> Board:
     return Matrix([
         [
-            Cell(UUID(int=0), UUID(int=0), (0, 0), None),
-            Cell(UUID(int=0), UUID(int=0), (1, 0), None),
-            Cell(UUID(int=0), UUID(int=0), (2, 0), None),
+            Cell(UUID(int=0), UUID(int=0), (0, 0), None, None),
+            Cell(UUID(int=0), UUID(int=0), (1, 0), None, None),
+            Cell(UUID(int=0), UUID(int=0), (2, 0), None, None),
         ],
         [
-            Cell(UUID(int=0), UUID(int=0), (0, 1), None),
-            Cell(UUID(int=0), UUID(int=0), (1, 1), None),
-            Cell(UUID(int=0), UUID(int=0), (2, 1), None),
+            Cell(UUID(int=0), UUID(int=0), (0, 1), None, None),
+            Cell(UUID(int=0), UUID(int=0), (1, 1), None, None),
+            Cell(UUID(int=0), UUID(int=0), (2, 1), None, None),
         ],
         [
-            Cell(UUID(int=0), UUID(int=0), (0, 2), None),
-            Cell(UUID(int=0), UUID(int=0), (1, 2), None),
-            Cell(UUID(int=0), UUID(int=0), (2, 2), None),
+            Cell(UUID(int=0), UUID(int=0), (0, 2), None, None),
+            Cell(UUID(int=0), UUID(int=0), (1, 2), None, None),
+            Cell(UUID(int=0), UUID(int=0), (2, 2), None, None),
         ],
     ])
 
@@ -128,19 +128,19 @@ def game(
 def board_with_invalid_cell_order() -> Board:
     return Matrix([
         [
-            Cell(UUID(int=0), UUID(int=0), (0, 0), None),
-            Cell(UUID(int=0), UUID(int=0), (1, 0), None),
-            Cell(UUID(int=0), UUID(int=0), (2, 7), None),
+            Cell(UUID(int=0), UUID(int=0), (0, 0), None, None),
+            Cell(UUID(int=0), UUID(int=0), (1, 0), None, None),
+            Cell(UUID(int=0), UUID(int=0), (2, 7), None, None),
         ],
         [
-            Cell(UUID(int=0), UUID(int=0), (0, 1), None),
-            Cell(UUID(int=0), UUID(int=0), (1, 1), None),
-            Cell(UUID(int=0), UUID(int=0), (2, 1), None),
+            Cell(UUID(int=0), UUID(int=0), (0, 1), None, None),
+            Cell(UUID(int=0), UUID(int=0), (1, 1), None, None),
+            Cell(UUID(int=0), UUID(int=0), (2, 1), None, None),
         ],
         [
-            Cell(UUID(int=0), UUID(int=0), (0, 2), None),
-            Cell(UUID(int=0), UUID(int=0), (1, 2), None),
-            Cell(UUID(int=0), UUID(int=0), (2, 2), None),
+            Cell(UUID(int=0), UUID(int=0), (0, 2), None, None),
+            Cell(UUID(int=0), UUID(int=0), (1, 2), None, None),
+            Cell(UUID(int=0), UUID(int=0), (2, 2), None, None),
         ],
     ])
 
@@ -242,19 +242,19 @@ def test_create_empty_board_ok(tracking: Tracking, object_: str) -> None:
     if object_ == "board":
         assert board == Matrix([
             [
-                Cell(UUID(int=1), UUID(int=1000), (0, 0), None),
-                Cell(UUID(int=2), UUID(int=1000), (1, 0), None),
-                Cell(UUID(int=3), UUID(int=1000), (2, 0), None),
+                Cell(UUID(int=1), UUID(int=1000), (0, 0), None, None),
+                Cell(UUID(int=2), UUID(int=1000), (1, 0), None, None),
+                Cell(UUID(int=3), UUID(int=1000), (2, 0), None, None),
             ],
             [
-                Cell(UUID(int=4), UUID(int=1000), (0, 1), None),
-                Cell(UUID(int=5), UUID(int=1000), (1, 1), None),
-                Cell(UUID(int=6), UUID(int=1000), (2, 1), None),
+                Cell(UUID(int=4), UUID(int=1000), (0, 1), None, None),
+                Cell(UUID(int=5), UUID(int=1000), (1, 1), None, None),
+                Cell(UUID(int=6), UUID(int=1000), (2, 1), None, None),
             ],
             [
-                Cell(UUID(int=7), UUID(int=1000), (0, 2), None),
-                Cell(UUID(int=8), UUID(int=1000), (1, 2), None),
-                Cell(UUID(int=9), UUID(int=1000), (2, 2), None),
+                Cell(UUID(int=7), UUID(int=1000), (0, 2), None, None),
+                Cell(UUID(int=8), UUID(int=1000), (1, 2), None, None),
+                Cell(UUID(int=9), UUID(int=1000), (2, 2), None, None),
             ],
         ])
 
@@ -292,7 +292,7 @@ def test_make_move_with_not_user(
     middle_random: Random,
     tracking: Tracking,
 ) -> None:
-    with raises(NotUserError):
+    with raises(NotPlayerError):
         game.make_move(100, 9, UUID(int=8), middle_random, tracking)
 
 
@@ -301,7 +301,7 @@ def test_make_move_with_not_current_user(
     middle_random: Random,
     tracking: Tracking,
 ) -> None:
-    with raises(NotCurrentUserError):
+    with raises(NotCurrentPlayerError):
         game.make_move(2, 9, UUID(int=8), middle_random, tracking)
 
 
@@ -332,7 +332,7 @@ def test_make_move_with_double_move(
 ) -> None:
     game.make_move(1, 1, UUID(int=8), middle_random, tracking)
 
-    with raises(NotCurrentUserError):
+    with raises(NotCurrentPlayerError):
         game.make_move(1, 2, UUID(int=8), middle_random, tracking)
 
 
@@ -364,7 +364,7 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
         assert result == GameCompletionResult(
             UUID(int=8),
             UUID(int=0),
-            win=Win(1, 50),
+            win=UserWin(1, 50),
         )
 
     if object_ == "user1":
@@ -500,7 +500,7 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
         assert result == GameCompletionResult(
             UUID(int=8),
             UUID(int=0),
-            Win(1, 50),
+            UserWin(1, 50),
         )
 
     if object_ == "user1":

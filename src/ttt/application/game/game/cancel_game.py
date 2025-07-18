@@ -8,6 +8,7 @@ from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.games import Games
 from ttt.entities.core.game.game import AlreadyCompletedGameError
 from ttt.entities.core.user.location import UserLocation
+from ttt.entities.core.user.user import User
 from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
 
@@ -33,6 +34,7 @@ class CancelGame:
             locations = tuple(
                 not_none(user.game_location)
                 for user in (game.player1, game.player2)
+                if isinstance(user, User)
             )
 
             try:

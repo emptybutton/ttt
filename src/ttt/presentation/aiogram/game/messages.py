@@ -8,7 +8,8 @@ from ttt.entities.core.game.game import (
     GameCompletionResult,
     GameState,
 )
-from ttt.entities.core.user.win import Win
+from ttt.entities.core.game.win import AiWin
+from ttt.entities.core.user.win import UserWin
 from ttt.presentation.aiogram.game.keyboards import game_keyboard
 from ttt.presentation.aiogram.game.texts import game_cell
 
@@ -76,14 +77,14 @@ async def completed_game_messages(
 ) -> None:
     match game.result:
         case GameCompletionResult(
-            win=Win(winner_id=winner_id) as win,
+            win=UserWin(winner_id) as win,
         ) if winner_id == user_id:
             result_emoji = "🎆"
             about_result = f"Вы победили! +{win.new_stars} 🌟"
         case GameCompletionResult(win=None):
             result_emoji = "🕊"
             about_result = "Ничья!"
-        case GameCompletionResult(win=Win(winner_id=_)):
+        case GameCompletionResult(win=UserWin(_) | AiWin()):
             result_emoji = "💀"
             about_result = "Вы проиграли!"
         case GameCancellationResult():

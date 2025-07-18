@@ -20,7 +20,7 @@ def _game_keyboard_button(
     cell: Cell,
     game: Game,
 ) -> KeyboardButton:
-    match cell.filler_id:
+    match cell.filler_id():
         case game.player1.id:
             return KeyboardButton(text=game.player1_emoji.str_)
         case game.player2.id:
