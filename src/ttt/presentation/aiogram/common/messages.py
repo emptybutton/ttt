@@ -30,6 +30,7 @@ async def help_message(bot: Bot, chat_id: int) -> None:
         as_marked_section(
             "Комманды:",
             Text(Bold("/game"), " — начать игру"),
+            Text(Bold("/game_with_ai"), " — начать игру с ИИ"),
             Text(Bold("/cancel_game"), " — отменить игру"),
             Text(Bold("/profile"), " — показать профиль"),
             Text(Bold("/select_emoji"), " — выбрать эмоджи"),

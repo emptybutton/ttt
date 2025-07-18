@@ -10,8 +10,23 @@ from ttt.entities.core.game.game import (
 )
 from ttt.entities.core.game.win import AiWin
 from ttt.entities.core.user.win import UserWin
-from ttt.presentation.aiogram.game.keyboards import game_keyboard
+from ttt.presentation.aiogram.game.keyboards import (
+    game_keyboard,
+    keyboard_to_start_game_with_ai,
+)
 from ttt.presentation.aiogram.game.texts import game_cell
+
+
+async def message_to_start_game_with_ai(
+    bot: Bot,
+    chat_id: int,
+) -> None:
+    text = Text("🤖 Выберите тип ИИ")
+    keyboard = keyboard_to_start_game_with_ai()
+
+    await bot.send_message(
+        chat_id, **text.as_kwargs(), reply_markup=keyboard,
+    )
 
 
 async def started_game_message(

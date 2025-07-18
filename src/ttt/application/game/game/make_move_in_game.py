@@ -5,6 +5,7 @@ from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
+from ttt.application.game.common.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.games import Games
 from ttt.application.user.common.ports.users import Users
@@ -28,6 +29,7 @@ class MakeMoveInGame:
     users: Users
     uuids: UUIDs
     randoms: Randoms
+    ai_gateway: GameAiGateway
     transaction: Transaction
 
     async def __call__(
@@ -54,7 +56,7 @@ class MakeMoveInGame:
 
             try:
                 tracking = Tracking()
-                game.make_move(
+                move = game.make_move(
                     location.user_id,
                     cell_number_int,
                     game_result_id,
@@ -76,7 +78,35 @@ class MakeMoveInGame:
                     location, game,
                 )
             else:
-                await self.map_(tracking)
-                await self.game_views.render_game_view_with_locations(
-                    locations, game,
-                )
+                if move.next_move_ai_id is not None:
+                    await self.game_views.render_game_view_with_locations(
+                        locations, game,
+                    )
+
+                    game_result_id = await self.uuids.random_uuid()
+                    free_cell_random = await self.randoms.random()
+                    player_win_random = await self.randoms.random()
+                    ai_move_cell_number_int = (
+                        await self.ai_gateway.next_move_cell_number_int(
+                            game,
+                            move.next_move_ai_id,
+                        )
+                    )
+                    game.make_ai_move(
+                        move.next_move_ai_id,
+                        ai_move_cell_number_int,
+                        game_result_id,
+                        free_cell_random,
+                        player_win_random,
+                        tracking,
+                    )
+
+                    await self.map_(tracking)
+                    await self.game_views.render_game_view_with_locations(
+                        locations, game,
+                    )
+                else:
+                    await self.map_(tracking)
+                    await self.game_views.render_game_view_with_locations(
+                        locations, game,
+                    )

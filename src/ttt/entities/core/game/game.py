@@ -55,7 +55,7 @@ type GameResult = GameCompletionResult | GameCancellationResult
 
 @dataclass(frozen=True)
 class UserMove:
-    is_game_waiting_ai_move: bool
+    next_move_ai_id: UUID | None
 
 
 @dataclass(frozen=True)
@@ -221,10 +221,11 @@ class Game:
         )
 
         next_move_player = self._current_player()
-
-        return UserMove(
-            is_game_waiting_ai_move=isinstance(next_move_player, Ai),
+        next_move_ai_id = (
+            next_move_player.id if isinstance(next_move_player, Ai) else None
         )
+
+        return UserMove(next_move_ai_id=next_move_ai_id)
 
     def make_ai_move(  # noqa: PLR0913, PLR0917
         self,

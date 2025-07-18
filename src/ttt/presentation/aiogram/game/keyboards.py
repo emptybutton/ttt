@@ -1,7 +1,25 @@
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+)
 
 from ttt.entities.core.game.cell import Cell
 from ttt.entities.core.game.game import Game
+
+
+def keyboard_to_start_game_with_ai() -> InlineKeyboardMarkup:
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text="gemini 2.0 flash",
+                callback_data="gemini_2_0_flash",
+            ),
+        ],
+    ]
+
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 def game_keyboard(game: Game) -> ReplyKeyboardMarkup:

@@ -5,6 +5,7 @@ from aiogram.types import BotCommand
 async def ttt_bot(bot: Bot) -> None:
     await bot.set_my_commands([
         BotCommand(command="game", description="Начать игру"),
+        BotCommand(command="game_with_ai", description="Начать игру c ИИ"),
         BotCommand(command="cancel_game", description="Отменить игру"),
         BotCommand(command="profile", description="Показать профиль"),
         BotCommand(command="select_emoji", description="Выбрать эмоджи"),

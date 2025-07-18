@@ -61,3 +61,8 @@ class GameViews(ABC):
     async def render_double_waiting_for_game_view(
         self, location: UserLocation,
     ) -> None: ...
+
+    @abstractmethod
+    async def render_waiting_for_ai_type_to_start_game_with_ai_view(
+        self, location: UserLocation,
+    ) -> None: ...

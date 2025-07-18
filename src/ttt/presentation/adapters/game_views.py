@@ -14,6 +14,7 @@ from ttt.presentation.aiogram.game.messages import (
     completed_game_messages,
     double_waiting_for_game_message,
     maked_move_message,
+    message_to_start_game_with_ai,
     no_cell_message,
     no_game_message,
     not_current_user_message,
@@ -125,6 +126,13 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
     ) -> None:
         self._tasks.create_task(
             waiting_for_game_message(self._bot, location.chat_id),
+        )
+
+    async def render_waiting_for_ai_type_to_start_game_with_ai_view(
+        self, location: UserLocation,
+    ) -> None:
+        self._tasks.create_task(
+            message_to_start_game_with_ai(self._bot, location.chat_id),
         )
 
     async def render_double_waiting_for_game_view(
