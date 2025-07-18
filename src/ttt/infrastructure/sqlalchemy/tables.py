@@ -115,7 +115,7 @@ class TablePayment(Base):
 
 
 class TableUserEmoji(Base):
-    __tablename__ = "player_emojis"
+    __tablename__ = "user_emojis"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     player_id: Mapped[int] = mapped_column(
@@ -147,7 +147,7 @@ class TableStarsPurchase(Base):
     __tablename__ = "stars_purchases"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    location_player_id: Mapped[int] = mapped_column(
+    location_user_id: Mapped[int] = mapped_column(
         ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
@@ -198,7 +198,7 @@ class TableUser(Base):
     id: Mapped[int] = mapped_column(BigInteger(), primary_key=True)
     account_stars: Mapped[int] = mapped_column(server_default="0")
     selected_emoji_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("player_emojis.id", deferrable=True, initially="DEFERRED"),
+        ForeignKey("user_emojis.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
     number_of_wins: Mapped[int]
