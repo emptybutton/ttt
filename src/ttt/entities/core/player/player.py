@@ -270,7 +270,7 @@ class Player:
         raise NoPurchaseError
 
 
-type PlayerAggregate = Player | PlayerEmoji | StarsPurchase
+type PlayerAtomic = Player | PlayerEmoji | StarsPurchase
 
 
 def register_player(player_id: int, tracking: Tracking) -> Player:

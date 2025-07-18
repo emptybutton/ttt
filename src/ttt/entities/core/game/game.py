@@ -293,7 +293,7 @@ class Game:
         tracking.register_mutated(self)
 
 
-type GameAggregate = Game | GameResult | Cell
+type GameAtomic = Game | GameResult | Cell
 
 
 @dataclass(frozen=True)

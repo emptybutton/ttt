@@ -114,4 +114,4 @@ def cancel_payment(
     tracking.register_mutated(payment)
 
 
-type PaymentAggregate = Payment
+type PaymentAtomic = Payment

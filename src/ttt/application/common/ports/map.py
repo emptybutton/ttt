@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 
-from ttt.entities.aggregate import Aggregate
+from ttt.entities.atomic import Atomic
 from ttt.entities.tools.tracking import Tracking
 
 
 class NotUniquePlayerIdError(Exception): ...
 
 
-type MappableTracking = Tracking[Aggregate]
+type MappableTracking = Tracking[Atomic]
 
 
 class Map(ABC):

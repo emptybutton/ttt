@@ -8,7 +8,7 @@ from sqlalchemy import CHAR, BigInteger, ForeignKey, Index
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from ttt.entities.aggregate import Aggregate
+from ttt.entities.atomic import Atomic
 from ttt.entities.core.game.board import Board
 from ttt.entities.core.game.cell import Cell
 from ttt.entities.core.game.game import (
@@ -486,18 +486,18 @@ class TableGame(Base):
         return Matrix(lines)
 
 
-type TablePlayerAggregate = TablePlayer | TablePlayerEmoji | TableStarsPurchase
-type TableGameAggregate = TableGame | TableGameResult | TableCell
-type TablePaymentAggregate = TablePayment
+type TablePlayerAtomic = TablePlayer | TablePlayerEmoji | TableStarsPurchase
+type TableGameAtomic = TableGame | TableGameResult | TableCell
+type TablePaymentAtomic = TablePayment
 
-type TableAggregate = (
-    TablePlayerAggregate
-    | TableGameAggregate
-    | TablePaymentAggregate
+type TableAtomic = (
+    TablePlayerAtomic
+    | TableGameAtomic
+    | TablePaymentAtomic
 )
 
 
-def table_entity(entity: Aggregate) -> TableAggregate:  # noqa: PLR0911
+def table_entity(entity: Atomic) -> TableAtomic:  # noqa: PLR0911
     match entity:
         case Player():
             return TablePlayer.of(entity)
