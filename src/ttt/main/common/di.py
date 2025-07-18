@@ -18,19 +18,19 @@ from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.common.ports.games import Games
 from ttt.application.game.common.ports.waiting_locations import WaitingLocations
-from ttt.application.player.common.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
+from ttt.application.user.common.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
     PaidStarsPurchasePaymentInbox,
 )
-from ttt.application.player.common.ports.players import Players
+from ttt.application.user.common.ports.users import Users
 from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
 from ttt.infrastructure.adapters.paid_stars_purchase_payment_inbox import (
     InNatsPaidStarsPurchasePaymentInbox,
 )
-from ttt.infrastructure.adapters.players import InPostgresPlayers
 from ttt.infrastructure.adapters.randoms import MersenneTwisterRandoms
 from ttt.infrastructure.adapters.transaction import InPostgresTransaction
+from ttt.infrastructure.adapters.users import InPostgresUsers
 from ttt.infrastructure.adapters.uuids import UUIDv4s
 from ttt.infrastructure.adapters.waiting_locations import (
     InRedisFixedBatchesWaitingLocations,
@@ -147,9 +147,9 @@ class InfrastructureProvider(Provider):
         scope=Scope.REQUEST,
     )
 
-    provide_players = provide(
-        InPostgresPlayers,
-        provides=Players,
+    provide_users = provide(
+        InPostgresUsers,
+        provides=Users,
         scope=Scope.REQUEST,
     )
 

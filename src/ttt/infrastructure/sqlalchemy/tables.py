@@ -19,12 +19,12 @@ from ttt.entities.core.game.game import (
     GameState,
     number_of_unfilled_cells,
 )
-from ttt.entities.core.player.account import Account
-from ttt.entities.core.player.emoji import PlayerEmoji
-from ttt.entities.core.player.location import PlayerGameLocation, PlayerLocation
-from ttt.entities.core.player.player import Player
-from ttt.entities.core.player.stars_purchase import StarsPurchase
-from ttt.entities.core.player.win import Win
+from ttt.entities.core.user.account import Account
+from ttt.entities.core.user.emoji import UserEmoji
+from ttt.entities.core.user.location import UserGameLocation, UserLocation
+from ttt.entities.core.user.stars_purchase import StarsPurchase
+from ttt.entities.core.user.user import User
+from ttt.entities.core.user.win import Win
 from ttt.entities.finance.payment.payment import Payment, PaymentState
 from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.finance.rubles import Rubles
@@ -114,7 +114,7 @@ class TablePayment(Base):
         )
 
 
-class TablePlayerEmoji(Base):
+class TableUserEmoji(Base):
     __tablename__ = "player_emojis"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -125,8 +125,8 @@ class TablePlayerEmoji(Base):
     emoji_str: Mapped[str] = mapped_column(CHAR(1))
     datetime_of_purchase: Mapped[datetime]
 
-    def entity(self) -> PlayerEmoji:
-        return PlayerEmoji(
+    def entity(self) -> UserEmoji:
+        return UserEmoji(
             self.id,
             self.player_id,
             Emoji(self.emoji_str),
@@ -134,10 +134,10 @@ class TablePlayerEmoji(Base):
         )
 
     @classmethod
-    def of(cls, it: PlayerEmoji) -> "TablePlayerEmoji":
-        return TablePlayerEmoji(
+    def of(cls, it: UserEmoji) -> "TableUserEmoji":
+        return TableUserEmoji(
             id=it.id,
-            player_id=it.player_id,
+            player_id=it.user_id,
             emoji_str=it.emoji.str_,
             datetime_of_purchase=it.datetime_of_purchase,
         )
@@ -173,7 +173,7 @@ class TableStarsPurchase(Base):
     def entity(self) -> StarsPurchase:
         return StarsPurchase(
             id_=self.id,
-            location=PlayerLocation(
+            location=UserLocation(
                 self.location_player_id,
                 self.location_chat_id,
             ),
@@ -185,14 +185,14 @@ class TableStarsPurchase(Base):
     def of(cls, it: StarsPurchase) -> "TableStarsPurchase":
         return TableStarsPurchase(
             id=it.id_,
-            location_player_id=it.location.player_id,
+            location_player_id=it.location.user_id,
             location_chat_id=it.location.chat_id,
             stars=it.stars,
             payment_id=None if it.payment is None else it.payment.id_,
         )
 
 
-class TablePlayer(Base):
+class TableUser(Base):
     __tablename__ = "players"
 
     id: Mapped[int] = mapped_column(BigInteger(), primary_key=True)
@@ -210,21 +210,21 @@ class TablePlayer(Base):
     )
     game_location_chat_id: Mapped[int | None] = mapped_column(BigInteger())
 
-    emojis: Mapped[list[TablePlayerEmoji]] = relationship(
+    emojis: Mapped[list[TableUserEmoji]] = relationship(
         lazy="selectin",
-        foreign_keys=[TablePlayerEmoji.player_id],
+        foreign_keys=[TableUserEmoji.player_id],
     )
     stars_purchases: Mapped[list[TableStarsPurchase]] = relationship(
         lazy="selectin",
         foreign_keys=[TableStarsPurchase.location_player_id],
     )
 
-    def entity(self) -> Player:
+    def entity(self) -> User:
         if (
             self.game_location_game_id is not None
             and self.game_location_chat_id is not None
         ):
-            location = PlayerGameLocation(
+            location = UserGameLocation(
                 self.id,
                 self.game_location_chat_id,
                 self.game_location_game_id,
@@ -232,7 +232,7 @@ class TablePlayer(Base):
         else:
             location = None
 
-        return Player(
+        return User(
             self.id,
             Account(self.account_stars),
             [it.entity() for it in self.emojis],
@@ -245,7 +245,7 @@ class TablePlayer(Base):
         )
 
     @classmethod
-    def of(cls, it: Player) -> "TablePlayer":
+    def of(cls, it: User) -> "TableUser":
         if it.game_location is None:
             game_location_game_id = None
             game_location_chat_id = None
@@ -253,7 +253,7 @@ class TablePlayer(Base):
             game_location_game_id = it.game_location.game_id
             game_location_chat_id = it.game_location.chat_id
 
-        return TablePlayer(
+        return TableUser(
             id=it.id,
             account_stars=it.account.stars,
             selected_emoji_id=it.selected_emoji_id,
@@ -431,12 +431,12 @@ class TableGame(Base):
     state: Mapped[TableGameState] = mapped_column(game_state)
 
     result: Mapped["TableGameResult | None"] = relationship(lazy="joined")
-    player1: Mapped["TablePlayer"] = relationship(
+    player1: Mapped["TableUser"] = relationship(
         lazy="joined",
         foreign_keys=[player1_id],
     )
     player1_emoji_str: Mapped[str] = mapped_column(server_default="❌")
-    player2: Mapped["TablePlayer"] = relationship(
+    player2: Mapped["TableUser"] = relationship(
         lazy="joined",
         foreign_keys=[player2_id],
     )
@@ -486,12 +486,12 @@ class TableGame(Base):
         return Matrix(lines)
 
 
-type TablePlayerAtomic = TablePlayer | TablePlayerEmoji | TableStarsPurchase
+type TableUserAtomic = TableUser | TableUserEmoji | TableStarsPurchase
 type TableGameAtomic = TableGame | TableGameResult | TableCell
 type TablePaymentAtomic = TablePayment
 
 type TableAtomic = (
-    TablePlayerAtomic
+    TableUserAtomic
     | TableGameAtomic
     | TablePaymentAtomic
 )
@@ -499,10 +499,10 @@ type TableAtomic = (
 
 def table_entity(entity: Atomic) -> TableAtomic:  # noqa: PLR0911
     match entity:
-        case Player():
-            return TablePlayer.of(entity)
-        case PlayerEmoji():
-            return TablePlayerEmoji.of(entity)
+        case User():
+            return TableUser.of(entity)
+        case UserEmoji():
+            return TableUserEmoji.of(entity)
         case StarsPurchase():
             return TableStarsPurchase.of(entity)
 

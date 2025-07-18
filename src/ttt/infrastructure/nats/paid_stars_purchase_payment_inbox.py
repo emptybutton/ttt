@@ -6,7 +6,7 @@ from typing import ClassVar, Self, cast
 from nats.js import JetStreamContext
 from pydantic import TypeAdapter
 
-from ttt.application.player.common.dto.common import PaidStarsPurchasePayment
+from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.infrastructure.nats.messages import at_least_once_messages
 
 
@@ -16,13 +16,13 @@ class InNatsPaidStarsPurchasePaymentInbox:
 
     _subscription: JetStreamContext.PullSubscription = field(init=False)
     _adapter: ClassVar = TypeAdapter(PaidStarsPurchasePayment)
-    _subject: ClassVar = "player.stars_purchase.paid_payment_inbox"
+    _subject: ClassVar = "user.stars_purchase.paid_payment_inbox"
 
     async def __aenter__(self) -> Self:
         self._subscription = await self._js.pull_subscribe(
             self._subject,
-            "ttt-player-stars_purchase-paid_payment_inbox",
-            "PLAYER",
+            "ttt-user-stars_purchase-paid_payment_inbox",
+            "USER",
         )
         return self
 

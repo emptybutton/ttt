@@ -14,11 +14,11 @@ from ttt.entities.core.game.cell_number import (
     CellNumber,
     InvalidCellNumberError,
 )
-from ttt.entities.core.player.player import (
-    Player,
-    PlayerAlreadyInGameError,
+from ttt.entities.core.user.user import (
+    User,
+    UserAlreadyInGameError,
 )
-from ttt.entities.core.player.win import Win
+from ttt.entities.core.user.win import Win
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.math.random import Random
 from ttt.entities.math.vector import Vector
@@ -50,7 +50,7 @@ class GameCancellationResult:
 type GameResult = GameCompletionResult | GameCancellationResult
 
 
-class OnePlayerError(Exception): ...
+class OneUserError(Exception): ...
 
 
 class NotStandardBoardError(Exception): ...
@@ -68,10 +68,10 @@ class AlreadyCompletedGameError(Exception): ...
 class NoCellError(Exception): ...
 
 
-class NotPlayerError(Exception): ...
+class NotUserError(Exception): ...
 
 
-class NotCurrentPlayerError(Exception): ...
+class NotCurrentUserError(Exception): ...
 
 
 class OneEmojiError(Exception): ...
@@ -88,16 +88,16 @@ def number_of_unfilled_cells(board: Matrix[Cell]) -> int:
 class Game:
     """
     :raises ttt.entities.core.game.game.OneEmojiError:
-    :raises ttt.entities.core.game.game.OnePlayerError:
+    :raises ttt.entities.core.game.game.OneUserError:
     :raises ttt.entities.core.game.game.NotStandardBoardError:
     :raises ttt.entities.core.game.game.InvalidCellOrderError:
     :raises ttt.entities.core.game.game.InvalidNumberOfUnfilledCellsError:
     """
 
     id: UUID
-    player1: Player
+    player1: User
     player1_emoji: Emoji
-    player2: Player
+    player2: User
     player2_emoji: Emoji
     board: Board
     number_of_unfilled_cells: int
@@ -105,7 +105,7 @@ class Game:
     state: GameState
 
     def __post_init__(self) -> None:
-        assert_(self.player1.id != self.player2.id, else_=OnePlayerError)
+        assert_(self.player1.id != self.player2.id, else_=OneUserError)
         assert_(self.player1_emoji != self.player2_emoji, else_=OneEmojiError)
         assert_(is_board_standard(self.board), else_=NotStandardBoardError)
 
@@ -123,15 +123,15 @@ class Game:
         )
 
     def cancel(
-        self, player_id: int, game_result_id: UUID, tracking: Tracking,
+        self, user_id: int, game_result_id: UUID, tracking: Tracking,
     ) -> None:
         """
         :raises ttt.entities.core.game.game.AlreadyCompletedGameError:
-        :raises ttt.entities.core.game.game.NotPlayerError:
+        :raises ttt.entities.core.game.game.NotUserError:
         """
 
         none(self.result, else_=AlreadyCompletedGameError)
-        canceler = not_none(self._player(player_id), else_=NotPlayerError)
+        canceler = not_none(self._player(user_id), else_=NotUserError)
 
         self.player1.leave_game(tracking)
         self.player2.leave_game(tracking)
@@ -145,7 +145,7 @@ class Game:
 
     def make_move(
         self,
-        player_id: int,
+        user_id: int,
         cell_number_int: int,
         game_result_id: UUID,
         random: Random,
@@ -153,8 +153,8 @@ class Game:
     ) -> GameResult | None:
         """
         :raises ttt.entities.core.game.game.AlreadyCompletedGameError:
-        :raises ttt.entities.core.game.game.NotPlayerError:
-        :raises ttt.entities.core.game.game.NotCurrentPlayerError:
+        :raises ttt.entities.core.game.game.NotUserError:
+        :raises ttt.entities.core.game.game.NotCurrentUserError:
         :raises ttt.entities.core.game.game.NoCellError:
         :raises ttt.entities.core.game.cell.AlreadyFilledCellError:
         """
@@ -163,10 +163,10 @@ class Game:
             self._current_player(), AlreadyCompletedGameError,
         )
         assert_(
-            player_id in {self.player1.id, self.player2.id},
-            else_=NotPlayerError(),
+            user_id in {self.player1.id, self.player2.id},
+            else_=NotUserError(),
         )
-        assert_(current_player.id == player_id, else_=NotCurrentPlayerError())
+        assert_(current_player.id == user_id, else_=NotCurrentUserError())
 
         try:
             cell_number = CellNumber(cell_number_int)
@@ -175,7 +175,7 @@ class Game:
         else:
             cell_position = cell_number.board_position()
 
-        self._fill_cell(cell_position, player_id, tracking)
+        self._fill_cell(cell_position, user_id, tracking)
 
         if self._is_player_winner(current_player, cell_position):
             not_current_player = not_none(self._not_current_player())
@@ -199,7 +199,7 @@ class Game:
         return None
 
     def _fill_cell(
-        self, cell_position: Vector, player_id: int, tracking: Tracking,
+        self, cell_position: Vector, user_id: int, tracking: Tracking,
     ) -> None:
         """
         :raises ttt.entities.core.game.game.NoCellError:
@@ -211,7 +211,7 @@ class Game:
         except IndexError as error:
             raise NoCellError from error
 
-        cell.fill(player_id, tracking)
+        cell.fill(user_id, tracking)
         self.number_of_unfilled_cells -= 1
         tracking.register_mutated(self)
 
@@ -221,7 +221,7 @@ class Game:
     def _is_board_filled(self) -> bool:
         return self.number_of_unfilled_cells <= 0
 
-    def _is_player_winner(self, player: Player, cell_position: Vector) -> bool:
+    def _is_player_winner(self, player: User, cell_position: Vector) -> bool:
         cell_x, cell_y = cell_position
 
         is_winner = all(
@@ -246,7 +246,7 @@ class Game:
 
         return is_winner
 
-    def _current_player(self) -> Player | None:
+    def _current_player(self) -> User | None:
         match self.state:
             case GameState.wait_player1:
                 return self.player1
@@ -255,8 +255,8 @@ class Game:
             case GameState.completed:
                 return None
 
-    def _player(self, player_id: int) -> Player | None:
-        match player_id:
+    def _player(self, user_id: int) -> User | None:
+        match user_id:
             case self.player1.id:
                 return self.player1
             case self.player2.id:
@@ -264,7 +264,7 @@ class Game:
             case _:
                 return None
 
-    def _not_current_player(self) -> Player | None:
+    def _not_current_player(self) -> User | None:
         match self.state:
             case GameState.wait_player1:
                 return self.player2
@@ -297,25 +297,25 @@ type GameAtomic = Game | GameResult | Cell
 
 
 @dataclass(frozen=True)
-class PlayersAlreadyInGameError(Exception):
-    players: Sequence[Player]
+class UsersAlreadyInGameError(Exception):
+    users: Sequence[User]
 
 
 def start_game(  # noqa: PLR0913, PLR0917
     cell_id_matrix: Matrix[UUID],
     game_id: UUID,
-    player1: Player,
+    player1: User,
     player1_random_emoji: Emoji,
     player1_chat_id: int,
-    player2: Player,
+    player2: User,
     player2_random_emoji: Emoji,
     player2_chat_id: int,
     tracking: Tracking,
 ) -> Game:
     """
     :raises ttt.entities.core.game.game.SameRandomEmojiError:
-    :raises ttt.entities.core.game.game.OnePlayerError:
-    :raises ttt.entities.core.game.game.PlayersAlreadyInGameError:
+    :raises ttt.entities.core.game.game.OneUserError:
+    :raises ttt.entities.core.game.game.UsersAlreadyInGameError:
     :raises ttt.entities.core.game.board.InvalidCellIDMatrixError:
     """
 
@@ -346,15 +346,15 @@ def start_game(  # noqa: PLR0913, PLR0917
 
     try:
         player1.be_in_game(game_id, player1_chat_id, tracking)
-    except PlayerAlreadyInGameError:
+    except UserAlreadyInGameError:
         players_in_game.append(player1)
 
     try:
         player2.be_in_game(game_id, player2_chat_id, tracking)
-    except PlayerAlreadyInGameError:
+    except UserAlreadyInGameError:
         players_in_game.append(player2)
 
     if players_in_game:
-        raise PlayersAlreadyInGameError(players_in_game)
+        raise UsersAlreadyInGameError(players_in_game)
 
     return game

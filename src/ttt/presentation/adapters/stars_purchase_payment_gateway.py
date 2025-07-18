@@ -5,15 +5,15 @@ from uuid import UUID
 from aiogram import Bot
 from aiogram.types import PreCheckoutQuery
 
-from ttt.application.player.common.dto.common import PaidStarsPurchasePayment
-from ttt.application.player.common.ports.stars_purchase_payment_gateway import (
+from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
+from ttt.application.user.common.ports.stars_purchase_payment_gateway import (
     StarsPurchasePaymentGateway,
 )
-from ttt.entities.core.player.location import PlayerLocation
-from ttt.entities.core.player.stars_purchase import StarsPurchase
+from ttt.entities.core.user.location import UserLocation
+from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.buffer import Buffer
-from ttt.presentation.aiogram.player.invoices import stars_invoce
+from ttt.presentation.aiogram.user.invoices import stars_invoce
 
 
 @dataclass
@@ -28,7 +28,7 @@ class AiogramInAndBufferOutStarsPurchasePaymentGateway(
     async def send_invoice(
         self,
         purshase: StarsPurchase,
-        location: PlayerLocation,
+        location: UserLocation,
     ) -> None:
         await stars_invoce(self._bot, location, purshase, self._payments_token)
 

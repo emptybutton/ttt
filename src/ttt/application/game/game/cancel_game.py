@@ -7,7 +7,7 @@ from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.games import Games
 from ttt.entities.core.game.game import AlreadyCompletedGameError
-from ttt.entities.core.player.location import PlayerLocation
+from ttt.entities.core.user.location import UserLocation
 from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
 
@@ -20,10 +20,10 @@ class CancelGame:
     uuids: UUIDs
     transaction: Transaction
 
-    async def __call__(self, location: PlayerLocation) -> None:
+    async def __call__(self, location: UserLocation) -> None:
         async with self.transaction:
             game, game_result_id = await gather(
-                self.games.game_with_game_location(location.player_id),
+                self.games.game_with_game_location(location.user_id),
                 self.uuids.random_uuid(),
             )
             if game is None:
@@ -31,13 +31,13 @@ class CancelGame:
                 return
 
             locations = tuple(
-                not_none(player.game_location)
-                for player in (game.player1, game.player2)
+                not_none(user.game_location)
+                for user in (game.player1, game.player2)
             )
 
             try:
                 tracking = Tracking()
-                game.cancel(location.player_id, game_result_id, tracking)
+                game.cancel(location.user_id, game_result_id, tracking)
             except AlreadyCompletedGameError:
                 await self.game_views.render_game_already_complteted_view(
                     location, game,

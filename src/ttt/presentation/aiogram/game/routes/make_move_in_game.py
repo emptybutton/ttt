@@ -3,7 +3,7 @@ from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.game.game.make_move_in_game import MakeMoveInGame
-from ttt.entities.core.player.location import PlayerLocation
+from ttt.entities.core.user.location import UserLocation
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import (
     anons_are_rohibited_message,
@@ -28,5 +28,5 @@ async def _(
     cell_number_int = int(not_none(message.text))
 
     await make_move_in_game(
-        PlayerLocation(message.from_user.id, message.chat.id), cell_number_int,
+        UserLocation(message.from_user.id, message.chat.id), cell_number_int,
     )

@@ -4,7 +4,7 @@ from ttt.entities.atomic import Atomic
 from ttt.entities.tools.tracking import Tracking
 
 
-class NotUniquePlayerIdError(Exception): ...
+class NotUniqueUserIdError(Exception): ...
 
 
 type MappableTracking = Tracking[Atomic]
@@ -18,5 +18,5 @@ class Map(ABC):
         /,
     ) -> None:
         """
-        :raises ttt.application.common.ports.map.NotUniquePlayerIdError:
+        :raises ttt.application.common.ports.map.NotUniqueUserIdError:
         """

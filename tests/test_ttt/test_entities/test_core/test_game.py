@@ -11,15 +11,15 @@ from ttt.entities.core.game.game import (
     GameState,
     InvalidCellOrderError,
     NoCellError,
-    NotCurrentPlayerError,
-    NotPlayerError,
+    NotCurrentUserError,
     NotStandardBoardError,
+    NotUserError,
     OneEmojiError,
-    OnePlayerError,
+    OneUserError,
 )
-from ttt.entities.core.player.account import Account
-from ttt.entities.core.player.player import Player
-from ttt.entities.core.player.win import Win
+from ttt.entities.core.user.account import Account
+from ttt.entities.core.user.user import User
+from ttt.entities.core.user.win import Win
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.math.random import Random
 from ttt.entities.text.emoji import Emoji
@@ -105,17 +105,17 @@ def standard_board() -> Board:
 
 @fixture
 def game(
-    player1: Player,
-    player2: Player,
+    user1: User,
+    user2: User,
     emoji1: Emoji,
     emoji2: Emoji,
     standard_board: Board,
 ) -> Game:
     return Game(
         UUID(int=0),
-        player1,
+        user1,
         emoji1,
-        player2,
+        user2,
         emoji2,
         standard_board,
         9,
@@ -147,17 +147,17 @@ def board_with_invalid_cell_order() -> Board:
 
 def test_not_standard_board(
     not_standard_board: Board,
-    player1: Player,
-    player2: Player,
+    user1: User,
+    user2: User,
     emoji1: Emoji,
     emoji2: Emoji,
 ) -> None:
     with raises(NotStandardBoardError):
         Game(
             UUID(int=0),
-            player1,
+            user1,
             emoji1,
-            player2,
+            user2,
             emoji2,
             not_standard_board,
             9,
@@ -166,18 +166,18 @@ def test_not_standard_board(
         )
 
 
-def test_one_player(
-    player1: Player,
+def test_one_user(
+    user1: User,
     emoji1: Emoji,
     emoji2: Emoji,
     standard_board: Board,
 ) -> None:
-    with raises(OnePlayerError):
+    with raises(OneUserError):
         Game(
             UUID(int=1),
-            player1,
+            user1,
             emoji1,
-            player1,
+            user1,
             emoji2,
             standard_board,
             9,
@@ -187,17 +187,17 @@ def test_one_player(
 
 
 def test_one_emoji(
-    player1: Player,
-    player2: Player,
+    user1: User,
+    user2: User,
     emoji1: Emoji,
     standard_board: Board,
 ) -> None:
     with raises(OneEmojiError):
         Game(
             UUID(int=1),
-            player1,
+            user1,
             emoji1,
-            player2,
+            user2,
             emoji1,
             standard_board,
             9,
@@ -208,17 +208,17 @@ def test_one_emoji(
 
 def test_game_with_invalid_cell_order(
     board_with_invalid_cell_order: Board,
-    player1: Player,
-    player2: Player,
+    user1: User,
+    user2: User,
     emoji1: Emoji,
     emoji2: Emoji,
 ) -> None:
     with raises(InvalidCellOrderError):
         Game(
             UUID(int=0),
-            player1,
+            user1,
             emoji1,
-            player2,
+            user2,
             emoji2,
             board_with_invalid_cell_order,
             9,
@@ -263,8 +263,8 @@ def test_create_empty_board_ok(tracking: Tracking, object_: str) -> None:
 
 
 def test_make_move_with_completed_game(  # noqa: PLR0913, PLR0917
-    player1: Player,
-    player2: Player,
+    user1: User,
+    user2: User,
     emoji1: Emoji,
     emoji2: Emoji,
     standard_board: Board,
@@ -273,9 +273,9 @@ def test_make_move_with_completed_game(  # noqa: PLR0913, PLR0917
 ) -> None:
     game = Game(
         UUID(int=1),
-        player1,
+        user1,
         emoji1,
-        player2,
+        user2,
         emoji2,
         standard_board,
         9,
@@ -287,21 +287,21 @@ def test_make_move_with_completed_game(  # noqa: PLR0913, PLR0917
         game.make_move(1, 1, UUID(int=8), middle_random, tracking)
 
 
-def test_make_move_with_not_player(
+def test_make_move_with_not_user(
     game: Game,
     middle_random: Random,
     tracking: Tracking,
 ) -> None:
-    with raises(NotPlayerError):
+    with raises(NotUserError):
         game.make_move(100, 9, UUID(int=8), middle_random, tracking)
 
 
-def test_make_move_with_not_current_player(
+def test_make_move_with_not_current_user(
     game: Game,
     middle_random: Random,
     tracking: Tracking,
 ) -> None:
-    with raises(NotCurrentPlayerError):
+    with raises(NotCurrentUserError):
         game.make_move(2, 9, UUID(int=8), middle_random, tracking)
 
 
@@ -332,16 +332,16 @@ def test_make_move_with_double_move(
 ) -> None:
     game.make_move(1, 1, UUID(int=8), middle_random, tracking)
 
-    with raises(NotCurrentPlayerError):
+    with raises(NotCurrentUserError):
         game.make_move(1, 2, UUID(int=8), middle_random, tracking)
 
 
-@mark.parametrize("object_", ["result", "player1", "player2", "extra_move"])
+@mark.parametrize("object_", ["result", "user1", "user2", "extra_move"])
 def test_winning_game(  # noqa: PLR0913, PLR0917
     object_: str,
     game: Game,
-    player1: Player,
-    player2: Player,
+    user1: User,
+    user2: User,
     middle_random: Random,
     tracking: Tracking,
 ) -> None:
@@ -367,8 +367,8 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             win=Win(1, 50),
         )
 
-    if object_ == "player1":
-        assert player1 == Player(
+    if object_ == "user1":
+        assert user1 == User(
             id=1,
             account=Account(50),
             emojis=[],
@@ -380,8 +380,8 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             game_location=None,
         )
 
-    if object_ == "player2":
-        assert player2 == Player(
+    if object_ == "user2":
+        assert user2 == User(
             id=2,
             account=Account(0),
             emojis=[],
@@ -398,12 +398,12 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             game.make_move(2, 6, UUID(int=8), middle_random, tracking)
 
 
-@mark.parametrize("object_", ["result", "player1", "player2", "extra_move"])
+@mark.parametrize("object_", ["result", "user1", "user2", "extra_move"])
 def test_drawn_game(  # noqa: PLR0913, PLR0917
     object_: str,
     game: Game,
-    player1: Player,
-    player2: Player,
+    user1: User,
+    user2: User,
     middle_random: Random,
     tracking: Tracking,
 ) -> None:
@@ -435,8 +435,8 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             win=None,
         )
 
-    if object_ == "player1":
-        assert player1 == Player(
+    if object_ == "user1":
+        assert user1 == User(
             id=1,
             account=Account(0),
             emojis=[],
@@ -448,8 +448,8 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             game_location=None,
         )
 
-    if object_ == "player2":
-        assert player2 == Player(
+    if object_ == "user2":
+        assert user2 == User(
             id=2,
             account=Account(0),
             emojis=[],
@@ -466,12 +466,12 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             game.make_move(2, 5, UUID(int=8), middle_random, tracking)
 
 
-@mark.parametrize("object_", ["result", "player1", "player2", "extra_move"])
+@mark.parametrize("object_", ["result", "user1", "user2", "extra_move"])
 def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
     object_: str,
     game: Game,
-    player1: Player,
-    player2: Player,
+    user1: User,
+    user2: User,
     middle_random: Random,
     tracking: Tracking,
 ) -> None:
@@ -503,8 +503,8 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             Win(1, 50),
         )
 
-    if object_ == "player1":
-        assert player1 == Player(
+    if object_ == "user1":
+        assert user1 == User(
             id=1,
             account=Account(50),
             emojis=[],
@@ -516,8 +516,8 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             game_location=None,
         )
 
-    if object_ == "player2":
-        assert player2 == Player(
+    if object_ == "user2":
+        assert user2 == User(
             id=2,
             account=Account(0),
             emojis=[],

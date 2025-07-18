@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
 
-from ttt.entities.core.player.location import PlayerLocation
+from ttt.entities.core.user.location import UserLocation
 
 
 @dataclass(frozen=True)
@@ -13,15 +13,15 @@ class WaitingLocationsPush:
 class WaitingLocations(ABC):
     @abstractmethod
     async def push(
-        self, location: PlayerLocation, /,
+        self, location: UserLocation, /,
     ) -> WaitingLocationsPush: ...
 
     @abstractmethod
     async def push_many(
-        self, locations: Sequence[PlayerLocation], /,
+        self, locations: Sequence[UserLocation], /,
     ) -> None: ...
 
     @abstractmethod
     def __aiter__(
         self,
-    ) -> AsyncIterator[tuple[PlayerLocation, PlayerLocation]]: ...
+    ) -> AsyncIterator[tuple[UserLocation, UserLocation]]: ...

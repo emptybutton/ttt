@@ -6,7 +6,7 @@ from dishka import make_async_container
 from dishka.integrations.aiogram import AiogramProvider as DishkaAiogramProvider
 from dishka.integrations.aiogram import setup_dishka
 
-from ttt.application.player.common.dto.common import PaidStarsPurchasePayment
+from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.infrastructure.buffer import Buffer
 from ttt.main.aiogram.di import (
     AiogramProvider,

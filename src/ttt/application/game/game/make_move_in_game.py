@@ -7,14 +7,14 @@ from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.games import Games
-from ttt.application.player.common.ports.players import Players
+from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.cell import AlreadyFilledCellError
 from ttt.entities.core.game.game import (
     AlreadyCompletedGameError,
     NoCellError,
-    NotCurrentPlayerError,
+    NotCurrentUserError,
 )
-from ttt.entities.core.player.location import PlayerLocation
+from ttt.entities.core.user.location import UserLocation
 from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
 
@@ -24,26 +24,26 @@ class MakeMoveInGame:
     map_: Map
     games: Games
     game_views: GameViews
-    players: Players
+    users: Users
     uuids: UUIDs
     randoms: Randoms
     transaction: Transaction
 
     async def __call__(
         self,
-        location: PlayerLocation,
+        location: UserLocation,
         cell_number_int: int,
     ) -> None:
         async with self.transaction:
-            game = await self.games.game_with_game_location(location.player_id)
+            game = await self.games.game_with_game_location(location.user_id)
 
             if game is None:
                 await self.game_views.render_no_game_view(location)
                 return
 
             locations = tuple(
-                not_none(player.game_location)
-                for player in (game.player1, game.player2)
+                not_none(user.game_location)
+                for user in (game.player1, game.player2)
             )
             game_result_id, random = await gather(
                 self.uuids.random_uuid(),
@@ -53,7 +53,7 @@ class MakeMoveInGame:
             try:
                 tracking = Tracking()
                 game.make_move(
-                    location.player_id,
+                    location.user_id,
                     cell_number_int,
                     game_result_id,
                     random,
@@ -63,8 +63,8 @@ class MakeMoveInGame:
                 await self.game_views.render_game_already_complteted_view(
                     location, game,
                 )
-            except NotCurrentPlayerError:
-                await self.game_views.render_not_current_player_view(
+            except NotCurrentUserError:
+                await self.game_views.render_not_current_user_view(
                     location, game,
                 )
             except NoCellError:

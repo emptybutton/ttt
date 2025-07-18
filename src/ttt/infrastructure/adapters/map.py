@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ttt.application.common.ports.map import (
     Map,
     MappableTracking,
-    NotUniquePlayerIdError,
+    NotUniqueUserIdError,
 )
 from ttt.infrastructure.sqlalchemy.tables import table_entity
 
@@ -39,7 +39,7 @@ class MapToPostgres(Map):
             case UniqueViolation() as unique_error:
                 constraint_name = unique_error.diag.constraint_name
 
-                if constraint_name == "players_pkey":
-                    raise NotUniquePlayerIdError from error
+                if constraint_name == "users_pkey":
+                    raise NotUniqueUserIdError from error
             case _:
                 raise error from error

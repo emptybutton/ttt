@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from ttt.entities.core.player.win import Win
+from ttt.entities.core.user.win import Win
 
 
 @dataclass(frozen=True)

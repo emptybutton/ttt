@@ -21,55 +21,55 @@ from ttt.application.game.game.cancel_game import CancelGame
 from ttt.application.game.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.game.start_game import StartGame
 from ttt.application.game.game.wait_game import WaitGame
-from ttt.application.player.common.dto.common import PaidStarsPurchasePayment
-from ttt.application.player.common.ports.player_fsm import PlayerFsm
-from ttt.application.player.common.ports.player_views import PlayerViews
-from ttt.application.player.common.ports.stars_purchase_payment_gateway import (
+from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
+from ttt.application.user.common.ports.stars_purchase_payment_gateway import (
     StarsPurchasePaymentGateway,
 )
-from ttt.application.player.emoji_purchase.buy_emoji import BuyEmoji
-from ttt.application.player.emoji_purchase.wait_emoji_to_buy import (
+from ttt.application.user.common.ports.user_fsm import UserFsm
+from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
+from ttt.application.user.emoji_purchase.wait_emoji_to_buy import (
     WaitEmojiToBuy,
 )
-from ttt.application.player.emoji_selection.select_emoji import SelectEmoji
-from ttt.application.player.emoji_selection.wait_emoji_to_select import (
+from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
+from ttt.application.user.emoji_selection.wait_emoji_to_select import (
     WaitEmojiToSelect,
 )
-from ttt.application.player.register_player import RegisterPlayer
-from ttt.application.player.remove_emoji import RemoveEmoji
-from ttt.application.player.stars_purchase.complete_stars_purshase_payment import (  # noqa: E501
+from ttt.application.user.register_user import RegisterUser
+from ttt.application.user.remove_emoji import RemoveEmoji
+from ttt.application.user.stars_purchase.complete_stars_purshase_payment import (  # noqa: E501
     CompleteStarsPurshasePayment,
 )
-from ttt.application.player.stars_purchase.start_stars_purchase import (
+from ttt.application.user.stars_purchase.start_stars_purchase import (
     StartStarsPurchase,
 )
-from ttt.application.player.stars_purchase.start_stars_purchase_payment import (
+from ttt.application.user.stars_purchase.start_stars_purchase_payment import (
     StartStarsPurchasePayment,
 )
-from ttt.application.player.stars_purchase.start_stars_purshase_payment_completion import (  # noqa: E501
+from ttt.application.user.stars_purchase.start_stars_purshase_payment_completion import (  # noqa: E501
     StartStarsPurshasePaymentCompletion,
 )
-from ttt.application.player.stars_purchase.wait_stars_to_start_stars_purshase import (  # noqa: E501
+from ttt.application.user.stars_purchase.wait_stars_to_start_stars_purshase import (  # noqa: E501
     WaitStarsToStartStarsPurshase,
 )
-from ttt.application.player.view_player import ViewPlayer
+from ttt.application.user.view_user import ViewUser
 from ttt.infrastructure.buffer import Buffer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
     BackroundAiogramMessagesAsGameViews,
 )
-from ttt.presentation.adapters.player_fsm import AiogramTrustingPlayerFsm
-from ttt.presentation.adapters.player_views import (
-    AiogramMessagesFromPostgresAsPlayerViews,
-)
 from ttt.presentation.adapters.stars_purchase_payment_gateway import (
     AiogramInAndBufferOutStarsPurchasePaymentGateway,
+)
+from ttt.presentation.adapters.user_fsm import AiogramTrustingUserFsm
+from ttt.presentation.adapters.user_views import (
+    AiogramMessagesFromPostgresAsUserViews,
 )
 from ttt.presentation.aiogram.common.bots import ttt_bot
 from ttt.presentation.aiogram.common.routes.all import common_routers
 from ttt.presentation.aiogram.game.routes.all import game_routers
-from ttt.presentation.aiogram.player.routes.all import player_routers
+from ttt.presentation.aiogram.user.routes.all import user_routers
 from ttt.presentation.unkillable_tasks import UnkillableTasks
 
 
@@ -93,7 +93,7 @@ class AiogramProvider(Provider):
         dp = Dispatcher(name="main", storage=storage)
         dp.include_routers(
             *common_routers,
-            *player_routers,
+            *user_routers,
             *game_routers,
         )
 
@@ -118,9 +118,9 @@ class AiogramProvider(Provider):
         scope=Scope.APP,
     )
 
-    provide_player_views = provide(
-        AiogramMessagesFromPostgresAsPlayerViews,
-        provides=PlayerViews,
+    provide_user_views = provide(
+        AiogramMessagesFromPostgresAsUserViews,
+        provides=UserViews,
         scope=Scope.REQUEST,
     )
 
@@ -187,9 +187,9 @@ class AiogramRequestDataProvider(Provider):
     ) -> FSMContext:
         return cast(FSMContext, middleware_data["state"])
 
-    provide_player_fsm = provide(
-        AiogramTrustingPlayerFsm,
-        provides=PlayerFsm,
+    provide_user_fsm = provide(
+        AiogramTrustingUserFsm,
+        provides=UserFsm,
         scope=Scope.REQUEST,
     )
 
@@ -228,8 +228,8 @@ class ApplicationWithAiogramRequestDataProvider(Provider):
 
 
 class ApplicationWithoutAiogramRequestDataProvider(Provider):
-    provide_view_player = provide(ViewPlayer, scope=Scope.REQUEST)
-    provide_register_player = provide(RegisterPlayer, scope=Scope.REQUEST)
+    provide_view_user = provide(ViewUser, scope=Scope.REQUEST)
+    provide_register_user = provide(RegisterUser, scope=Scope.REQUEST)
     provide_remove_emoji = provide(RemoveEmoji, scope=Scope.REQUEST)
     probide_complete_stars_purshase_payment = provide(
         CompleteStarsPurshasePayment, scope=Scope.REQUEST,

@@ -3,25 +3,25 @@ from dataclasses import dataclass
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.waiting_locations import WaitingLocations
-from ttt.application.player.common.ports.player_views import PlayerViews
-from ttt.application.player.common.ports.players import Players
-from ttt.entities.core.player.location import PlayerLocation
+from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.common.ports.users import Users
+from ttt.entities.core.user.location import UserLocation
 
 
 @dataclass(frozen=True, unsafe_hash=False)
 class WaitGame:
-    players: Players
+    users: Users
     waiting_locations: WaitingLocations
-    player_views: PlayerViews
+    user_views: UserViews
     game_views: GameViews
     transaction: Transaction
 
-    async def __call__(self, location: PlayerLocation) -> None:
+    async def __call__(self, location: UserLocation) -> None:
         async with self.transaction:
-            if not await self.players.contains_player_with_id(
-                location.player_id,
+            if not await self.users.contains_user_with_id(
+                location.user_id,
             ):
-                await self.player_views.render_player_is_not_registered_view(
+                await self.user_views.render_user_is_not_registered_view(
                     location,
                 )
                 return

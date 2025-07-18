@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.game.common.ports.games import Games
 from ttt.entities.core.game.game import Game
-from ttt.infrastructure.sqlalchemy.tables import TableGame, TablePlayer
+from ttt.infrastructure.sqlalchemy.tables import TableGame, TableUser
 
 
 @dataclass(frozen=True, unsafe_hash=False)
@@ -13,13 +13,13 @@ class InPostgresGames(Games):
     _session: AsyncSession
 
     async def game_with_game_location(
-        self, game_location_player_id: int, /,
+        self, game_location_user_id: int, /,
     ) -> Game | None:
         join_condition = (
-            (TablePlayer.id == game_location_player_id)
-            & (TablePlayer.game_location_game_id == TableGame.id)
+            (TableUser.id == game_location_user_id)
+            & (TableUser.game_location_game_id == TableGame.id)
         )
-        stmt = select(TableGame).join(TablePlayer, join_condition)
+        stmt = select(TableGame).join(TableUser, join_condition)
 
         table_game = await self._session.scalar(stmt)
 

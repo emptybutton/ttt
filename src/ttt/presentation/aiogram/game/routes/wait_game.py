@@ -5,7 +5,7 @@ from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.game.game.wait_game import WaitGame
-from ttt.entities.core.player.location import PlayerLocation
+from ttt.entities.core.user.location import UserLocation
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
@@ -25,4 +25,4 @@ async def _(
         )
         return
 
-    await wait_game(PlayerLocation(message.from_user.id, message.chat.id))
+    await wait_game(UserLocation(message.from_user.id, message.chat.id))
