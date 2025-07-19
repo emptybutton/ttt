@@ -21,6 +21,8 @@ from ttt.application.game.game.cancel_game import CancelGame
 from ttt.application.game.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.game.start_game import StartGame
 from ttt.application.game.game.wait_game import WaitGame
+from ttt.application.game.game_with_ai.start_game_with_ai import StartGameWithAi
+from ttt.application.game.game_with_ai.wait_ai_type_to_start_game_with_ai import WaitAiTypeToStartGameWithAi
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.stars_purchase_payment_gateway import (
     StarsPurchasePaymentGateway,
@@ -238,6 +240,12 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
         StartStarsPurshasePaymentCompletion, scope=Scope.REQUEST,
     )
 
+    provide_wait_ai_type_to_start_game_with_ai = provide(
+        WaitAiTypeToStartGameWithAi, scope=Scope.REQUEST,
+    )
+    provide_start_game_with_ai = provide(
+        StartGameWithAi, scope=Scope.REQUEST,
+    )
     provide_start_game = provide(StartGame, scope=Scope.REQUEST)
     provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
     provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)

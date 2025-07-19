@@ -16,6 +16,7 @@ from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
+from ttt.application.game.common.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.common.ports.games import Games
 from ttt.application.game.common.ports.waiting_locations import WaitingLocations
 from ttt.application.user.common.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
@@ -23,6 +24,7 @@ from ttt.application.user.common.ports.paid_stars_purchase_payment_inbox import 
 )
 from ttt.application.user.common.ports.users import Users
 from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
+from ttt.infrastructure.adapters.game_ai_gateway import GeminiGameAiGateway
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
 from ttt.infrastructure.adapters.paid_stars_purchase_payment_inbox import (
@@ -39,6 +41,7 @@ from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.infrastructure.nats.paid_stars_purchase_payment_inbox import (
     InNatsPaidStarsPurchasePaymentInbox as OriginalInNatsPaidStarsPurchasePaymentInbox,  # noqa: E501
 )
+from ttt.infrastructure.openai.gemini import Gemini, gemini
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.infrastructure.redis.batches import InRedisFixedBatches
@@ -129,6 +132,10 @@ class InfrastructureProvider(Provider):
         async with inbox:
             yield inbox
 
+    @provide(scope=Scope.APP)
+    def provide_gemini(self, secrets: Secrets, envs: Envs) -> Gemini:
+        return gemini(secrets.gemini_api_key, envs.gemini_url)
+
     provide_in_nats_paid_stars_purchase_payment_inbox = provide(
         InNatsPaidStarsPurchasePaymentInbox,
         provides=PaidStarsPurchasePaymentInbox,
@@ -189,3 +196,9 @@ class InfrastructureProvider(Provider):
                 envs.game_waiting_queue_pulling_timeout_salt_ms,
             ),
         )
+
+    provide_game_ai_gateway = provide(
+        GeminiGameAiGateway,
+        provides=GameAiGateway,
+        scope=Scope.APP,
+    )
