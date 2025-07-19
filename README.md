@@ -8,11 +8,4 @@
 
 > ***T***ic-***T***ac-***T***oe
 
-Telegram бот для многопользовательской игры «Крестики-нолики»
-
-```bash
-git clone https://github.com/emptybutton/ttt.git
-
-echo "bot_token: YOUR_BOT_TOKEN" > deploy/dev/ttt/secrets.yaml
-docker compose -f ttt/deploy/dev/docker-compose.yaml up
-```
+Telegram бот для многопользовательской игры «Крестики-нолики».
