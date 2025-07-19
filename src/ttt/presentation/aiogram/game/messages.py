@@ -92,7 +92,12 @@ async def completed_game_messages(
 ) -> None:
     match game.result:
         case GameCompletionResult(
-            win=UserWin(winner_id) as win,
+            win=UserWin(user_id=winner_id, new_stars=None) as win,
+        ) if winner_id == user_id:
+            result_emoji = "🎆"
+            about_result = "Вы победили!"
+        case GameCompletionResult(
+            win=UserWin(user_id=winner_id, new_stars=int()) as win,
         ) if winner_id == user_id:
             result_emoji = "🎆"
             about_result = f"Вы победили! +{win.new_stars} 🌟"

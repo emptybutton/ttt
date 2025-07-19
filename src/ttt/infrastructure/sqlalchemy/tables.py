@@ -341,7 +341,7 @@ class TableGameResult(Base):
 
         if self.ai_win_ai_id is not None:
             win = AiWin(self.ai_win_ai_id)
-        elif self.win_winner_id is None or self.win_new_stars is None:
+        elif self.win_winner_id is None:
             win = None
         else:
             win = UserWin(self.win_winner_id, self.win_new_stars)
@@ -533,8 +533,8 @@ class TableGame(Base):
 
         if self.player2 is not None:
             player2 = self.player2.entity()
-        elif self.ai1 is not None:
-            player2 = self.ai1.entity()
+        elif self.ai2 is not None:
+            player2 = self.ai2.entity()
         else:
             raise ValueError
 
@@ -552,11 +552,27 @@ class TableGame(Base):
 
     @classmethod
     def of(cls, it: Game) -> "TableGame":
+        if isinstance(it.player1, User):
+            player1_id = it.player1.id
+            ai1_id = None
+        else:
+            player1_id = None
+            ai1_id = it.player1.id
+
+        if isinstance(it.player2, User):
+            player2_id = it.player2.id
+            ai2_id = None
+        else:
+            player2_id = None
+            ai2_id = it.player2.id
+
         return TableGame(
             id=it.id,
-            player1_id=it.player1.id,
+            player1_id=player1_id,
+            ai1_id=ai1_id,
             player1_emoji_str=it.player1_emoji.str_,
-            player2_id=it.player2.id,
+            player2_id=player2_id,
+            ai2_id=ai2_id,
             player2_emoji_str=it.player2_emoji.str_,
             state=TableGameState.of(it.state),
         )

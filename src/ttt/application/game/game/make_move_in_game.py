@@ -85,7 +85,6 @@ class MakeMoveInGame:
 
                     game_result_id = await self.uuids.random_uuid()
                     free_cell_random = await self.randoms.random()
-                    player_win_random = await self.randoms.random()
                     ai_move_cell_number_int = (
                         await self.ai_gateway.next_move_cell_number_int(
                             game,
@@ -97,7 +96,6 @@ class MakeMoveInGame:
                         ai_move_cell_number_int,
                         game_result_id,
                         free_cell_random,
-                        player_win_random,
                         tracking,
                     )
 

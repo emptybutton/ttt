@@ -149,6 +149,9 @@ class Game:
             else_=InvalidNumberOfUnfilledCellsError,
         )
 
+    def is_against_ai(self) -> bool:
+        return isinstance(self.player1, Ai) or isinstance(self.player2, Ai)
+
     def cancel(
         self, user_id: int, game_result_id: UUID, tracking: Tracking,
     ) -> None:
@@ -194,6 +197,8 @@ class Game:
         if not isinstance(current_player, User):
             raise TypeError
 
+        not_current_player = not_none(self._not_current_player())
+
         assert_(
             user_id in {user.id for user in self._users()},
             else_=NotPlayerError(),
@@ -216,9 +221,31 @@ class Game:
         self.number_of_unfilled_cells -= 1
         tracking.register_mutated(self)
 
-        self._handle_move(
-            cell.board_position, player_win_random, game_result_id, tracking,
-        )
+        if self._is_player_winner(current_player, cell.board_position):
+            if self.is_against_ai():
+                win = current_player.win_against_ai(tracking)
+            else:
+                win = current_player.win_against_user(
+                    player_win_random, tracking,
+                )
+
+            if isinstance(not_current_player, User):
+                not_current_player.lose(tracking)
+
+            self._complete(win, game_result_id, tracking)
+
+        elif not self._can_continue():
+            current_player.be_draw(tracking)
+
+            if isinstance(not_current_player, User):
+                not_current_player.be_draw(tracking)
+
+            self._complete(
+                win=None, game_result_id=game_result_id, tracking=tracking,
+            )
+
+        else:
+            self._wait_next_move(tracking)
 
         next_move_player = self._current_player()
         next_move_ai_id = (
@@ -227,13 +254,12 @@ class Game:
 
         return UserMove(next_move_ai_id=next_move_ai_id)
 
-    def make_ai_move(  # noqa: PLR0913, PLR0917
+    def make_ai_move(
         self,
         ai_id: UUID,
         cell_number_int: int | None,
         game_result_id: UUID,
         free_cell_random: Random,
-        player_win_random: Random,
         tracking: Tracking,
     ) -> AiMove:
         """
@@ -247,11 +273,15 @@ class Game:
         if not isinstance(current_player, Ai):
             raise NotAiCurrentMoveError
 
+        not_current_player = self._not_current_player()
+        if not isinstance(not_current_player, User):
+            raise TypeError
+
         if cell_number_int is None:
             return self._make_random_ai_move(
-                ai_id,
+                current_player,
+                not_current_player,
                 free_cell_random,
-                player_win_random,
                 game_result_id,
                 tracking,
             )
@@ -260,9 +290,9 @@ class Game:
             cell_number = CellNumber(cell_number_int)
         except InvalidCellNumberError:
             return self._make_random_ai_move(
-                ai_id,
+                current_player,
+                not_current_player,
                 free_cell_random,
-                player_win_random,
                 game_result_id,
                 tracking,
             )
@@ -273,9 +303,9 @@ class Game:
             cell = self.board[cell_position]
         except IndexError:
             return self._make_random_ai_move(
-                ai_id,
+                current_player,
+                not_current_player,
                 free_cell_random,
-                player_win_random,
                 game_result_id,
                 tracking,
             )
@@ -284,9 +314,9 @@ class Game:
             cell.fill_as_ai(ai_id, tracking)
         except AlreadyFilledCellError:
             return self._make_random_ai_move(
-                ai_id,
+                current_player,
+                not_current_player,
                 free_cell_random,
-                player_win_random,
                 game_result_id,
                 tracking,
             )
@@ -294,60 +324,14 @@ class Game:
         self.number_of_unfilled_cells -= 1
         tracking.register_mutated(self)
 
-        self._handle_move(
-            cell_position, player_win_random, game_result_id, tracking,
-        )
-
-        return AiMove(was_random=False)
-
-    def _make_random_ai_move(
-        self,
-        ai_id: UUID,
-        free_cell_random: Random,
-        player_win_random: Random,
-        game_result_id: UUID,
-        tracking: Tracking,
-    ) -> AiMove:
-        cell = choice(self._free_cells(), random=free_cell_random)
-        cell.fill_as_ai(ai_id, tracking)
-        self.number_of_unfilled_cells -= 1
-        tracking.register_mutated(self)
-
-        self._handle_move(
-            cell.board_position, player_win_random, game_result_id, tracking,
-        )
-
-        return AiMove(was_random=True)
-
-    def _handle_move(
-        self,
-        cell_position: Vector,
-        player_win_random: Random,
-        game_result_id: UUID,
-        tracking: Tracking,
-    ) -> None:
-        current_player = cast(Player, not_none(self._current_player()))
-        not_current_player = not_none(self._not_current_player())
-
         if self._is_player_winner(current_player, cell_position):
-            win: Win
-
-            match current_player:
-                case User():
-                    win = current_player.win(player_win_random, tracking)
-                case Ai():
-                    win = current_player.win()
-
-            if isinstance(not_current_player, User):
-                not_current_player.lose(tracking)
+            win = current_player.win()
+            not_current_player.lose(tracking)
 
             self._complete(win, game_result_id, tracking)
 
         elif not self._can_continue():
-            if isinstance(current_player, User):
-                current_player.be_draw(tracking)
-            if isinstance(not_current_player, User):
-                not_current_player.be_draw(tracking)
+            not_current_player.be_draw(tracking)
 
             self._complete(
                 win=None, game_result_id=game_result_id, tracking=tracking,
@@ -355,6 +339,39 @@ class Game:
 
         else:
             self._wait_next_move(tracking)
+
+        return AiMove(was_random=False)
+
+    def _make_random_ai_move(
+        self,
+        current_player: Ai,
+        not_current_player: User,
+        free_cell_random: Random,
+        game_result_id: UUID,
+        tracking: Tracking,
+    ) -> AiMove:
+        cell = choice(self._free_cells(), random=free_cell_random)
+        cell.fill_as_ai(current_player.id, tracking)
+        self.number_of_unfilled_cells -= 1
+        tracking.register_mutated(self)
+
+        if self._is_player_winner(current_player, cell.board_position):
+            win = current_player.win()
+            not_current_player.lose(tracking)
+
+            self._complete(win, game_result_id, tracking)
+
+        elif not self._can_continue():
+            not_current_player.be_draw(tracking)
+
+            self._complete(
+                win=None, game_result_id=game_result_id, tracking=tracking,
+            )
+
+        else:
+            self._wait_next_move(tracking)
+
+        return AiMove(was_random=True)
 
     def _free_cells(self) -> tuple[Cell, ...]:
         return tuple(

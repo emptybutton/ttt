@@ -14,7 +14,7 @@ def keyboard_to_start_game_with_ai() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(
                 text="gemini 2.0 flash",
-                callback_data="gemini_2_0_flash",
+                callback_data="start_game_with_gemini_2_0_flash",
             ),
         ],
     ]

@@ -87,7 +87,7 @@ class User:
         self.number_of_defeats += 1
         tracking.register_mutated(self)
 
-    def win(self, random: Random, tracking: Tracking) -> UserWin:
+    def win_against_user(self, random: Random, tracking: Tracking) -> UserWin:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
         """
@@ -101,6 +101,15 @@ class User:
 
         tracking.register_mutated(self)
         return UserWin(self.id, new_stars)
+
+    def win_against_ai(self, tracking: Tracking) -> UserWin:
+        """
+        :raises ttt.entities.core.user.user.UserNotInGameError:
+        """
+
+        self.leave_game(tracking)
+
+        return UserWin(self.id, new_stars=None)
 
     def be_draw(self, tracking: Tracking) -> None:
         """
