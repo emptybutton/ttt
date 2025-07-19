@@ -5,6 +5,7 @@ from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
+from ttt.application.game.common.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.games import Games
 from ttt.application.game.common.ports.waiting_locations import WaitingLocations
@@ -29,6 +30,7 @@ class StartGameWithAi:
     game_views: GameViews
     waiting_locations: WaitingLocations
     transaction: Transaction
+    ai_gateway: GameAiGateway
 
     async def __call__(self, location: UserLocation, ai_type: AiType) -> None:
         game_id = await self.uuids.random_uuid()
@@ -49,7 +51,7 @@ class StartGameWithAi:
 
             try:
                 tracking = Tracking()
-                game = start_game_with_ai(
+                started_game = start_game_with_ai(
                     cell_id_matrix,
                     game_id,
                     user,
@@ -66,10 +68,42 @@ class StartGameWithAi:
                     [location],
                 )
             else:
-                await self.map_(tracking)
-                await (
-                    self.game_views
-                    .render_started_game_view_with_locations(
-                        [location.game(game.id)], game,
+                if started_game.next_move_ai_id is None:
+                    await self.map_(tracking)
+                    await (
+                        self.game_views
+                        .render_started_game_view_with_locations(
+                            [location.game(started_game.game.id)],
+                            started_game.game,
+                        )
                     )
-                )
+                else:
+                    await (
+                        self.game_views
+                        .render_started_game_view_with_locations(
+                            [location.game(started_game.game.id)],
+                            started_game.game,
+                        )
+                    )
+
+                    game_result_id = await self.uuids.random_uuid()
+                    free_cell_random = await self.randoms.random()
+                    ai_move_cell_number_int = (
+                        await self.ai_gateway.next_move_cell_number_int(
+                            started_game.game,
+                            started_game.next_move_ai_id,
+                        )
+                    )
+                    started_game.game.make_ai_move(
+                        started_game.next_move_ai_id,
+                        ai_move_cell_number_int,
+                        game_result_id,
+                        free_cell_random,
+                        tracking,
+                    )
+
+                    await self.map_(tracking)
+                    await self.game_views.render_game_view_with_locations(
+                        [location.game(started_game.game.id)],
+                        started_game.game,
+                    )

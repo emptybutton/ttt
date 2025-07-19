@@ -27,13 +27,20 @@ class Tracking[T = Any]:
 
     def register_mutated(self, it: T) -> None:
         if it in self.new or it in self.unused:
-            raise TrackingError
+            return
 
         if it not in self.mutated:
             self.mutated.append(it)
 
     def register_unused(self, it: T) -> None:
-        if it in self.new or it in self.mutated or it in self.unused:
+        if it in self.new:
+            self.new.remove(it)
+
+        if it in self.mutated:
+            self.mutated.remove(it)
+            return
+
+        if it in self.unused:
             raise TrackingError
 
         self.unused.append(it)

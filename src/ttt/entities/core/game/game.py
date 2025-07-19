@@ -529,6 +529,12 @@ def start_game(  # noqa: PLR0913, PLR0917
     return game
 
 
+@dataclass(frozen=True, unsafe_hash=False)
+class StartedGameWithAi:
+    game: Game
+    next_move_ai_id: UUID | None
+
+
 def start_game_with_ai(  # noqa: PLR0913, PLR0917
     cell_id_matrix: Matrix[UUID],
     game_id: UUID,
@@ -540,7 +546,7 @@ def start_game_with_ai(  # noqa: PLR0913, PLR0917
     ai_random_emoji: Emoji,
     player_order_random: Random,
     tracking: Tracking,
-) -> Game:
+) -> StartedGameWithAi:
     """
     :raises ttt.entities.core.game.game.SameRandomEmojiError:
     :raises ttt.entities.core.game.game.UserAlreadyInGameError:
@@ -563,9 +569,11 @@ def start_game_with_ai(  # noqa: PLR0913, PLR0917
     if float(player_order_random) >= 0.5:  # noqa: PLR2004
         player1, player2 = user, ai
         player1_emoji, player2_emoji = user_emoji, ai_emoji
+        next_move_ai_id = None
     else:
         player1, player2 = ai, user
         player1_emoji, player2_emoji = ai_emoji, user_emoji
+        next_move_ai_id = player1.id
 
     board = create_empty_board(cell_id_matrix, game_id, tracking)
     game = Game(
@@ -583,4 +591,4 @@ def start_game_with_ai(  # noqa: PLR0913, PLR0917
 
     user.be_in_game(game_id, user_chat_id, tracking)
 
-    return game
+    return StartedGameWithAi(game, next_move_ai_id)
