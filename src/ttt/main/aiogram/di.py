@@ -22,7 +22,9 @@ from ttt.application.game.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.game.start_game import StartGame
 from ttt.application.game.game.wait_game import WaitGame
 from ttt.application.game.game_with_ai.start_game_with_ai import StartGameWithAi
-from ttt.application.game.game_with_ai.wait_ai_type_to_start_game_with_ai import WaitAiTypeToStartGameWithAi
+from ttt.application.game.game_with_ai.wait_ai_type_to_start_game_with_ai import (  # noqa: E501
+    WaitAiTypeToStartGameWithAi,
+)
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.stars_purchase_payment_gateway import (
     StarsPurchasePaymentGateway,

@@ -7,8 +7,6 @@ from ttt.application.game.game_with_ai.start_game_with_ai import (
 )
 from ttt.entities.core.game.ai import AiType
 from ttt.entities.core.user.location import UserLocation
-from ttt.entities.tools.assertion import not_none
-from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
 
 start_game_with_ai_router = Router(name=__name__)

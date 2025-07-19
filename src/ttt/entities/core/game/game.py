@@ -2,7 +2,6 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, auto
 from itertools import chain
-from typing import cast
 from uuid import UUID
 
 from ttt.entities.core.game.ai import Ai, AiType, create_ai

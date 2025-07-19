@@ -144,7 +144,12 @@ async def double_waiting_for_game_message(bot: Bot, chat_id: int) -> None:
 
 
 async def no_game_message(bot: Bot, chat_id: int) -> None:
-    text = Text("❌ Игры нет. Для поиска введите: ", Bold("/game"))
+    text = Text(
+        "❌ Игры нет. Чтобы начать введите ",
+        Bold("/game"),
+        " или ",
+        Bold("/game_with_ai"),
+    )
     await bot.send_message(chat_id, **text.as_kwargs())
 
 
