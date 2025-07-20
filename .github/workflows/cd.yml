@@ -2,7 +2,7 @@ name: CD
 
 on:
   release:
-    branches: [main]
+    branches: [prod]
     types: [published]
 
 jobs:
