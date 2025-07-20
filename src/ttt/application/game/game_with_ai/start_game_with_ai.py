@@ -66,7 +66,9 @@ class StartGameWithAi:
                     tracking,
                 )
             except UserAlreadyInGameError:
-                await self.log.user_already_in_game_to_start_game(user, location)
+                await self.log.user_already_in_game_to_start_game(
+                    user, location,
+                )
                 await self.game_views.render_user_already_in_game_views(
                     [location],
                 )

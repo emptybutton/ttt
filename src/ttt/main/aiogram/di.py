@@ -12,15 +12,12 @@ from aiogram.types import (
     TelegramObject,
 )
 from dishka import (
-    AsyncContainer,
     Provider,
     Scope,
     from_context,
-    make_async_container,
     provide,
 )
 from dishka.integrations.aiogram import AiogramMiddlewareData
-from dishka.integrations.aiogram import AiogramProvider as DishkaAiogramProvider
 from redis.asyncio import Redis
 from structlog.types import FilteringBoundLogger
 
@@ -68,8 +65,6 @@ from ttt.application.user.stars_purchase.wait_stars_to_start_stars_purshase impo
 from ttt.application.user.view_user import ViewUser
 from ttt.infrastructure.buffer import Buffer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
-from ttt.infrastructure.structlog.logger import LoggerFactory
-from ttt.main.common.di import InfrastructureProvider
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
     BackroundAiogramMessagesAsGameViews,

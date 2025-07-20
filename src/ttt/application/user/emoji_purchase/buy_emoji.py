@@ -70,7 +70,9 @@ class BuyEmoji:
                     emoji, purchased_emoji_id, tracking, current_datetime,
                 )
             except EmojiAlreadyPurchasedError:
-                await self.log.emoji_already_purchased_to_buy(user, location, emoji)
+                await self.log.emoji_already_purchased_to_buy(
+                    user, location, emoji,
+                )
                 await self.fsm.set(None)
                 await self.user_views.render_emoji_already_purchased_view(
                     location,

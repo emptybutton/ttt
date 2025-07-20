@@ -2,7 +2,6 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import cast
-from uuid import UUID, uuid4
 
 import structlog
 from structlog.types import FilteringBoundLogger
