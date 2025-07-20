@@ -55,11 +55,13 @@ type GameResult = GameCompletionResult | GameCancellationResult
 @dataclass(frozen=True)
 class UserMove:
     next_move_ai_id: UUID | None
+    filled_cell_number: CellNumber
 
 
 @dataclass(frozen=True)
 class AiMove:
     was_random: bool
+    filled_cell_number: CellNumber
 
 
 class OneUserError(Exception): ...
@@ -150,6 +152,12 @@ class Game:
 
     def is_against_ai(self) -> bool:
         return isinstance(self.player1, Ai) or isinstance(self.player2, Ai)
+
+    def is_against_user(self) -> bool:
+        return not self.is_against_ai()
+
+    def is_completed(self) -> bool:
+        return self.result is not None
 
     def cancel(
         self, user_id: int, game_result_id: UUID, tracking: Tracking,
@@ -251,7 +259,10 @@ class Game:
             next_move_player.id if isinstance(next_move_player, Ai) else None
         )
 
-        return UserMove(next_move_ai_id=next_move_ai_id)
+        return UserMove(
+            next_move_ai_id=next_move_ai_id,
+            filled_cell_number=cell.number(),
+        )
 
     def make_ai_move(
         self,
@@ -370,7 +381,7 @@ class Game:
         else:
             self._wait_next_move(tracking)
 
-        return AiMove(was_random=True)
+        return AiMove(was_random=True, filled_cell_number=cell.number())
 
     def _free_cells(self) -> tuple[Cell, ...]:
         return tuple(

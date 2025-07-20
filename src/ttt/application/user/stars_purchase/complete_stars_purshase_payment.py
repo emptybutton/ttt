@@ -8,6 +8,7 @@ from ttt.application.user.common.ports.paid_stars_purchase_payment_inbox import 
 )
 from ttt.application.user.common.ports.user_views import UserViews
 from ttt.application.user.common.ports.users import Users
+from ttt.application.user.stars_purchase.ports.user_log import StarsPurchaseUserLog
 from ttt.entities.finance.payment.payment import PaymentIsNotInProcessError
 from ttt.entities.tools.tracking import Tracking
 
@@ -20,6 +21,7 @@ class CompleteStarsPurshasePayment:
     transaction: Transaction
     map_: Map
     user_views: UserViews
+    log: StarsPurchaseUserLog
 
     async def __call__(self) -> None:
         async for paid_payment in self.inbox.stream():
@@ -49,6 +51,10 @@ class CompleteStarsPurshasePayment:
                 except (PaymentIsNotInProcessError):
                     ...
                 else:
+                    await self.log.stars_purshase_payment_completed(
+                        user, paid_payment,
+                    )
+
                     await self.map_(tracking)
                     await (
                         self.user_views
