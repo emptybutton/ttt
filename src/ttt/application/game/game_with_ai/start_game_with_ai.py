@@ -106,7 +106,7 @@ class StartGameWithAi:
                         tracking,
                     )
                     await self.log.ai_move_maked(
-                        location, started_game.game, ai_move.filled_cell_number,
+                        location, started_game.game, ai_move,
                     )
 
                     await self.map_(tracking)

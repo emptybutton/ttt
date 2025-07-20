@@ -350,7 +350,7 @@ class Game:
         else:
             self._wait_next_move(tracking)
 
-        return AiMove(was_random=False)
+        return AiMove(was_random=False, filled_cell_number=cell.number())
 
     def _make_random_ai_move(
         self,

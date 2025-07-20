@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
 )
+from structlog.types import FilteringBoundLogger
 
 from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
@@ -19,12 +20,24 @@ from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.common.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.common.ports.games import Games
 from ttt.application.game.common.ports.waiting_locations import WaitingLocations
+from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.user.common.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
     PaidStarsPurchasePaymentInbox,
 )
+from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.common.ports.users import Users
+from ttt.application.user.emoji_purchase.ports.user_log import (
+    EmojiPurchaseUserLog,
+)
+from ttt.application.user.emoji_selection.ports.user_log import (
+    EmojiSelectionUserLog,
+)
+from ttt.application.user.stars_purchase.ports.user_log import (
+    StarsPurchaseUserLog,
+)
 from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.game_ai_gateway import GeminiGameAiGateway
+from ttt.infrastructure.adapters.game_log import StructlogGameLog
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
 from ttt.infrastructure.adapters.paid_stars_purchase_payment_inbox import (
@@ -32,6 +45,12 @@ from ttt.infrastructure.adapters.paid_stars_purchase_payment_inbox import (
 )
 from ttt.infrastructure.adapters.randoms import MersenneTwisterRandoms
 from ttt.infrastructure.adapters.transaction import InPostgresTransaction
+from ttt.infrastructure.adapters.user_log import (
+    StructlogCommonUserLog,
+    StructlogEmojiPurchaseUserLog,
+    StructlogEmojiSelectionUserLog,
+    StructlogStarsPurchaseUserLog,
+)
 from ttt.infrastructure.adapters.users import InPostgresUsers
 from ttt.infrastructure.adapters.uuids import UUIDv4s
 from ttt.infrastructure.adapters.waiting_locations import (
@@ -45,6 +64,7 @@ from ttt.infrastructure.openai.gemini import Gemini, gemini
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.infrastructure.redis.batches import InRedisFixedBatches
+from ttt.infrastructure.structlog.logger import logger
 
 
 class InfrastructureProvider(Provider):
@@ -136,6 +156,10 @@ class InfrastructureProvider(Provider):
     def provide_gemini(self, secrets: Secrets, envs: Envs) -> Gemini:
         return gemini(secrets.gemini_api_key, envs.gemini_url)
 
+    @provide(scope=Scope.REQUEST)
+    def provide_logger(self) -> FilteringBoundLogger:
+        return logger()
+
     provide_in_nats_paid_stars_purchase_payment_inbox = provide(
         InNatsPaidStarsPurchasePaymentInbox,
         provides=PaidStarsPurchasePaymentInbox,
@@ -201,4 +225,34 @@ class InfrastructureProvider(Provider):
         GeminiGameAiGateway,
         provides=GameAiGateway,
         scope=Scope.APP,
+    )
+
+    provide__game_log = provide(
+        StructlogGameLog,
+        provides=GameLog,
+        scope=Scope.REQUEST,
+    )
+
+    provide_common_user_log = provide(
+        StructlogCommonUserLog,
+        provides=CommonUserLog,
+        scope=Scope.REQUEST,
+    )
+
+    provide_emoji_purchase_user_log = provide(
+        StructlogEmojiPurchaseUserLog,
+        provides=EmojiPurchaseUserLog,
+        scope=Scope.REQUEST,
+    )
+
+    provide_emoji_selection_user_log = provide(
+        StructlogEmojiSelectionUserLog,
+        provides=EmojiSelectionUserLog,
+        scope=Scope.REQUEST,
+    )
+
+    provide_stars_purchase_user_log = provide(
+        StructlogStarsPurchaseUserLog,
+        provides=StarsPurchaseUserLog,
+        scope=Scope.REQUEST,
     )

@@ -31,10 +31,10 @@ class WaitGame:
             push = await self.waiting_locations.push(location)
 
             if push.was_location_dedublicated:
-                await self.log.double_waiting_for_game(location)
+                await self.log.double_waiting_for_game_start(location)
                 await self.game_views.render_double_waiting_for_game_view(
                     location,
                 )
             else:
-                await self.log.waiting_for_game_started(location)
+                await self.log.waiting_for_game_start(location)
                 await self.game_views.render_waiting_for_game_view(location)

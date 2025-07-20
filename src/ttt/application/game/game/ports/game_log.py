@@ -2,20 +2,20 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
 from ttt.entities.core.game.cell_number import CellNumber
-from ttt.entities.core.game.game import Game
+from ttt.entities.core.game.game import AiMove, Game, UserMove
 from ttt.entities.core.user.location import UserGameLocation, UserLocation
 
 
 class GameLog(ABC):
     @abstractmethod
-    async def waiting_for_game_started(
+    async def waiting_for_game_start(
         self,
         location: UserLocation,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def double_waiting_for_game(
+    async def double_waiting_for_game_start(
         self,
         location: UserLocation,
         /,
@@ -55,7 +55,7 @@ class GameLog(ABC):
         self,
         location: UserLocation,
         game: Game,
-        filled_cell_number: CellNumber,
+        move: UserMove,
         /,
     ) -> None: ...
 
@@ -64,7 +64,7 @@ class GameLog(ABC):
         self,
         location: UserLocation,
         game: Game,
-        filled_cell_number: CellNumber,
+        move: AiMove,
         /,
     ) -> None: ...
 

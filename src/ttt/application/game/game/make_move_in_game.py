@@ -80,9 +80,7 @@ class MakeMoveInGame:
                     location, game,
                 )
             else:
-                await self.log.user_move_maked(
-                    location, game, user_move.filled_cell_number,
-                )
+                await self.log.user_move_maked(location, game, user_move)
 
                 if user_move.next_move_ai_id is not None:
                     await self.game_views.render_game_view_with_locations(
@@ -106,7 +104,7 @@ class MakeMoveInGame:
                     )
 
                     await self.log.ai_move_maked(
-                        location, game, ai_move.filled_cell_number,
+                        location, game, ai_move,
                     )
 
                 if game.is_completed():
