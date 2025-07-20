@@ -11,7 +11,6 @@ from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.infrastructure.buffer import Buffer
 from ttt.infrastructure.structlog.logger import LoggerFactory
 from ttt.main.aiogram.di import (
-    AiogramContainers,
     AiogramProvider,
     AiogramRequestDataProvider,
     ApplicationWithAiogramRequestDataProvider,
@@ -21,23 +20,26 @@ from ttt.main.common.di import InfrastructureProvider
 from ttt.presentation.unkillable_tasks import UnkillableTasks
 
 
-async def start_aiogram(containers: AiogramContainers) -> None:
-    dp = await containers.container_with_request_data.get(Dispatcher)
-    setup_dishka(containers.container_with_request_data, dp)
+async def start_aiogram(
+    container_with_request_data: AsyncContainer,
+    container_without_request_data: AsyncContainer,
+) -> None:
+    dp = await container_with_request_data.get(Dispatcher)
+    setup_dishka(container_with_request_data, dp)
 
-    async with containers.container_without_request_data() as request:
+    async with container_without_request_data() as request:
         tasks = await request.get(UnkillableTasks)
 
     logging.basicConfig(level=logging.INFO)
 
-    bot = await containers.container_with_request_data.get(Bot)
+    bot = await container_with_request_data.get(Bot)
 
     try:
         async with tasks:
             await dp.start_polling(bot)
     finally:
         await gather(
-            containers.container_with_request_data.close(),
-            containers.container_without_request_data.close(),
+            container_with_request_data.close(),
+            container_without_request_data.close(),
             return_exceptions=True,
         )

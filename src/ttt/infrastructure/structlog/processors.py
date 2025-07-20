@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 from structlog.types import EventDict
 
 
-@dataclass(kw_only=True, frozen=True, slots=True)
+@dataclass(frozen=True)
 class AddRequestId:
     request_id: UUID = field(default_factory=uuid4)
 
