@@ -43,7 +43,7 @@ class StructlogGameLog(GameLog):
     ) -> None:
         await self._logger.ainfo(
             "game_against_user_started",
-            game_id=game.id,
+            game_id=game.id.hex,
         )
 
     async def user_intends_to_start_game_against_ai(
@@ -64,7 +64,7 @@ class StructlogGameLog(GameLog):
     ) -> None:
         await self._logger.ainfo(
             "game_against_ai_started",
-            game_id=game.id,
+            game_id=game.id.hex,
         )
 
     async def game_cancelled(
@@ -77,7 +77,7 @@ class StructlogGameLog(GameLog):
             "user_intends_to_start_game_against_ai",
             chat_id=location.chat_id,
             user_id=location.user_id,
-            game_id=game.id,
+            game_id=game.id.hex,
         )
 
     async def user_move_maked(
@@ -91,7 +91,7 @@ class StructlogGameLog(GameLog):
             "user_move_maked",
             chat_id=location.chat_id,
             user_id=location.user_id,
-            game_id=game.id,
+            game_id=game.id.hex,
             filled_cell_number=int(move.filled_cell_number),
         )
 
@@ -106,7 +106,7 @@ class StructlogGameLog(GameLog):
             "ai_move_maked",
             chat_id=location.chat_id,
             user_id=location.user_id,
-            game_id=game.id,
+            game_id=game.id.hex,
             filled_cell_number=int(move.filled_cell_number),
             was_move_random=move.was_random,
         )
@@ -121,7 +121,7 @@ class StructlogGameLog(GameLog):
             "game_completed",
             chat_id=location.chat_id,
             user_id=location.user_id,
-            game_id=game.id,
+            game_id=game.id.hex,
         )
 
     async def user_already_in_game_to_start_game(
@@ -140,7 +140,7 @@ class StructlogGameLog(GameLog):
             "already_completed_game_to_make_move",
             chat_id=location.chat_id,
             user_id=location.user_id,
-            game_id=game.id,
+            game_id=game.id.hex,
             cell_number_int=cell_number_int,
         )
 
@@ -151,7 +151,7 @@ class StructlogGameLog(GameLog):
             "not_current_player_to_make_move",
             chat_id=location.chat_id,
             user_id=location.user_id,
-            game_id=game.id,
+            game_id=game.id.hex,
             cell_number_int=cell_number_int,
         )
 
@@ -162,7 +162,7 @@ class StructlogGameLog(GameLog):
             "no_cell_to_make_move",
             chat_id=location.chat_id,
             user_id=location.user_id,
-            game_id=game.id,
+            game_id=game.id.hex,
             cell_number_int=cell_number_int,
         )
 
@@ -173,7 +173,7 @@ class StructlogGameLog(GameLog):
             "already_filled_cell_to_make_move",
             chat_id=location.chat_id,
             user_id=location.user_id,
-            game_id=game.id,
+            game_id=game.id.hex,
             cell_number_int=cell_number_int,
         )
 
@@ -184,7 +184,7 @@ class StructlogGameLog(GameLog):
             "already_completed_game_to_cancel_move",
             chat_id=location.chat_id,
             user_id=location.user_id,
-            game_id=game.id,
+            game_id=game.id.hex,
         )
 
     async def users_already_in_game_to_start_game_via_matchmaking_queue(

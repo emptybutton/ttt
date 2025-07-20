@@ -169,7 +169,7 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
             "stars_purshase_payment_completion_started",
             user_id=payment.location.user_id,
             chat_id=payment.location.chat_id,
-            purshase_id=payment.purshase_id,
+            purshase_id=payment.purshase_id.hex,
         )
 
     async def stars_purshase_payment_completed(
@@ -179,7 +179,7 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
             "stars_purshase_payment_completed",
             user_id=payment.location.user_id,
             chat_id=payment.location.chat_id,
-            purshase_id=payment.purshase_id,
+            purshase_id=payment.purshase_id.hex,
         )
 
     async def double_stars_purchase_payment_completion(
@@ -191,7 +191,7 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
             "double_stars_purchase_payment_completion",
             user_id=paid_payment.location.user_id,
             chat_id=paid_payment.location.chat_id,
-            purshase_id=paid_payment.purshase_id,
+            purshase_id=paid_payment.purshase_id.hex,
         )
 
     async def invalid_stars_for_stars_purchase(
@@ -210,7 +210,7 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
         await self._logger.ainfo(
             "double_stars_purchase_payment_start",
             user_id=user.id,
-            purchase_id=purchase_id,
+            purchase_id=purchase_id.hex,
         )
 
     async def no_purchase_to_start_stars_purchase_payment(
@@ -219,5 +219,5 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
         await self._logger.aerror(
             "no_purchase_to_start_stars_purchase_payment",
             user_id=user.id,
-            purchase_id=purchase_id,
+            purchase_id=purchase_id.hex,
         )

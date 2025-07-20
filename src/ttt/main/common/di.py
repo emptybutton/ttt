@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterator
 
-from dishka import Provider, Scope, provide
+from dishka import Provider, Scope, from_context, provide
 from nats import connect as connect_to_nats
 from nats.aio.client import Client as Nats
 from nats.js import JetStreamContext
@@ -64,10 +64,15 @@ from ttt.infrastructure.openai.gemini import Gemini, gemini
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.infrastructure.redis.batches import InRedisFixedBatches
-from ttt.infrastructure.structlog.logger import logger
+from ttt.infrastructure.structlog.logger import LoggerFactory
 
 
 class InfrastructureProvider(Provider):
+    provide_paid_stars_purchase_payment_buffer = from_context(
+        provides=LoggerFactory,
+        scope=Scope.APP,
+    )
+
     provide_envs = provide(source=Envs.load, scope=Scope.APP)
     provide_secrets = provide(source=Secrets.load, scope=Scope.APP)
 
@@ -157,8 +162,10 @@ class InfrastructureProvider(Provider):
         return gemini(secrets.gemini_api_key, envs.gemini_url)
 
     @provide(scope=Scope.REQUEST)
-    def provide_logger(self) -> FilteringBoundLogger:
-        return logger()
+    def provide_logger(
+        self, logger_factory: LoggerFactory,
+    ) -> FilteringBoundLogger:
+        return logger_factory()
 
     provide_in_nats_paid_stars_purchase_payment_inbox = provide(
         InNatsPaidStarsPurchasePaymentInbox,

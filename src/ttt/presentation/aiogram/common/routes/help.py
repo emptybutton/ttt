@@ -12,4 +12,5 @@ help_router = Router(name=__name__)
 
 @help_router.message(Command("help"), any_state)
 async def _(message: Message) -> None:
+    raise ValueError(42)
     await help_message(not_none(message.bot), message.chat.id)

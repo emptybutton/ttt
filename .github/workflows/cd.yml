@@ -17,6 +17,7 @@ jobs:
           echo "bot_token: ${{ secrets.BOT_TOKEN }}" > deploy/prod/ttt/secrets.yaml
           echo "payments_token: ${{ secrets.PAYMENTS_TOKEN }}" >> deploy/prod/ttt/secrets.yaml
           echo "gemini_api_key: ${{ secrets.GEMINI_API_KEY }}" >> deploy/prod/ttt/secrets.yaml
+          echo "sentry_dsn: ${{ secrets.SENTRY_DSN }}" >> deploy/prod/ttt/secrets.yaml
 
       - name: deploy
         run: bash ./deploy/prod/deploy.sh

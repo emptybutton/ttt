@@ -1,8 +1,18 @@
-from watchfiles import run_process
+import asyncio
+
+from ttt.infrastructure.pydantic_settings.secrets import Secrets
+from ttt.infrastructure.structlog.logger import DevLoggerFactory
+from ttt.main.aiogram.di import aiogram_containers
+from ttt.main.aiogram.start_aiogram import start_aiogram
+
+
+async def amain() -> None:
+    containers = aiogram_containers(DevLoggerFactory())
+    await start_aiogram(containers)
 
 
 def main() -> None:
-    run_process("./src", target="ttt")
+    asyncio.run(amain())
 
 
 if __name__ == "__main__":

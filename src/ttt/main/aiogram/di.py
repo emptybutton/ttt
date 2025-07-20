@@ -11,8 +11,16 @@ from aiogram.types import (
     PreCheckoutQuery,
     TelegramObject,
 )
-from dishka import Provider, Scope, from_context, provide
+from dishka import (
+    AsyncContainer,
+    Provider,
+    Scope,
+    from_context,
+    make_async_container,
+    provide,
+)
 from dishka.integrations.aiogram import AiogramMiddlewareData
+from dishka.integrations.aiogram import AiogramProvider as DishkaAiogramProvider
 from redis.asyncio import Redis
 
 from ttt.application.common.ports.emojis import Emojis
@@ -59,6 +67,8 @@ from ttt.application.user.stars_purchase.wait_stars_to_start_stars_purshase impo
 from ttt.application.user.view_user import ViewUser
 from ttt.infrastructure.buffer import Buffer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
+from ttt.infrastructure.structlog.logger import LoggerFactory
+from ttt.main.common.di import InfrastructureProvider
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
     BackroundAiogramMessagesAsGameViews,
@@ -252,3 +262,44 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
     provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
     provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
     provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)
+
+
+@dataclass(frozen=True, unsafe_hash=False)
+class AiogramContainers:
+    container_with_request_data: AsyncContainer
+    container_without_request_data: AsyncContainer
+
+
+def aiogram_containers(logger_factory: LoggerFactory) -> AiogramContainers:
+    paid_stars_purchase_payment_buffer = Buffer[PaidStarsPurchasePayment]()
+
+    container_with_request_data = make_async_container(
+        DishkaAiogramProvider(),
+        AiogramProvider(),
+        AiogramRequestDataProvider(),
+        ApplicationWithAiogramRequestDataProvider(),
+        ApplicationWithoutAiogramRequestDataProvider(),
+        InfrastructureProvider(),
+        context={
+            Buffer[PaidStarsPurchasePayment]: (
+                paid_stars_purchase_payment_buffer
+            ),
+            LoggerFactory: logger_factory,
+        },
+    )
+    container_without_request_data = make_async_container(
+        DishkaAiogramProvider(),
+        AiogramProvider(),
+        ApplicationWithoutAiogramRequestDataProvider(),
+        InfrastructureProvider(),
+        context={
+            Buffer[PaidStarsPurchasePayment]: (
+                paid_stars_purchase_payment_buffer
+            ),
+            LoggerFactory: logger_factory,
+        },
+    )
+
+    return AiogramContainers(
+        container_with_request_data, container_without_request_data,
+    )
