@@ -8,7 +8,9 @@ from ttt.application.user.common.ports.paid_stars_purchase_payment_inbox import 
 )
 from ttt.application.user.common.ports.user_views import UserViews
 from ttt.application.user.common.ports.users import Users
-from ttt.application.user.stars_purchase.ports.user_log import StarsPurchaseUserLog
+from ttt.application.user.stars_purchase.ports.user_log import (
+    StarsPurchaseUserLog,
+)
 from ttt.entities.finance.payment.payment import PaymentIsNotInProcessError
 from ttt.entities.tools.tracking import Tracking
 
@@ -49,7 +51,9 @@ class CompleteStarsPurshasePayment:
                         tracking,
                     )
                 except (PaymentIsNotInProcessError):
-                    ...
+                    await self.log.double_stars_purchase_payment_completion(
+                        user, paid_payment,
+                    )
                 else:
                     await self.log.stars_purshase_payment_completed(
                         user, paid_payment,

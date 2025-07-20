@@ -93,6 +93,19 @@ class StartGame:
                         else:
                             locations_of_users_not_in_game.append(location)
 
+                    await (
+                        self.log
+                        .users_already_in_game_to_start_game_via_matchmaking_queue(
+                            locations_of_users_in_game,
+                        )
+                    )
+                    await (
+                        self.log
+                        .bad_attempt_to_start_game_via_matchmaking_queue(
+                            locations_of_users_not_in_game,
+                        )
+                    )
+
                     await self.waiting_locations.push_many(
                         locations_of_users_not_in_game,
                     )

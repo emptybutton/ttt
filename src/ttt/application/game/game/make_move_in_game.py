@@ -66,16 +66,28 @@ class MakeMoveInGame:
                     tracking,
                 )
             except AlreadyCompletedGameError:
+                await self.log.already_completed_game_to_make_move(
+                    game, location, cell_number_int,
+                )
                 await self.game_views.render_game_already_complteted_view(
                     location, game,
                 )
             except NotCurrentPlayerError:
+                await self.log.not_current_player_to_make_move(
+                    game, location, cell_number_int,
+                )
                 await self.game_views.render_not_current_user_view(
                     location, game,
                 )
             except NoCellError:
+                await self.log.no_cell_to_make_move(
+                    game, location, cell_number_int,
+                )
                 await self.game_views.render_no_cell_view(location, game)
             except AlreadyFilledCellError:
+                await self.log.already_filled_cell_to_make_move(
+                    game, location, cell_number_int,
+                )
                 await self.game_views.render_already_filled_cell_error(
                     location, game,
                 )

@@ -43,6 +43,9 @@ class CancelGame:
                 tracking = Tracking()
                 game.cancel(location.user_id, game_result_id, tracking)
             except AlreadyCompletedGameError:
+                await self.log.already_completed_game_to_cancel(
+                    game, location,
+                )
                 await self.game_views.render_game_already_complteted_view(
                     location, game,
                 )

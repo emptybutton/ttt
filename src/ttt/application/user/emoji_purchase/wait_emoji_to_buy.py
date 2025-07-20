@@ -6,7 +6,9 @@ from ttt.application.user.common.ports.user_fsm import (
     WaitingEmojiToBuyState,
 )
 from ttt.application.user.common.ports.user_views import UserViews
-from ttt.application.user.emoji_purchase.ports.user_log import EmojiPurchaseUserLog
+from ttt.application.user.emoji_purchase.ports.user_log import (
+    EmojiPurchaseUserLog,
+)
 from ttt.entities.core.user.location import UserLocation
 
 

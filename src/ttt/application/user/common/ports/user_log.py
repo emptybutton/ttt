@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import User
-from ttt.entities.text.emoji import Emoji
 
 
 class CommonUserLog(ABC):

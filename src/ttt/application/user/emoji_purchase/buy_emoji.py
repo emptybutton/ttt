@@ -11,7 +11,9 @@ from ttt.application.user.common.ports.user_fsm import (
 )
 from ttt.application.user.common.ports.user_views import UserViews
 from ttt.application.user.common.ports.users import Users
-from ttt.application.user.emoji_purchase.ports.user_log import EmojiPurchaseUserLog
+from ttt.application.user.emoji_purchase.ports.user_log import (
+    EmojiPurchaseUserLog,
+)
 from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import (
     EmojiAlreadyPurchasedError,
@@ -68,6 +70,7 @@ class BuyEmoji:
                     emoji, purchased_emoji_id, tracking, current_datetime,
                 )
             except EmojiAlreadyPurchasedError:
+                await self.log.emoji_already_purchased_to_buy(user, location, emoji)
                 await self.fsm.set(None)
                 await self.user_views.render_emoji_already_purchased_view(
                     location,
@@ -81,7 +84,7 @@ class BuyEmoji:
                     )
                 )
             else:
-                await self.log.user_bought_emoji(location, user)
+                await self.log.user_bought_emoji(location, user, emoji)
 
                 await self.map_(tracking)
                 await self.fsm.set(None)

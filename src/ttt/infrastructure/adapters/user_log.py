@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from uuid import UUID
 
 from structlog.types import FilteringBoundLogger
 
@@ -13,8 +14,10 @@ from ttt.application.user.emoji_selection.ports.user_log import (
 from ttt.application.user.stars_purchase.ports.user_log import (
     StarsPurchaseUserLog,
 )
+from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import User
+from ttt.entities.text.emoji import Emoji
 
 
 @dataclass(frozen=True, unsafe_hash=False)
@@ -61,12 +64,13 @@ class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):
     _logger: FilteringBoundLogger
 
     async def user_bought_emoji(
-        self, location: UserLocation, user: User, /,
+        self, location: UserLocation, user: User, emoji: Emoji, /,
     ) -> None:
         await self._logger.ainfo(
             "user_bought_emoji",
             chat_id=location.chat_id,
             user_id=location.user_id,
+            emoji=emoji.str_,
         )
 
     async def user_intends_to_buy_emoji(
@@ -80,18 +84,29 @@ class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):
             user_id=location.user_id,
         )
 
+    async def emoji_already_purchased_to_buy(
+        self, user: User, location: UserLocation, emoji: Emoji,
+    ) -> None:
+        await self._logger.ainfo(
+            "emoji_already_purchased_to_buy",
+            chat_id=location.chat_id,
+            user_id=location.user_id,
+            emoji=emoji.str_,
+        )
+
 
 @dataclass(frozen=True, unsafe_hash=False)
 class StructlogEmojiSelectionUserLog(EmojiSelectionUserLog):
     _logger: FilteringBoundLogger
 
     async def user_selected_emoji(
-        self, location: UserLocation, user: User, /,
+        self, location: UserLocation, user: User, emoji: Emoji, /,
     ) -> None:
         await self._logger.ainfo(
             "user_selected_emoji",
             chat_id=location.chat_id,
             user_id=location.user_id,
+            emoji=emoji.str_,
         )
 
     async def user_intends_to_select_emoji(
@@ -101,6 +116,15 @@ class StructlogEmojiSelectionUserLog(EmojiSelectionUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_intends_to_select_emoji",
+            chat_id=location.chat_id,
+            user_id=location.user_id,
+        )
+
+    async def emoji_not_purchased_to_select(
+        self, location: UserLocation, user: User, emoji: Emoji,
+    ) -> None:
+        await self._logger.ainfo(
+            "emoji_not_purchased_to_select",
             chat_id=location.chat_id,
             user_id=location.user_id,
         )
@@ -156,4 +180,44 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
             user_id=payment.location.user_id,
             chat_id=payment.location.chat_id,
             purshase_id=payment.purshase_id,
+        )
+
+    async def double_stars_purchase_payment_completion(
+        self,
+        user: User,
+        paid_payment: PaidStarsPurchasePayment,
+    ) -> None:
+        await self._logger.awarning(
+            "double_stars_purchase_payment_completion",
+            user_id=paid_payment.location.user_id,
+            chat_id=paid_payment.location.chat_id,
+            purshase_id=paid_payment.purshase_id,
+        )
+
+    async def invalid_stars_for_stars_purchase(
+        self, location: UserLocation, user: User, stars: Stars,
+    ) -> None:
+        await self._logger.aerror(
+            "invalid_stars_for_stars_purchase",
+            user_id=location.user_id,
+            chat_id=location.chat_id,
+            stars=stars,
+        )
+
+    async def double_stars_purchase_payment_start(
+        self, user: User, purchase_id: UUID,
+    ) -> None:
+        await self._logger.ainfo(
+            "double_stars_purchase_payment_start",
+            user_id=user.id,
+            purchase_id=purchase_id,
+        )
+
+    async def no_purchase_to_start_stars_purchase_payment(
+        self, user: User, purchase_id: UUID,
+    ) -> None:
+        await self._logger.aerror(
+            "no_purchase_to_start_stars_purchase_payment",
+            user_id=user.id,
+            purchase_id=purchase_id,
         )

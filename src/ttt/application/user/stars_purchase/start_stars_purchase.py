@@ -11,7 +11,9 @@ from ttt.application.user.common.ports.stars_purchase_payment_gateway import (
 from ttt.application.user.common.ports.user_fsm import UserFsm
 from ttt.application.user.common.ports.user_views import UserViews
 from ttt.application.user.common.ports.users import Users
-from ttt.application.user.stars_purchase.ports.user_log import StarsPurchaseUserLog
+from ttt.application.user.stars_purchase.ports.user_log import (
+    StarsPurchaseUserLog,
+)
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.stars_purchase import (
@@ -56,6 +58,7 @@ class StartStarsPurchase:
                     tracking,
                 )
             except InvalidStarsForStarsPurchaseError:
+                await self.log.invalid_stars_for_stars_purchase(location, user, stars)
                 await self.fsm.set(None)
                 await (
                     self.user_views

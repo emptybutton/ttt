@@ -59,13 +59,14 @@ class SelectEmoji:
             try:
                 user.select_emoji(emoji, tracking)
             except EmojiNotPurchasedError:
+                await self.log.emoji_not_purchased_to_select(location, user, emoji)
                 await self.fsm.set(None)
                 await (
                     self.user_views
                     .render_emoji_not_purchased_to_select_view(location)
                 )
             else:
-                await self.log.user_selected_emoji(location, user)
+                await self.log.user_selected_emoji(location, user, emoji)
 
                 await self.map_(tracking)
                 await self.fsm.set(None)
