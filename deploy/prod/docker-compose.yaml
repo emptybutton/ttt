@@ -158,10 +158,6 @@ services:
   alloy:
     image: grafana/alloy:v1.10.0
     container_name: ttt-alloy
-    # ports:
-    #   - 12345:12345
-    #   - 4317:4317
-    #   - 4318:4318
     volumes:
       - ./alloy/config.alloy:/etc/alloy/config.alloy
       - /var/run/docker.sock:/var/run/docker.sock
@@ -176,8 +172,6 @@ services:
     container_name: ttt-loki
     environment:
       TZ: ${SYSTEM_TIMEZONE:-Europe/Moscow}
-    # ports:
-    #   - 3100:3100
     volumes:
       - loki-data:/loki
       - ./loki/loki-config.yaml:/etc/loki/local-config.yaml
