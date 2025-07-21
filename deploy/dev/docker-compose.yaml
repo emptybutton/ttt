@@ -54,7 +54,7 @@ services:
       POSTGRES_PASSWORD: root
     healthcheck:
       test: pg_isready -d root -U root
-      start_period: 1m
+      start_period: 2m
       start_interval: 1s
       interval: 5s
 
