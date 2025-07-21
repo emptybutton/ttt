@@ -11,9 +11,15 @@ from aiogram.types import (
     PreCheckoutQuery,
     TelegramObject,
 )
-from dishka import Provider, Scope, from_context, provide
+from dishka import (
+    Provider,
+    Scope,
+    from_context,
+    provide,
+)
 from dishka.integrations.aiogram import AiogramMiddlewareData
 from redis.asyncio import Redis
+from structlog.types import FilteringBoundLogger
 
 from ttt.application.common.ports.emojis import Emojis
 from ttt.application.game.common.ports.game_views import GameViews
@@ -145,13 +151,14 @@ class AiogramProvider(Provider):
     @provide(scope=Scope.REQUEST)
     async def unkillable_tasks(
         self,
+        logger: FilteringBoundLogger,
         start_game: StartGame,
         start_stars_purshase_payment_completion: (
             StartStarsPurshasePaymentCompletion
         ),
         complete_stars_purshase_payment: CompleteStarsPurshasePayment,
     ) -> UnkillableTasks:
-        tasks = UnkillableTasks()
+        tasks = UnkillableTasks(logger)
         tasks.add(start_game)
         tasks.add(start_stars_purshase_payment_completion)
         tasks.add(complete_stars_purshase_payment)

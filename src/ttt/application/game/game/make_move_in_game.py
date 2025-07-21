@@ -8,6 +8,7 @@ from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.common.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.games import Games
+from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.cell import AlreadyFilledCellError
 from ttt.entities.core.game.game import (
@@ -31,6 +32,7 @@ class MakeMoveInGame:
     randoms: Randoms
     ai_gateway: GameAiGateway
     transaction: Transaction
+    log: GameLog
 
     async def __call__(
         self,
@@ -56,7 +58,7 @@ class MakeMoveInGame:
 
             try:
                 tracking = Tracking()
-                move = game.make_move(
+                user_move = game.make_move(
                     location.user_id,
                     cell_number_int,
                     game_result_id,
@@ -64,21 +66,35 @@ class MakeMoveInGame:
                     tracking,
                 )
             except AlreadyCompletedGameError:
+                await self.log.already_completed_game_to_make_move(
+                    game, location, cell_number_int,
+                )
                 await self.game_views.render_game_already_complteted_view(
                     location, game,
                 )
             except NotCurrentPlayerError:
+                await self.log.not_current_player_to_make_move(
+                    game, location, cell_number_int,
+                )
                 await self.game_views.render_not_current_user_view(
                     location, game,
                 )
             except NoCellError:
+                await self.log.no_cell_to_make_move(
+                    game, location, cell_number_int,
+                )
                 await self.game_views.render_no_cell_view(location, game)
             except AlreadyFilledCellError:
+                await self.log.already_filled_cell_to_make_move(
+                    game, location, cell_number_int,
+                )
                 await self.game_views.render_already_filled_cell_error(
                     location, game,
                 )
             else:
-                if move.next_move_ai_id is not None:
+                await self.log.user_move_maked(location, game, user_move)
+
+                if user_move.next_move_ai_id is not None:
                     await self.game_views.render_game_view_with_locations(
                         locations, game,
                     )
@@ -88,23 +104,25 @@ class MakeMoveInGame:
                     ai_move_cell_number_int = (
                         await self.ai_gateway.next_move_cell_number_int(
                             game,
-                            move.next_move_ai_id,
+                            user_move.next_move_ai_id,
                         )
                     )
-                    game.make_ai_move(
-                        move.next_move_ai_id,
+                    ai_move = game.make_ai_move(
+                        user_move.next_move_ai_id,
                         ai_move_cell_number_int,
                         game_result_id,
                         free_cell_random,
                         tracking,
                     )
 
-                    await self.map_(tracking)
-                    await self.game_views.render_game_view_with_locations(
-                        locations, game,
+                    await self.log.ai_move_maked(
+                        location, game, ai_move,
                     )
-                else:
-                    await self.map_(tracking)
-                    await self.game_views.render_game_view_with_locations(
-                        locations, game,
-                    )
+
+                if game.is_completed():
+                    await self.log.game_completed(location, game)
+
+                await self.map_(tracking)
+                await self.game_views.render_game_view_with_locations(
+                    locations, game,
+                )

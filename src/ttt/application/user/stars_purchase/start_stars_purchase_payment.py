@@ -10,6 +10,9 @@ from ttt.application.user.common.ports.stars_purchase_payment_gateway import (
     StarsPurchasePaymentGateway,
 )
 from ttt.application.user.common.ports.users import Users
+from ttt.application.user.stars_purchase.ports.user_log import (
+    StarsPurchaseUserLog,
+)
 from ttt.entities.core.user.user import NoPurchaseError
 from ttt.entities.finance.payment.payment import PaymentIsAlreadyBeingMadeError
 from ttt.entities.tools.assertion import not_none
@@ -24,6 +27,7 @@ class StartStarsPurchasePayment:
     users: Users
     payment_gateway: StarsPurchasePaymentGateway
     map_: Map
+    log: StarsPurchaseUserLog
 
     async def __call__(self, user_id: int, purchase_id: UUID) -> None:
         async with self.transaction:
@@ -40,13 +44,20 @@ class StartStarsPurchasePayment:
                     purchase_id, payment_id, current_datetime, tracking,
                 )
             except PaymentIsAlreadyBeingMadeError:
+                await self.log.double_stars_purchase_payment_start(
+                    user, purchase_id,
+                )
                 await self.payment_gateway.stop_payment_due_to_dublicate(
                     payment_id,
                 )
             except NoPurchaseError:
+                await self.log.no_purchase_to_start_stars_purchase_payment(
+                    user, purchase_id,
+                )
                 await self.payment_gateway.stop_payment_due_to_error(
                     payment_id,
                 )
             else:
+                await self.log.user_started_stars_puchase_payment(user)
                 await self.map_(tracking)
                 await self.payment_gateway.start_payment(payment_id)

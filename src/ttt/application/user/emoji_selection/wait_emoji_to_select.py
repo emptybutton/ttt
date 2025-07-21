@@ -6,6 +6,9 @@ from ttt.application.user.common.ports.user_fsm import (
     WaitingEmojiToSelectState,
 )
 from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.emoji_selection.ports.user_log import (
+    EmojiSelectionUserLog,
+)
 from ttt.entities.core.user.location import UserLocation
 
 
@@ -13,9 +16,11 @@ from ttt.entities.core.user.location import UserLocation
 class WaitEmojiToSelect:
     fsm: UserFsm
     user_views: UserViews
+    log: EmojiSelectionUserLog
 
     async def __call__(self, location: UserLocation) -> None:
         await gather(
             self.fsm.set(WaitingEmojiToSelectState()),
             self.user_views.render_wait_emoji_to_buy_view(location),
         )
+        await self.log.user_intends_to_select_emoji(location)
