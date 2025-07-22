@@ -2,6 +2,7 @@ name: ttt
 
 services:
   ttt:
+    image: ttt:dev
     build:
       context: ../../
       dockerfile: deploy/dev/ttt/Dockerfile
