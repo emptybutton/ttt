@@ -70,3 +70,4 @@ async def _route(
     location = UserLocation(user_id, chat_id)
 
     await start_stars_purchase(location, stars)
+    await callback.answer()
