@@ -55,11 +55,13 @@ type GameResult = GameCompletionResult | GameCancellationResult
 @dataclass(frozen=True)
 class UserMove:
     next_move_ai_id: UUID | None
+    filled_cell_number: CellNumber
 
 
 @dataclass(frozen=True)
 class AiMove:
     was_random: bool
+    filled_cell_number: CellNumber
 
 
 class OneUserError(Exception): ...
@@ -151,8 +153,17 @@ class Game:
     def is_against_ai(self) -> bool:
         return isinstance(self.player1, Ai) or isinstance(self.player2, Ai)
 
+    def is_against_user(self) -> bool:
+        return not self.is_against_ai()
+
+    def is_completed(self) -> bool:
+        return self.result is not None
+
     def cancel(
-        self, user_id: int, game_result_id: UUID, tracking: Tracking,
+        self,
+        user_id: int,
+        game_result_id: UUID,
+        tracking: Tracking,
     ) -> None:
         """
         :raises ttt.entities.core.game.game.AlreadyCompletedGameError:
@@ -168,7 +179,9 @@ class Game:
             self.player2.leave_game(tracking)
 
         self.result = GameCancellationResult(
-            game_result_id, self.id, canceler.id,
+            game_result_id,
+            self.id,
+            canceler.id,
         )
         tracking.register_new(self.result)
         self.state = GameState.completed
@@ -191,7 +204,8 @@ class Game:
         """
 
         current_player = not_none(
-            self._current_player(), AlreadyCompletedGameError,
+            self._current_player(),
+            AlreadyCompletedGameError,
         )
         if not isinstance(current_player, User):
             raise TypeError
@@ -225,7 +239,8 @@ class Game:
                 win = current_player.win_against_ai(tracking)
             else:
                 win = current_player.win_against_user(
-                    player_win_random, tracking,
+                    player_win_random,
+                    tracking,
                 )
 
             if isinstance(not_current_player, User):
@@ -240,7 +255,9 @@ class Game:
                 not_current_player.be_draw(tracking)
 
             self._complete(
-                win=None, game_result_id=game_result_id, tracking=tracking,
+                win=None,
+                game_result_id=game_result_id,
+                tracking=tracking,
             )
 
         else:
@@ -251,7 +268,10 @@ class Game:
             next_move_player.id if isinstance(next_move_player, Ai) else None
         )
 
-        return UserMove(next_move_ai_id=next_move_ai_id)
+        return UserMove(
+            next_move_ai_id=next_move_ai_id,
+            filled_cell_number=cell.number(),
+        )
 
     def make_ai_move(
         self,
@@ -267,7 +287,8 @@ class Game:
         """
 
         current_player = not_none(
-            self._current_player(), AlreadyCompletedGameError,
+            self._current_player(),
+            AlreadyCompletedGameError,
         )
         if not isinstance(current_player, Ai):
             raise NotAiCurrentMoveError
@@ -333,13 +354,15 @@ class Game:
             not_current_player.be_draw(tracking)
 
             self._complete(
-                win=None, game_result_id=game_result_id, tracking=tracking,
+                win=None,
+                game_result_id=game_result_id,
+                tracking=tracking,
             )
 
         else:
             self._wait_next_move(tracking)
 
-        return AiMove(was_random=False)
+        return AiMove(was_random=False, filled_cell_number=cell.number())
 
     def _make_random_ai_move(
         self,
@@ -364,13 +387,15 @@ class Game:
             not_current_player.be_draw(tracking)
 
             self._complete(
-                win=None, game_result_id=game_result_id, tracking=tracking,
+                win=None,
+                game_result_id=game_result_id,
+                tracking=tracking,
             )
 
         else:
             self._wait_next_move(tracking)
 
-        return AiMove(was_random=True)
+        return AiMove(was_random=True, filled_cell_number=cell.number())
 
     def _free_cells(self) -> tuple[Cell, ...]:
         return tuple(
@@ -453,7 +478,10 @@ class Game:
         tracking.register_mutated(self)
 
     def _complete(
-        self, win: Win | None, game_result_id: UUID, tracking: Tracking,
+        self,
+        win: Win | None,
+        game_result_id: UUID,
+        tracking: Tracking,
     ) -> None:
         self.result = GameCompletionResult(game_result_id, self.id, win)
         tracking.register_new(self.result)

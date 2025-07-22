@@ -13,12 +13,16 @@ class WaitingLocationsPush:
 class WaitingLocations(ABC):
     @abstractmethod
     async def push(
-        self, location: UserLocation, /,
+        self,
+        location: UserLocation,
+        /,
     ) -> WaitingLocationsPush: ...
 
     @abstractmethod
     async def push_many(
-        self, locations: Sequence[UserLocation], /,
+        self,
+        locations: Sequence[UserLocation],
+        /,
     ) -> None: ...
 
     @abstractmethod

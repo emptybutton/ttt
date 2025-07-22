@@ -12,6 +12,5 @@ class UUIDv4s(UUIDs):
 
     async def random_uuid_matrix(self, size: MatrixSize) -> Matrix[UUID]:
         return Matrix([
-            [uuid4() for _ in range(size[0])]
-            for _ in range(size[1])
+            [uuid4() for _ in range(size[0])] for _ in range(size[1])
         ])

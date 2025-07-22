@@ -10,7 +10,8 @@ async def ttt_bot(bot: Bot) -> None:
         BotCommand(command="profile", description="Показать профиль"),
         BotCommand(command="select_emoji", description="Выбрать эмоджи"),
         BotCommand(
-            command="remove_emoji", description="Убрать выбранный эмоджи",
+            command="remove_emoji",
+            description="Убрать выбранный эмоджи",
         ),
         BotCommand(command="buy_emoji", description="Купить эмоджи"),
         BotCommand(command="buy_stars", description="Купить звёзды"),

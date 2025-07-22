@@ -16,11 +16,13 @@ remove_emoji_router = Router(name=__name__)
 @remove_emoji_router.message(any_state, Command("remove_emoji"))
 @inject
 async def _(
-    message: Message, remove_emoji: FromDishka[RemoveEmoji],
+    message: Message,
+    remove_emoji: FromDishka[RemoveEmoji],
 ) -> None:
     if message.from_user is None:
         await anons_are_rohibited_message(
-            not_none(message.bot), message.chat.id,
+            not_none(message.bot),
+            message.chat.id,
         )
         return
 

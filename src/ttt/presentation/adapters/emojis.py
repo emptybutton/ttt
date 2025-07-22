@@ -10,7 +10,8 @@ from ttt.infrastructure.dedublication import Dedublication
 @dataclass
 class PictographsAsEmojis(Emojis):
     _dedublication: Dedublication[str] = field(
-        init=False, default_factory=Dedublication,
+        init=False,
+        default_factory=Dedublication,
     )
 
     async def __aexit__(

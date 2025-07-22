@@ -39,7 +39,7 @@ class MapToPostgres(Map):
             case UniqueViolation() as unique_error:
                 constraint_name = unique_error.diag.constraint_name
 
-                if constraint_name == "users_pkey":
+                if constraint_name == "players_pkey":
                     raise NotUniqueUserIdError from error
             case _:
                 raise error from error

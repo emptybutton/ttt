@@ -13,11 +13,12 @@ class InPostgresGames(Games):
     _session: AsyncSession
 
     async def game_with_game_location(
-        self, game_location_user_id: int, /,
+        self,
+        game_location_user_id: int,
+        /,
     ) -> Game | None:
-        join_condition = (
-            (TableUser.id == game_location_user_id)
-            & (TableUser.game_location_game_id == TableGame.id)
+        join_condition = (TableUser.id == game_location_user_id) & (
+            TableUser.game_location_game_id == TableGame.id
         )
         stmt = select(TableGame).join(TableUser, join_condition)
 

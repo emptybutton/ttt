@@ -9,6 +9,7 @@ from ttt.application.game.common.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.games import Games
 from ttt.application.game.common.ports.waiting_locations import WaitingLocations
+from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.user.common.ports.user_views import UserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.ai import AiType
@@ -31,6 +32,7 @@ class StartGameWithAi:
     waiting_locations: WaitingLocations
     transaction: Transaction
     ai_gateway: GameAiGateway
+    log: GameLog
 
     async def __call__(self, location: UserLocation, ai_type: AiType) -> None:
         game_id = await self.uuids.random_uuid()
@@ -64,23 +66,27 @@ class StartGameWithAi:
                     tracking,
                 )
             except UserAlreadyInGameError:
+                await self.log.user_already_in_game_to_start_game(
+                    user,
+                    location,
+                )
                 await self.game_views.render_user_already_in_game_views(
                     [location],
                 )
             else:
+                await self.log.game_against_ai_started(started_game.game)
+
                 if started_game.next_move_ai_id is None:
                     await self.map_(tracking)
                     await (
-                        self.game_views
-                        .render_started_game_view_with_locations(
+                        self.game_views.render_started_game_view_with_locations(
                             [location.game(started_game.game.id)],
                             started_game.game,
                         )
                     )
                 else:
                     await (
-                        self.game_views
-                        .render_started_game_view_with_locations(
+                        self.game_views.render_started_game_view_with_locations(
                             [location.game(started_game.game.id)],
                             started_game.game,
                         )
@@ -94,12 +100,17 @@ class StartGameWithAi:
                             started_game.next_move_ai_id,
                         )
                     )
-                    started_game.game.make_ai_move(
+                    ai_move = started_game.game.make_ai_move(
                         started_game.next_move_ai_id,
                         ai_move_cell_number_int,
                         game_result_id,
                         free_cell_random,
                         tracking,
+                    )
+                    await self.log.ai_move_maked(
+                        location,
+                        started_game.game,
+                        ai_move,
                     )
 
                     await self.map_(tracking)

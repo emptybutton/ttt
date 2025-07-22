@@ -63,10 +63,13 @@ async def wait_emoji_to_buy_message(bot: Bot, chat_id: int) -> None:
 
 
 async def not_enough_stars_to_buy_emoji_message(
-    bot: Bot, chat_id: int, stars_to_become_enough: Stars,
+    bot: Bot,
+    chat_id: int,
+    stars_to_become_enough: Stars,
 ) -> None:
     await bot.send_message(
-        chat_id, f"😞 Нужно ещё {stars_to_become_enough} 🌟 для покупки",
+        chat_id,
+        f"😞 Нужно ещё {stars_to_become_enough} 🌟 для покупки",
     )
 
 
@@ -76,7 +79,8 @@ async def emoji_already_purchased_message(bot: Bot, chat_id: int) -> None:
 
 async def invalid_emoji_message(bot: Bot, chat_id: int) -> None:
     await bot.send_message(
-        chat_id, "❌ Эмоджи должен состоять из одного символа. Попробуйте ещё",
+        chat_id,
+        "❌ Эмоджи должен состоять из одного символа. Попробуйте ещё",
     )
 
 
@@ -97,7 +101,8 @@ async def selected_emoji_removed_message(bot: Bot, chat_id: int) -> None:
 
 
 async def wait_stars_to_start_stars_purshase_message(
-    bot: Bot, chat_id: int,
+    bot: Bot,
+    chat_id: int,
 ) -> None:
     await bot.send_message(
         chat_id,
@@ -107,12 +112,14 @@ async def wait_stars_to_start_stars_purshase_message(
 
 
 async def stars_will_be_added_message(
-    bot: Bot, chat_id: int,
+    bot: Bot,
+    chat_id: int,
 ) -> None:
     await bot.send_message(chat_id, "🌟 Звёзды скоро начислятся!")
 
 
 async def stars_added_message(
-    bot: Bot, chat_id: int,
+    bot: Bot,
+    chat_id: int,
 ) -> None:
     await bot.send_message(chat_id, "🌟 Звезды начислились!")

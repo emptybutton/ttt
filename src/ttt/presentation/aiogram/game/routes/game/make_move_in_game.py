@@ -21,12 +21,14 @@ async def _(
 ) -> None:
     if message.from_user is None:
         await anons_are_rohibited_message(
-            not_none(message.bot), message.chat.id,
+            not_none(message.bot),
+            message.chat.id,
         )
         return
 
     cell_number_int = int(not_none(message.text))
 
     await make_move_in_game(
-        UserLocation(message.from_user.id, message.chat.id), cell_number_int,
+        UserLocation(message.from_user.id, message.chat.id),
+        cell_number_int,
     )

@@ -1,14 +1,19 @@
 import asyncio
 from collections.abc import Callable, Coroutine
 from dataclasses import dataclass, field
-from traceback import print_exception
 from types import TracebackType
 from typing import Any, Self
+
+from structlog.types import FilteringBoundLogger
+
+from ttt.infrastructure.structlog.logger import unexpected_error_log
 
 
 @dataclass(frozen=True, unsafe_hash=False)
 class UnkillableTasks:
+    _logger: FilteringBoundLogger
     _loop: asyncio.AbstractEventLoop = field(
+        init=False,
         default_factory=asyncio.get_running_loop,
     )
     _tasks: set[asyncio.Task[Any]] = field(init=False, default_factory=set)
@@ -49,7 +54,7 @@ class UnkillableTasks:
                 await func()
             except Exception as error:  # noqa: BLE001
                 self._create_task(decorated_func())
-                print_exception(type(error), error, error.__traceback__)
+                await unexpected_error_log(self._logger, error)
 
         return decorated_func
 

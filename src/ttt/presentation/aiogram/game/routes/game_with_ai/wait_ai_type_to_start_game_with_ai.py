@@ -16,7 +16,8 @@ wait_ai_type_to_start_game_with_ai_router = Router(name=__name__)
 
 
 @wait_ai_type_to_start_game_with_ai_router.message(
-    any_state, Command("game_with_ai"),
+    any_state,
+    Command("game_with_ai"),
 )
 @inject
 async def _(
@@ -25,7 +26,8 @@ async def _(
 ) -> None:
     if message.from_user is None:
         await anons_are_rohibited_message(
-            not_none(message.bot), message.chat.id,
+            not_none(message.bot),
+            message.chat.id,
         )
         return
 

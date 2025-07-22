@@ -114,7 +114,8 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
         )
 
     async def render_user_already_in_game_views(
-        self, locations: Sequence[UserLocation],
+        self,
+        locations: Sequence[UserLocation],
     ) -> None:
         for location in locations:
             self._tasks.create_task(
@@ -122,21 +123,24 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
             )
 
     async def render_waiting_for_game_view(
-        self, location: UserLocation,
+        self,
+        location: UserLocation,
     ) -> None:
         self._tasks.create_task(
             waiting_for_game_message(self._bot, location.chat_id),
         )
 
     async def render_waiting_for_ai_type_to_start_game_with_ai_view(
-        self, location: UserLocation,
+        self,
+        location: UserLocation,
     ) -> None:
         self._tasks.create_task(
             message_to_start_game_with_ai(self._bot, location.chat_id),
         )
 
     async def render_double_waiting_for_game_view(
-        self, location: UserLocation,
+        self,
+        location: UserLocation,
     ) -> None:
         self._tasks.create_task(
             double_waiting_for_game_message(self._bot, location.chat_id),

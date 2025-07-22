@@ -18,16 +18,19 @@ class AiogramTrustingUserFsm(UserFsm):
 
     @overload
     async def state[T: UserFsmState](
-        self, type_: type[T],
+        self,
+        type_: type[T],
     ) -> T: ...
 
     @overload
     async def state[T: UserFsmState](
-        self, type_: None,
+        self,
+        type_: None,
     ) -> None: ...
 
     async def state[T: UserFsmState](
-        self, type_: type[T] | None,
+        self,
+        type_: type[T] | None,
     ) -> T | None:
         if type_ is WaitingEmojiToSelectState:
             return cast(T, WaitingEmojiToSelectState())

@@ -15,11 +15,13 @@ _price_stars_map: dict[Kopecks, Stars] = {
     512_00: 32768,
     1024_00: 65536,
 }
-_stars_price_map: dict[Stars, Kopecks] = dict(zip(
-    _price_stars_map.values(),
-    _price_stars_map.keys(),
-    strict=True,
-))
+_stars_price_map: dict[Stars, Kopecks] = dict(
+    zip(
+        _price_stars_map.values(),
+        _price_stars_map.keys(),
+        strict=True,
+    ),
+)
 
 
 def stars_of_price(rubles: Rubles) -> Stars:
@@ -39,7 +41,8 @@ def price_of_stars(stars: Stars) -> Rubles:
 
     total_kopecks = _stars_price_map.get(stars)
     total_kopecks = not_none(
-        total_kopecks, else_=NonExchangeableRublesForStarsError,
+        total_kopecks,
+        else_=NonExchangeableRublesForStarsError,
     )
 
     return Rubles.with_total_kopecks(total_kopecks)
