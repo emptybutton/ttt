@@ -96,7 +96,9 @@ def complete_payment(
 
 
 def cancel_payment(
-    payment: Payment | None, current_datetime: datetime, tracking: Tracking,
+    payment: Payment | None,
+    current_datetime: datetime,
+    tracking: Tracking,
 ) -> None:
     """
     :raises ttt.entities.finance.payment.payment.NoPaymentError:

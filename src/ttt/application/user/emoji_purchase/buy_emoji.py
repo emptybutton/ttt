@@ -11,6 +11,9 @@ from ttt.application.user.common.ports.user_fsm import (
 )
 from ttt.application.user.common.ports.user_views import UserViews
 from ttt.application.user.common.ports.users import Users
+from ttt.application.user.emoji_purchase.ports.user_log import (
+    EmojiPurchaseUserLog,
+)
 from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import (
     EmojiAlreadyPurchasedError,
@@ -29,9 +32,12 @@ class BuyEmoji:
     users: Users
     user_views: UserViews
     map_: Map
+    log: EmojiPurchaseUserLog
 
     async def __call__(
-        self, location: UserLocation, emoji_str: str | None,
+        self,
+        location: UserLocation,
+        emoji_str: str | None,
     ) -> None:
         await self.fsm.state(WaitingEmojiToBuyState)
 
@@ -63,22 +69,30 @@ class BuyEmoji:
             tracking = Tracking()
             try:
                 user.buy_emoji(
-                    emoji, purchased_emoji_id, tracking, current_datetime,
+                    emoji,
+                    purchased_emoji_id,
+                    tracking,
+                    current_datetime,
                 )
             except EmojiAlreadyPurchasedError:
+                await self.log.emoji_already_purchased_to_buy(
+                    user,
+                    location,
+                    emoji,
+                )
                 await self.fsm.set(None)
                 await self.user_views.render_emoji_already_purchased_view(
                     location,
                 )
             except NotEnoughStarsError as error:
                 await self.fsm.set(None)
-                await (
-                    self.user_views
-                    .render_not_enough_stars_to_buy_emoji_view(
-                        location, error.stars_to_become_enough,
-                    )
+                await self.user_views.render_not_enough_stars_to_buy_emoji_view(
+                    location,
+                    error.stars_to_become_enough,
                 )
             else:
+                await self.log.user_bought_emoji(location, user, emoji)
+
                 await self.map_(tracking)
                 await self.fsm.set(None)
                 await self.user_views.render_emoji_was_purchased_view(

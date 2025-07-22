@@ -8,6 +8,7 @@ from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.games import Games
 from ttt.application.game.common.ports.waiting_locations import WaitingLocations
+from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.user.common.ports.user_views import UserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.game import UsersAlreadyInGameError, start_game
@@ -26,6 +27,7 @@ class StartGame:
     game_views: GameViews
     waiting_locations: WaitingLocations
     transaction: Transaction
+    log: GameLog
 
     async def __call__(self) -> None:
         async for user1_location, user2_location in self.waiting_locations:
@@ -33,38 +35,41 @@ class StartGame:
                 user1, user2 = await self.users.users_with_ids(
                     (user1_location.user_id, user2_location.user_id),
                 )
-                users_and_locations = tuple(zip(
-                    (user1, user2),
-                    (user1_location, user2_location),
-                    strict=True,
-                ))
-                game_id, cell_id_matrix, user1_emoji, user2_emoji = (
-                    await gather(
-                        self.uuids.random_uuid(),
-                        self.uuids.random_uuid_matrix((3, 3)),
-                        self.emojis.random_emoji(),
-                        self.emojis.random_emoji(),
-                    )
+                users_and_locations = tuple(
+                    zip(
+                        (user1, user2),
+                        (user1_location, user2_location),
+                        strict=True,
+                    ),
+                )
+                (
+                    game_id,
+                    cell_id_matrix,
+                    user1_emoji,
+                    user2_emoji,
+                ) = await gather(
+                    self.uuids.random_uuid(),
+                    self.uuids.random_uuid_matrix((3, 3)),
+                    self.emojis.random_emoji(),
+                    self.emojis.random_emoji(),
                 )
 
                 if user1 is None:
-                    await (
-                        self.user_views.render_user_is_not_registered_view(
-                            user1_location,
-                        )
+                    await self.user_views.render_user_is_not_registered_view(
+                        user1_location,
                     )
                 if user2 is None:
-                    await (
-                        self.user_views.render_user_is_not_registered_view(
-                            user2_location,
-                        )
+                    await self.user_views.render_user_is_not_registered_view(
+                        user2_location,
                     )
                 if user1 is None or user2 is None:
-                    await self.waiting_locations.push_many(tuple(
-                        location
-                        for user, location in users_and_locations
-                        if user is not None
-                    ))
+                    await self.waiting_locations.push_many(
+                        tuple(
+                            location
+                            for user, location in users_and_locations
+                            if user is not None
+                        ),
+                    )
                     continue
 
                 tracking = Tracking()
@@ -91,6 +96,19 @@ class StartGame:
                         else:
                             locations_of_users_not_in_game.append(location)
 
+                    await (
+                        self.log
+                        .users_already_in_game_to_start_game_via_matchmaking_queue(
+                            locations_of_users_in_game,
+                        )
+                    )
+                    await (
+                        self.log
+                        .bad_attempt_to_start_game_via_matchmaking_queue(
+                            locations_of_users_not_in_game,
+                        )
+                    )
+
                     await self.waiting_locations.push_many(
                         locations_of_users_not_in_game,
                     )
@@ -100,6 +118,7 @@ class StartGame:
                     continue
 
                 else:
+                    await self.log.game_against_user_started(game)
                     await self.map_(tracking)
 
                     game_locations = (
@@ -107,8 +126,8 @@ class StartGame:
                         user2_location.game(game.id),
                     )
                     await (
-                        self.game_views
-                        .render_started_game_view_with_locations(
-                            game_locations, game,
+                        self.game_views.render_started_game_view_with_locations(
+                            game_locations,
+                            game,
                         )
                     )

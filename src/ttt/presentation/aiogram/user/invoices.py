@@ -1,3 +1,4 @@
+import json
 from typing import Literal
 from uuid import UUID
 
@@ -47,6 +48,22 @@ async def stars_invoce(
     payload_model = StarsPurshaseInvoicePayload.of(purshase.id_, location)
     payload = payload_model.model_dump_json(by_alias=True)
 
+    provider_data = json.dumps({
+        "receipt": {
+            "items": [
+                {
+                    "description": f"{purshase.stars} звёзд",
+                    "quantity": 1,
+                    "amount": {
+                        "value": float(price_of_stars(purshase.stars)),
+                        "currency": "RUB",
+                    },
+                    "vat_code": 1,
+                },
+            ],
+        },
+    })
+
     await bot.send_invoice(
         location.chat_id,
         title="Звёзды",
@@ -56,4 +73,7 @@ async def stars_invoce(
         prices=[price],
         is_flexible=False,
         provider_token=payments_token,
+        need_phone_number=True,
+        send_phone_number_to_provider=True,
+        provider_data=provider_data,
     )

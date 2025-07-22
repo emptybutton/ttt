@@ -22,6 +22,9 @@ class Rubles:
             else_=InvalidRubleKopecksError,
         )
 
+    def __float__(self) -> float:
+        return self.total_kopecks() / 100
+
     def __bool__(self) -> bool:
         return bool(self.total_kopecks())
 

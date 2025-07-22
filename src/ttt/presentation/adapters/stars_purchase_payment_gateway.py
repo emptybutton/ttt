@@ -39,14 +39,16 @@ class AiogramInAndBufferOutStarsPurchasePaymentGateway(
         message = "С одного инвойса можно покупать только один раз"
 
         await not_none(self._pre_checkout_query).answer(
-            ok=False, error_message=message,
+            ok=False,
+            error_message=message,
         )
 
     async def stop_payment_due_to_error(self, payment_id: UUID) -> None:
         message = "Неожиданная ошибка. Попробуйте позже!"
 
         await not_none(self._pre_checkout_query).answer(
-            ok=False, error_message=message,
+            ok=False,
+            error_message=message,
         )
 
     async def paid_payment_stream(

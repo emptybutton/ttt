@@ -1,4 +1,3 @@
-
 from aiogram import F, Router
 from aiogram.types import ContentType, Message
 from dishka import AsyncContainer
@@ -40,11 +39,13 @@ async def _(
             buffer = await parent_container.get(
                 Buffer[PaidStarsPurchasePayment],
             )
-            buffer.add(PaidStarsPurchasePayment(
-                invoce_payload.purshase_id,
-                UserLocation(
-                    invoce_payload.location_user_id,
-                    invoce_payload.location_chat_id,
+            buffer.add(
+                PaidStarsPurchasePayment(
+                    invoce_payload.purshase_id,
+                    UserLocation(
+                        invoce_payload.location_user_id,
+                        invoce_payload.location_chat_id,
+                    ),
+                    success,
                 ),
-                success,
-            ))
+            )

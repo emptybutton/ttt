@@ -15,11 +15,13 @@ register_user_router = Router(name=__name__)
 @register_user_router.message(any_state, Command("start"))
 @inject
 async def _(
-    message: Message, register_user: FromDishka[RegisterUser],
+    message: Message,
+    register_user: FromDishka[RegisterUser],
 ) -> None:
     if message.from_user is None:
         await anons_are_rohibited_message(
-            not_none(message.bot), message.chat.id,
+            not_none(message.bot),
+            message.chat.id,
         )
         return
 

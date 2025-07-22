@@ -39,7 +39,10 @@ class StarsPurchase:
         )
 
     def start_payment(
-        self, payment_id: UUID, current_datetime: datetime, tracking: Tracking,
+        self,
+        payment_id: UUID,
+        current_datetime: datetime,
+        tracking: Tracking,
     ) -> None:
         """
         :raises ttt.entities.finance.payment.payment.PaymentIsAlreadyBeingMadeError:

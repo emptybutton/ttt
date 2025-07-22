@@ -16,11 +16,13 @@ view_user_router = Router(name=__name__)
 @view_user_router.message(any_state, Command("profile"))
 @inject
 async def _(
-    message: Message, view_user: FromDishka[ViewUser],
+    message: Message,
+    view_user: FromDishka[ViewUser],
 ) -> None:
     if message.from_user is None:
         await anons_are_rohibited_message(
-            not_none(message.bot), message.chat.id,
+            not_none(message.bot),
+            message.chat.id,
         )
         return
 

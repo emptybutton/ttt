@@ -21,18 +21,21 @@ class UserFsm(ABC):
     @abstractmethod
     @overload
     async def state[T: UserFsmState](
-        self, type_: type[T],
+        self,
+        type_: type[T],
     ) -> T: ...
 
     @abstractmethod
     @overload
     async def state[T: UserFsmState](
-        self, type_: None,
+        self,
+        type_: None,
     ) -> None: ...
 
     @abstractmethod
     async def state[T: UserFsmState](
-        self, type_: type[T] | None,
+        self,
+        type_: type[T] | None,
     ) -> T | None:
         """
         :raises ttt.application.user.common.ports.InvalidUserFsmStateError:

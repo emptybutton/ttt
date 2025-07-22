@@ -27,5 +27,6 @@ async def _(
         case StarsPurshaseInvoicePayload():
             action = await dishka_container.get(StartStarsPurchasePayment)
             await action(
-                invoce_payload.location_user_id, invoce_payload.purshase_id,
+                invoce_payload.location_user_id,
+                invoce_payload.purshase_id,
             )

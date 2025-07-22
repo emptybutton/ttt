@@ -8,6 +8,9 @@ from ttt.application.user.common.ports.user_fsm import (
 )
 from ttt.application.user.common.ports.user_views import UserViews
 from ttt.application.user.common.ports.users import Users
+from ttt.application.user.emoji_selection.ports.user_log import (
+    EmojiSelectionUserLog,
+)
 from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import EmojiNotPurchasedError
 from ttt.entities.text.emoji import Emoji, InvalidEmojiError
@@ -21,9 +24,12 @@ class SelectEmoji:
     users: Users
     user_views: UserViews
     map_: Map
+    log: EmojiSelectionUserLog
 
     async def __call__(
-        self, location: UserLocation, emoji_str: str | None,
+        self,
+        location: UserLocation,
+        emoji_str: str | None,
     ) -> None:
         await self.fsm.state(WaitingEmojiToSelectState)
 
@@ -55,12 +61,18 @@ class SelectEmoji:
             try:
                 user.select_emoji(emoji, tracking)
             except EmojiNotPurchasedError:
+                await self.log.emoji_not_purchased_to_select(
+                    location,
+                    user,
+                    emoji,
+                )
                 await self.fsm.set(None)
-                await (
-                    self.user_views
-                    .render_emoji_not_purchased_to_select_view(location)
+                await self.user_views.render_emoji_not_purchased_to_select_view(
+                    location,
                 )
             else:
+                await self.log.user_selected_emoji(location, user, emoji)
+
                 await self.map_(tracking)
                 await self.fsm.set(None)
                 await self.user_views.render_emoji_selected_view(location)

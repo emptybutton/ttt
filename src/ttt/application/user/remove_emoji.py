@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.transaction import Transaction
+from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.common.ports.user_views import UserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.user.location import UserLocation
@@ -14,6 +15,7 @@ class RemoveEmoji:
     users: Users
     user_views: UserViews
     map_: Map
+    log: CommonUserLog
 
     async def __call__(self, location: UserLocation) -> None:
         async with self.transaction:
@@ -27,6 +29,7 @@ class RemoveEmoji:
 
             tracking = Tracking()
             user.remove_selected_emoji(tracking)
+            await self.log.user_removed_emoji(location, user)
 
             await self.map_(tracking)
             await self.user_views.render_selected_emoji_removed_view(location)

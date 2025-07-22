@@ -596,11 +596,7 @@ type TableUserAtomic = TableUser | TableUserEmoji | TableStarsPurchase
 type TableGameAtomic = TableGame | TableGameResult | TableCell | TableAi
 type TablePaymentAtomic = TablePayment
 
-type TableAtomic = (
-    TableUserAtomic
-    | TableGameAtomic
-    | TablePaymentAtomic
-)
+type TableAtomic = TableUserAtomic | TableGameAtomic | TablePaymentAtomic
 
 
 def table_entity(entity: Atomic) -> TableAtomic:  # noqa: PLR0911

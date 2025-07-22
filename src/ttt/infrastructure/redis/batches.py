@@ -43,7 +43,8 @@ class InRedisFixedBatches:
     ) -> AsyncIterator[tuple[bytes, ...]]: ...
 
     async def with_len(
-        self, batch_len: int,
+        self,
+        batch_len: int,
     ) -> AsyncIterator[tuple[bytes, ...]]:
         assert_(batch_len >= 1)
 
@@ -71,9 +72,8 @@ class InRedisFixedBatches:
                 await self.add(batch)
 
     async def _sleep(self) -> None:
-        sleep_ms = (
-            self._pulling_timeout_min_ms
-            + randbelow(self._pulling_timeout_salt_ms)
+        sleep_ms = self._pulling_timeout_min_ms + randbelow(
+            self._pulling_timeout_salt_ms,
         )
 
         await sleep(sleep_ms / 1000)
