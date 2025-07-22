@@ -6,10 +6,13 @@ from ttt.application.common.ports.transaction import Transaction
 from ttt.application.user.common.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
     PaidStarsPurchasePaymentInbox,
 )
-from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.application.user.stars_purchase.ports.user_log import (
     StarsPurchaseUserLog,
+)
+from ttt.application.user.stars_purchase.ports.user_views import (
+    StarsPurchaseUserViews,
 )
 from ttt.entities.finance.payment.payment import PaymentIsNotInProcessError
 from ttt.entities.tools.tracking import Tracking
@@ -22,7 +25,8 @@ class CompleteStarsPurshasePayment:
     users: Users
     transaction: Transaction
     map_: Map
-    user_views: UserViews
+    common_views: CommonUserViews
+    stars_purshase_views: StarsPurchaseUserViews
     log: StarsPurchaseUserLog
 
     async def __call__(self) -> None:
@@ -35,7 +39,7 @@ class CompleteStarsPurshasePayment:
                 )
 
                 if user is None:
-                    await self.user_views.render_user_is_not_registered_view(
+                    await self.common_views.user_is_not_registered_view(
                         paid_payment.location,
                     )
                     continue
@@ -60,8 +64,10 @@ class CompleteStarsPurshasePayment:
                     )
 
                     await self.map_(tracking)
-                    await self.user_views.render_completed_stars_purshase_view(
-                        user,
-                        paid_payment.purshase_id,
-                        paid_payment.location,
+                    await (
+                        self.stars_purshase_views.completed_stars_purshase_view(
+                            user,
+                            paid_payment.purshase_id,
+                            paid_payment.location,
+                        )
                     )

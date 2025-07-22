@@ -36,10 +36,16 @@ from ttt.application.user.common.ports.stars_purchase_payment_gateway import (
     StarsPurchasePaymentGateway,
 )
 from ttt.application.user.common.ports.user_fsm import UserFsm
-from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
+from ttt.application.user.emoji_purchase.ports.user_views import (
+    EmojiPurchaseUserViews,
+)
 from ttt.application.user.emoji_purchase.wait_emoji_to_buy import (
     WaitEmojiToBuy,
+)
+from ttt.application.user.emoji_selection.ports.user_views import (
+    EmojiSelectionUserViews,
 )
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
 from ttt.application.user.emoji_selection.wait_emoji_to_select import (
@@ -49,6 +55,9 @@ from ttt.application.user.register_user import RegisterUser
 from ttt.application.user.remove_emoji import RemoveEmoji
 from ttt.application.user.stars_purchase.complete_stars_purshase_payment import (  # noqa: E501
     CompleteStarsPurshasePayment,
+)
+from ttt.application.user.stars_purchase.ports.user_views import (
+    StarsPurchaseUserViews,
 )
 from ttt.application.user.stars_purchase.start_stars_purchase import (
     StartStarsPurchase,
@@ -74,7 +83,10 @@ from ttt.presentation.adapters.stars_purchase_payment_gateway import (
 )
 from ttt.presentation.adapters.user_fsm import AiogramTrustingUserFsm
 from ttt.presentation.adapters.user_views import (
-    AiogramMessagesFromPostgresAsUserViews,
+    AiogramMessagesAsEmojiPurchaseUserViews,
+    AiogramMessagesAsEmojiSelectionUserViews,
+    AiogramMessagesAsStarsPurchaseUserViews,
+    AiogramMessagesFromPostgresAsCommonUserViews,
 )
 from ttt.presentation.aiogram.common.bots import ttt_bot
 from ttt.presentation.aiogram.common.routes.all import common_routers
@@ -129,9 +141,24 @@ class AiogramProvider(Provider):
     )
 
     provide_user_views = provide(
-        AiogramMessagesFromPostgresAsUserViews,
-        provides=UserViews,
+        AiogramMessagesFromPostgresAsCommonUserViews,
+        provides=CommonUserViews,
         scope=Scope.REQUEST,
+    )
+    provide_stars_purchase_user_views = provide(
+        AiogramMessagesAsStarsPurchaseUserViews,
+        provides=StarsPurchaseUserViews,
+        scope=Scope.APP,
+    )
+    provide_emoji_selection_user_views = provide(
+        AiogramMessagesAsEmojiSelectionUserViews,
+        provides=EmojiSelectionUserViews,
+        scope=Scope.APP,
+    )
+    provide_emoji_purchase_user_views = provide(
+        AiogramMessagesAsEmojiPurchaseUserViews,
+        provides=EmojiPurchaseUserViews,
+        scope=Scope.APP,
     )
 
     @provide(scope=Scope.APP)

@@ -30,7 +30,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
     _bot: Bot
     _storage: BaseStorage
 
-    async def render_game_view_with_locations(
+    async def game_view_with_locations(
         self,
         user_locations: Sequence[UserGameLocation],
         game: Game,
@@ -48,7 +48,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
                     game,
                 )
 
-    async def render_started_game_view_with_locations(
+    async def started_game_view_with_locations(
         self,
         user_locations: Sequence[UserGameLocation],
         game: Game,
@@ -64,7 +64,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
                 ),
             )
 
-    async def render_no_game_view(
+    async def no_game_view(
         self,
         user_location: UserLocation,
         /,
@@ -73,7 +73,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
             no_game_message(self._bot, user_location.chat_id),
         )
 
-    async def render_not_current_user_view(
+    async def not_current_user_view(
         self,
         user_location: UserLocation,
         game: Game,
@@ -83,7 +83,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
             not_current_user_message(self._bot, user_location.chat_id),
         )
 
-    async def render_no_cell_view(
+    async def no_cell_view(
         self,
         user_location: UserLocation,
         game: Game,
@@ -93,7 +93,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
             no_cell_message(self._bot, user_location.chat_id),
         )
 
-    async def render_already_filled_cell_error(
+    async def already_filled_cell_error(
         self,
         user_location: UserLocation,
         game: Game,
@@ -103,7 +103,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
             already_filled_cell_message(self._bot, user_location.chat_id),
         )
 
-    async def render_game_already_complteted_view(
+    async def game_already_complteted_view(
         self,
         user_location: UserLocation,
         game: Game,
@@ -113,7 +113,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
             already_completed_game_message(self._bot, user_location.chat_id),
         )
 
-    async def render_user_already_in_game_views(
+    async def user_already_in_game_views(
         self,
         locations: Sequence[UserLocation],
     ) -> None:
@@ -122,7 +122,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
                 user_already_in_game_message(self._bot, location.chat_id),
             )
 
-    async def render_waiting_for_game_view(
+    async def waiting_for_game_view(
         self,
         location: UserLocation,
     ) -> None:
@@ -130,7 +130,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
             waiting_for_game_message(self._bot, location.chat_id),
         )
 
-    async def render_waiting_for_ai_type_to_start_game_with_ai_view(
+    async def waiting_for_ai_type_to_start_game_with_ai_view(
         self,
         location: UserLocation,
     ) -> None:
@@ -138,7 +138,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
             message_to_start_game_with_ai(self._bot, location.chat_id),
         )
 
-    async def render_double_waiting_for_game_view(
+    async def double_waiting_for_game_view(
         self,
         location: UserLocation,
     ) -> None:

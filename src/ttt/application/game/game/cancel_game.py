@@ -30,7 +30,7 @@ class CancelGame:
                 self.uuids.random_uuid(),
             )
             if game is None:
-                await self.game_views.render_no_game_view(location)
+                await self.game_views.no_game_view(location)
                 return
 
             locations = tuple(
@@ -47,7 +47,7 @@ class CancelGame:
                     game,
                     location,
                 )
-                await self.game_views.render_game_already_complteted_view(
+                await self.game_views.game_already_complteted_view(
                     location,
                     game,
                 )
@@ -56,7 +56,7 @@ class CancelGame:
             await self.log.game_cancelled(location, game)
 
             await self.map_(tracking)
-            await self.game_views.render_game_view_with_locations(
+            await self.game_views.game_view_with_locations(
                 locations,
                 game,
             )

@@ -4,7 +4,7 @@ from ttt.application.common.ports.transaction import Transaction
 from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.waiting_locations import WaitingLocations
 from ttt.application.game.game.ports.game_log import GameLog
-from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.user.location import UserLocation
 
@@ -13,7 +13,7 @@ from ttt.entities.core.user.location import UserLocation
 class WaitGame:
     users: Users
     waiting_locations: WaitingLocations
-    user_views: UserViews
+    user_views: CommonUserViews
     game_views: GameViews
     transaction: Transaction
     log: GameLog
@@ -23,7 +23,7 @@ class WaitGame:
             if not await self.users.contains_user_with_id(
                 location.user_id,
             ):
-                await self.user_views.render_user_is_not_registered_view(
+                await self.user_views.user_is_not_registered_view(
                     location,
                 )
                 return
@@ -32,9 +32,9 @@ class WaitGame:
 
             if push.was_location_dedublicated:
                 await self.log.double_waiting_for_game_start(location)
-                await self.game_views.render_double_waiting_for_game_view(
+                await self.game_views.double_waiting_for_game_view(
                     location,
                 )
             else:
                 await self.log.waiting_for_game_start(location)
-                await self.game_views.render_waiting_for_game_view(location)
+                await self.game_views.waiting_for_game_view(location)

@@ -9,7 +9,7 @@ from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.games import Games
 from ttt.application.game.common.ports.waiting_locations import WaitingLocations
 from ttt.application.game.game.ports.game_log import GameLog
-from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.game import UsersAlreadyInGameError, start_game
 from ttt.entities.core.user.location import UserLocation
@@ -22,7 +22,7 @@ class StartGame:
     uuids: UUIDs
     emojis: Emojis
     users: Users
-    user_views: UserViews
+    user_views: CommonUserViews
     games: Games
     game_views: GameViews
     waiting_locations: WaitingLocations
@@ -55,11 +55,11 @@ class StartGame:
                 )
 
                 if user1 is None:
-                    await self.user_views.render_user_is_not_registered_view(
+                    await self.user_views.user_is_not_registered_view(
                         user1_location,
                     )
                 if user2 is None:
-                    await self.user_views.render_user_is_not_registered_view(
+                    await self.user_views.user_is_not_registered_view(
                         user2_location,
                     )
                 if user1 is None or user2 is None:
@@ -112,7 +112,7 @@ class StartGame:
                     await self.waiting_locations.push_many(
                         locations_of_users_not_in_game,
                     )
-                    await self.game_views.render_user_already_in_game_views(
+                    await self.game_views.user_already_in_game_views(
                         locations_of_users_in_game,
                     )
                     continue
@@ -125,9 +125,7 @@ class StartGame:
                         user1_location.game(game.id),
                         user2_location.game(game.id),
                     )
-                    await (
-                        self.game_views.render_started_game_view_with_locations(
-                            game_locations,
-                            game,
-                        )
+                    await self.game_views.started_game_view_with_locations(
+                        game_locations,
+                        game,
                     )

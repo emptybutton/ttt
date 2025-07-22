@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.user.common.ports.user_log import CommonUserLog
-from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.user.location import UserLocation
 from ttt.entities.tools.tracking import Tracking
@@ -13,7 +13,7 @@ from ttt.entities.tools.tracking import Tracking
 class RemoveEmoji:
     transaction: Transaction
     users: Users
-    user_views: UserViews
+    views: CommonUserViews
     map_: Map
     log: CommonUserLog
 
@@ -22,9 +22,7 @@ class RemoveEmoji:
             user = await self.users.user_with_id(location.user_id)
 
             if user is None:
-                await self.user_views.render_user_is_not_registered_view(
-                    location,
-                )
+                await self.views.user_is_not_registered_view(location)
                 return
 
             tracking = Tracking()
@@ -32,4 +30,4 @@ class RemoveEmoji:
             await self.log.user_removed_emoji(location, user)
 
             await self.map_(tracking)
-            await self.user_views.render_selected_emoji_removed_view(location)
+            await self.views.selected_emoji_removed_view(location)

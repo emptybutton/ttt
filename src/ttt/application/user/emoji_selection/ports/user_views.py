@@ -3,37 +3,30 @@ from abc import ABC, abstractmethod
 from ttt.entities.core.user.location import UserLocation
 
 
-class CommonUserViews(ABC):
+class EmojiSelectionUserViews(ABC):
     @abstractmethod
-    async def view_of_user_with_id(
+    async def invalid_emoji_to_select_view(
         self,
         location: UserLocation,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def user_is_not_registered_view(
+    async def emoji_not_purchased_to_select_view(
         self,
         location: UserLocation,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def user_already_registered_view(
+    async def emoji_selected_view(
         self,
         location: UserLocation,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def user_registered_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def selected_emoji_removed_view(
+    async def wait_emoji_to_select_view(
         self,
         location: UserLocation,
         /,
