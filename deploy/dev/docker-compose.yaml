@@ -98,10 +98,14 @@ services:
     command: ["bash", "/mnt/add_streams.sh"]
 
 volumes:
-  backend-data: null
-  postgres-data: null
-  redis-data: null
-  nats-data: null
+  backend-data:
+    name: "ttt-dev-postgres-backend-data"
+  postgres-data:
+    name: "ttt-dev-postgres-postgres-data"
+  redis-data:
+    name: "ttt-dev-postgres-redis-data"
+  nats-data:
+    name: "ttt-dev-postgres-nats-data"
 
 secrets:
   secrets:
