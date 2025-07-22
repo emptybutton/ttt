@@ -12,7 +12,8 @@ from ttt.entities.tools.assertion import not_none
 class InPostgresTransaction(Transaction):
     _session: AsyncSession
     _transaction: AsyncSessionTransaction | None = field(
-        init=False, default=None,
+        init=False,
+        default=None,
     )
 
     async def __aenter__(self) -> Self:

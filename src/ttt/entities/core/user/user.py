@@ -249,7 +249,10 @@ class User:
         self.account = self.account.map(lambda stars: stars + purchase.stars)
         tracking.register_mutated(self)
         complete_payment(
-            purchase.payment, payment_success, current_datetime, tracking,
+            purchase.payment,
+            payment_success,
+            current_datetime,
+            tracking,
         )
 
     def cancel_stars_purchase(

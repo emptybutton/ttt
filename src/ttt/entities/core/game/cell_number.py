@@ -27,11 +27,13 @@ class CellNumber:
         8: (1, 2),
         9: (2, 2),
     }
-    _int_by_board_position: ClassVar = dict(zip(
-        _board_position_by_int.values(),
-        _board_position_by_int.keys(),
-        strict=True,
-    ))
+    _int_by_board_position: ClassVar = dict(
+        zip(
+            _board_position_by_int.values(),
+            _board_position_by_int.keys(),
+            strict=True,
+        ),
+    )
 
     def __post_init__(self) -> None:
         assert_(1 <= self._int <= 9, else_=InvalidCellNumberError)  # noqa: PLR2004

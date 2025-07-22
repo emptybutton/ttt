@@ -78,40 +78,66 @@ class GameLog(ABC):
 
     @abstractmethod
     async def user_already_in_game_to_start_game(
-        self, user: User, location: UserLocation, /,
+        self,
+        user: User,
+        location: UserLocation,
+        /,
     ) -> None: ...
 
     @abstractmethod
     async def already_completed_game_to_make_move(
-        self, game: Game, location: UserLocation, cell_number_int: int, /,
+        self,
+        game: Game,
+        location: UserLocation,
+        cell_number_int: int,
+        /,
     ) -> None: ...
 
     @abstractmethod
     async def not_current_player_to_make_move(
-        self, game: Game, location: UserLocation, cell_number_int: int, /,
+        self,
+        game: Game,
+        location: UserLocation,
+        cell_number_int: int,
+        /,
     ) -> None: ...
 
     @abstractmethod
     async def no_cell_to_make_move(
-        self, game: Game, location: UserLocation, cell_number_int: int, /,
+        self,
+        game: Game,
+        location: UserLocation,
+        cell_number_int: int,
+        /,
     ) -> None: ...
 
     @abstractmethod
     async def already_filled_cell_to_make_move(
-        self, game: Game, location: UserLocation, cell_number_int: int, /,
+        self,
+        game: Game,
+        location: UserLocation,
+        cell_number_int: int,
+        /,
     ) -> None: ...
 
     @abstractmethod
     async def already_completed_game_to_cancel(
-        self, game: Game, location: UserLocation, /,
+        self,
+        game: Game,
+        location: UserLocation,
+        /,
     ) -> None: ...
 
     @abstractmethod
     async def users_already_in_game_to_start_game_via_matchmaking_queue(
-        self, locations_of_users_in_game: Sequence[UserLocation], /,
+        self,
+        locations_of_users_in_game: Sequence[UserLocation],
+        /,
     ) -> None: ...
 
     @abstractmethod
     async def bad_attempt_to_start_game_via_matchmaking_queue(
-        self, locations_of_users_not_in_game: Sequence[UserLocation], /,
+        self,
+        locations_of_users_not_in_game: Sequence[UserLocation],
+        /,
     ) -> None: ...

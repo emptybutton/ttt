@@ -35,9 +35,7 @@ class Envs(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,  # noqa: ARG003
         file_secret_settings: PydanticBaseSettingsSource,  # noqa: ARG003
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        return (
-            env_settings,
-        )
+        return (env_settings,)
 
     @classmethod
     def load(cls) -> "Envs":

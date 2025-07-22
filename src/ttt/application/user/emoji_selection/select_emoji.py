@@ -27,7 +27,9 @@ class SelectEmoji:
     log: EmojiSelectionUserLog
 
     async def __call__(
-        self, location: UserLocation, emoji_str: str | None,
+        self,
+        location: UserLocation,
+        emoji_str: str | None,
     ) -> None:
         await self.fsm.state(WaitingEmojiToSelectState)
 
@@ -60,12 +62,13 @@ class SelectEmoji:
                 user.select_emoji(emoji, tracking)
             except EmojiNotPurchasedError:
                 await self.log.emoji_not_purchased_to_select(
-                    location, user, emoji,
+                    location,
+                    user,
+                    emoji,
                 )
                 await self.fsm.set(None)
-                await (
-                    self.user_views
-                    .render_emoji_not_purchased_to_select_view(location)
+                await self.user_views.render_emoji_not_purchased_to_select_view(
+                    location,
                 )
             else:
                 await self.log.user_selected_emoji(location, user, emoji)

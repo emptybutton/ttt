@@ -24,5 +24,9 @@ class EmojiSelectionUserLog(ABC):
 
     @abstractmethod
     async def emoji_not_purchased_to_select(
-        self, location: UserLocation, user: User, emoji: Emoji, /,
+        self,
+        location: UserLocation,
+        user: User,
+        emoji: Emoji,
+        /,
     ) -> None: ...

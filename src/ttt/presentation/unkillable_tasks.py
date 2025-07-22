@@ -13,7 +13,8 @@ from ttt.infrastructure.structlog.logger import unexpected_error_log
 class UnkillableTasks:
     _logger: FilteringBoundLogger
     _loop: asyncio.AbstractEventLoop = field(
-        init=False, default_factory=asyncio.get_running_loop,
+        init=False,
+        default_factory=asyncio.get_running_loop,
     )
     _tasks: set[asyncio.Task[Any]] = field(init=False, default_factory=set)
 

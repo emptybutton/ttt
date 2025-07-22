@@ -151,7 +151,8 @@ class InfrastructureProvider(Provider):
 
     @provide(scope=Scope.APP)
     async def provide_original_in_nats_paid_stars_purchase_payment_inbox(
-        self, jetstream: JetStreamContext,
+        self,
+        jetstream: JetStreamContext,
     ) -> AsyncIterator[OriginalInNatsPaidStarsPurchasePaymentInbox]:
         inbox = OriginalInNatsPaidStarsPurchasePaymentInbox(jetstream)
         async with inbox:
@@ -163,7 +164,8 @@ class InfrastructureProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     def provide_logger(
-        self, logger_factory: LoggerFactory,
+        self,
+        logger_factory: LoggerFactory,
     ) -> FilteringBoundLogger:
         return logger_factory()
 

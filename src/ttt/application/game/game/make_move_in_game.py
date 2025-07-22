@@ -67,36 +67,48 @@ class MakeMoveInGame:
                 )
             except AlreadyCompletedGameError:
                 await self.log.already_completed_game_to_make_move(
-                    game, location, cell_number_int,
+                    game,
+                    location,
+                    cell_number_int,
                 )
                 await self.game_views.render_game_already_complteted_view(
-                    location, game,
+                    location,
+                    game,
                 )
             except NotCurrentPlayerError:
                 await self.log.not_current_player_to_make_move(
-                    game, location, cell_number_int,
+                    game,
+                    location,
+                    cell_number_int,
                 )
                 await self.game_views.render_not_current_user_view(
-                    location, game,
+                    location,
+                    game,
                 )
             except NoCellError:
                 await self.log.no_cell_to_make_move(
-                    game, location, cell_number_int,
+                    game,
+                    location,
+                    cell_number_int,
                 )
                 await self.game_views.render_no_cell_view(location, game)
             except AlreadyFilledCellError:
                 await self.log.already_filled_cell_to_make_move(
-                    game, location, cell_number_int,
+                    game,
+                    location,
+                    cell_number_int,
                 )
                 await self.game_views.render_already_filled_cell_error(
-                    location, game,
+                    location,
+                    game,
                 )
             else:
                 await self.log.user_move_maked(location, game, user_move)
 
                 if user_move.next_move_ai_id is not None:
                     await self.game_views.render_game_view_with_locations(
-                        locations, game,
+                        locations,
+                        game,
                     )
 
                     game_result_id = await self.uuids.random_uuid()
@@ -116,7 +128,9 @@ class MakeMoveInGame:
                     )
 
                     await self.log.ai_move_maked(
-                        location, game, ai_move,
+                        location,
+                        game,
+                        ai_move,
                     )
 
                 if game.is_completed():
@@ -124,5 +138,6 @@ class MakeMoveInGame:
 
                 await self.map_(tracking)
                 await self.game_views.render_game_view_with_locations(
-                    locations, game,
+                    locations,
+                    game,
                 )

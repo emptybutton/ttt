@@ -35,7 +35,9 @@ class BuyEmoji:
     log: EmojiPurchaseUserLog
 
     async def __call__(
-        self, location: UserLocation, emoji_str: str | None,
+        self,
+        location: UserLocation,
+        emoji_str: str | None,
     ) -> None:
         await self.fsm.state(WaitingEmojiToBuyState)
 
@@ -67,11 +69,16 @@ class BuyEmoji:
             tracking = Tracking()
             try:
                 user.buy_emoji(
-                    emoji, purchased_emoji_id, tracking, current_datetime,
+                    emoji,
+                    purchased_emoji_id,
+                    tracking,
+                    current_datetime,
                 )
             except EmojiAlreadyPurchasedError:
                 await self.log.emoji_already_purchased_to_buy(
-                    user, location, emoji,
+                    user,
+                    location,
+                    emoji,
                 )
                 await self.fsm.set(None)
                 await self.user_views.render_emoji_already_purchased_view(
@@ -79,11 +86,9 @@ class BuyEmoji:
                 )
             except NotEnoughStarsError as error:
                 await self.fsm.set(None)
-                await (
-                    self.user_views
-                    .render_not_enough_stars_to_buy_emoji_view(
-                        location, error.stars_to_become_enough,
-                    )
+                await self.user_views.render_not_enough_stars_to_buy_emoji_view(
+                    location,
+                    error.stars_to_become_enough,
                 )
             else:
                 await self.log.user_bought_emoji(location, user, emoji)

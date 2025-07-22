@@ -12,6 +12,7 @@ error_handling_router = Router(name=__name__)
 @error_handling_router.error()
 @inject
 async def _(
-    event: ErrorEvent, logger: FromDishka[FilteringBoundLogger],
+    event: ErrorEvent,
+    logger: FromDishka[FilteringBoundLogger],
 ) -> None:
     await unexpected_error_log(logger, event.exception)

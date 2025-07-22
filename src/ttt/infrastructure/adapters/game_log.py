@@ -125,7 +125,10 @@ class StructlogGameLog(GameLog):
         )
 
     async def user_already_in_game_to_start_game(
-        self, user: User, location: UserLocation, /,
+        self,
+        user: User,
+        location: UserLocation,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "user_already_in_game_to_start_game",
@@ -134,7 +137,11 @@ class StructlogGameLog(GameLog):
         )
 
     async def already_completed_game_to_make_move(
-        self, game: Game, location: UserLocation, cell_number_int: int, /,
+        self,
+        game: Game,
+        location: UserLocation,
+        cell_number_int: int,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "already_completed_game_to_make_move",
@@ -145,7 +152,11 @@ class StructlogGameLog(GameLog):
         )
 
     async def not_current_player_to_make_move(
-        self, game: Game, location: UserLocation, cell_number_int: int, /,
+        self,
+        game: Game,
+        location: UserLocation,
+        cell_number_int: int,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "not_current_player_to_make_move",
@@ -156,7 +167,11 @@ class StructlogGameLog(GameLog):
         )
 
     async def no_cell_to_make_move(
-        self, game: Game, location: UserLocation, cell_number_int: int, /,
+        self,
+        game: Game,
+        location: UserLocation,
+        cell_number_int: int,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "no_cell_to_make_move",
@@ -167,7 +182,11 @@ class StructlogGameLog(GameLog):
         )
 
     async def already_filled_cell_to_make_move(
-        self, game: Game, location: UserLocation, cell_number_int: int, /,
+        self,
+        game: Game,
+        location: UserLocation,
+        cell_number_int: int,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "already_filled_cell_to_make_move",
@@ -178,7 +197,10 @@ class StructlogGameLog(GameLog):
         )
 
     async def already_completed_game_to_cancel(
-        self, game: Game, location: UserLocation, /,
+        self,
+        game: Game,
+        location: UserLocation,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "already_completed_game_to_cancel_move",
@@ -188,25 +210,33 @@ class StructlogGameLog(GameLog):
         )
 
     async def users_already_in_game_to_start_game_via_matchmaking_queue(
-        self, locations_of_users_in_game: Sequence[UserLocation], /,
+        self,
+        locations_of_users_in_game: Sequence[UserLocation],
+        /,
     ) -> None:
-        await gather(*(
-            self._logger.awarning(
-                "user_already_in_game_to_start_game_via_matchmaking_queue",
-                chat_id=location.chat_id,
-                user_id=location.user_id,
-            )
-            for location in locations_of_users_in_game
-        ))
+        await gather(
+            *(
+                self._logger.awarning(
+                    "user_already_in_game_to_start_game_via_matchmaking_queue",
+                    chat_id=location.chat_id,
+                    user_id=location.user_id,
+                )
+                for location in locations_of_users_in_game
+            ),
+        )
 
     async def bad_attempt_to_start_game_via_matchmaking_queue(
-        self, locations_of_users_not_in_game: Sequence[UserLocation], /,
+        self,
+        locations_of_users_not_in_game: Sequence[UserLocation],
+        /,
     ) -> None:
-        await gather(*(
-            self._logger.awarning(
-                "bad_attempt_to_start_game_via_matchmaking_queue",
-                chat_id=location.chat_id,
-                user_id=location.user_id,
-            )
-            for location in locations_of_users_not_in_game
-        ))
+        await gather(
+            *(
+                self._logger.awarning(
+                    "bad_attempt_to_start_game_via_matchmaking_queue",
+                    chat_id=location.chat_id,
+                    user_id=location.user_id,
+                )
+                for location in locations_of_users_not_in_game
+            ),
+        )

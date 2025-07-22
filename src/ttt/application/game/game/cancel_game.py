@@ -44,10 +44,12 @@ class CancelGame:
                 game.cancel(location.user_id, game_result_id, tracking)
             except AlreadyCompletedGameError:
                 await self.log.already_completed_game_to_cancel(
-                    game, location,
+                    game,
+                    location,
                 )
                 await self.game_views.render_game_already_complteted_view(
-                    location, game,
+                    location,
+                    game,
                 )
                 return
 
@@ -55,5 +57,6 @@ class CancelGame:
 
             await self.map_(tracking)
             await self.game_views.render_game_view_with_locations(
-                locations, game,
+                locations,
+                game,
             )

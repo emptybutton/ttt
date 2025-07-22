@@ -16,7 +16,6 @@ class WaitStarsToStartStarsPurshase:
 
     async def __call__(self, location: UserLocation) -> None:
         await self.log.user_intends_to_buy_stars(location)
-        await (
-            self.user_views
-            .render_wait_stars_to_start_stars_purshase_view(location)
+        await self.user_views.render_wait_stars_to_start_stars_purshase_view(
+            location,
         )

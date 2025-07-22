@@ -35,38 +35,41 @@ class StartGame:
                 user1, user2 = await self.users.users_with_ids(
                     (user1_location.user_id, user2_location.user_id),
                 )
-                users_and_locations = tuple(zip(
-                    (user1, user2),
-                    (user1_location, user2_location),
-                    strict=True,
-                ))
-                game_id, cell_id_matrix, user1_emoji, user2_emoji = (
-                    await gather(
-                        self.uuids.random_uuid(),
-                        self.uuids.random_uuid_matrix((3, 3)),
-                        self.emojis.random_emoji(),
-                        self.emojis.random_emoji(),
-                    )
+                users_and_locations = tuple(
+                    zip(
+                        (user1, user2),
+                        (user1_location, user2_location),
+                        strict=True,
+                    ),
+                )
+                (
+                    game_id,
+                    cell_id_matrix,
+                    user1_emoji,
+                    user2_emoji,
+                ) = await gather(
+                    self.uuids.random_uuid(),
+                    self.uuids.random_uuid_matrix((3, 3)),
+                    self.emojis.random_emoji(),
+                    self.emojis.random_emoji(),
                 )
 
                 if user1 is None:
-                    await (
-                        self.user_views.render_user_is_not_registered_view(
-                            user1_location,
-                        )
+                    await self.user_views.render_user_is_not_registered_view(
+                        user1_location,
                     )
                 if user2 is None:
-                    await (
-                        self.user_views.render_user_is_not_registered_view(
-                            user2_location,
-                        )
+                    await self.user_views.render_user_is_not_registered_view(
+                        user2_location,
                     )
                 if user1 is None or user2 is None:
-                    await self.waiting_locations.push_many(tuple(
-                        location
-                        for user, location in users_and_locations
-                        if user is not None
-                    ))
+                    await self.waiting_locations.push_many(
+                        tuple(
+                            location
+                            for user, location in users_and_locations
+                            if user is not None
+                        ),
+                    )
                     continue
 
                 tracking = Tracking()
@@ -123,8 +126,8 @@ class StartGame:
                         user2_location.game(game.id),
                     )
                     await (
-                        self.game_views
-                        .render_started_game_view_with_locations(
-                            game_locations, game,
+                        self.game_views.render_started_game_view_with_locations(
+                            game_locations,
+                            game,
                         )
                     )

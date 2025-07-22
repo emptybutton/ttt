@@ -25,7 +25,9 @@ async def message_to_start_game_with_ai(
     keyboard = keyboard_to_start_game_with_ai()
 
     await bot.send_message(
-        chat_id, **text.as_kwargs(), reply_markup=keyboard,
+        chat_id,
+        **text.as_kwargs(),
+        reply_markup=keyboard,
     )
 
 
@@ -56,7 +58,9 @@ async def started_game_message(
         about_move,
     )
     await bot.send_message(
-        chat_id, **content.as_kwargs(), reply_markup=game_keyboard(game),
+        chat_id,
+        **content.as_kwargs(),
+        reply_markup=game_keyboard(game),
     )
 
 
@@ -67,14 +71,14 @@ async def maked_move_message(
     user_id: int,
 ) -> None:
     match user_id, game.state:
-        case (
-            (game.player1.id, GameState.wait_player1)
-            | (game.player2.id, GameState.wait_player2)
+        case (game.player1.id, GameState.wait_player1) | (
+            game.player2.id,
+            GameState.wait_player2,
         ):
             message = "🎯 Ходите"
-        case (
-            (game.player2.id, GameState.wait_player1)
-            | (game.player1.id, GameState.wait_player2)
+        case (game.player2.id, GameState.wait_player1) | (
+            game.player1.id,
+            GameState.wait_player2,
         ):
             message = "🎯 Ждите хода врага"
         case _:

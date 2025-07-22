@@ -25,7 +25,10 @@ class StructlogCommonUserLog(CommonUserLog):
     _logger: FilteringBoundLogger
 
     async def user_registered(
-        self, location: UserLocation, user: User, /,
+        self,
+        location: UserLocation,
+        user: User,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "user_registered",
@@ -34,7 +37,10 @@ class StructlogCommonUserLog(CommonUserLog):
         )
 
     async def user_double_registration(
-        self, location: UserLocation, user: User, /,
+        self,
+        location: UserLocation,
+        user: User,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "user_double_registration",
@@ -50,7 +56,10 @@ class StructlogCommonUserLog(CommonUserLog):
         )
 
     async def user_removed_emoji(
-        self, location: UserLocation, user: User, /,
+        self,
+        location: UserLocation,
+        user: User,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "user_removed_emoji",
@@ -64,7 +73,11 @@ class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):
     _logger: FilteringBoundLogger
 
     async def user_bought_emoji(
-        self, location: UserLocation, user: User, emoji: Emoji, /,
+        self,
+        location: UserLocation,
+        user: User,
+        emoji: Emoji,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "user_bought_emoji",
@@ -85,7 +98,10 @@ class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):
         )
 
     async def emoji_already_purchased_to_buy(
-        self, user: User, location: UserLocation, emoji: Emoji,
+        self,
+        user: User,
+        location: UserLocation,
+        emoji: Emoji,
     ) -> None:
         await self._logger.ainfo(
             "emoji_already_purchased_to_buy",
@@ -100,7 +116,11 @@ class StructlogEmojiSelectionUserLog(EmojiSelectionUserLog):
     _logger: FilteringBoundLogger
 
     async def user_selected_emoji(
-        self, location: UserLocation, user: User, emoji: Emoji, /,
+        self,
+        location: UserLocation,
+        user: User,
+        emoji: Emoji,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "user_selected_emoji",
@@ -121,7 +141,10 @@ class StructlogEmojiSelectionUserLog(EmojiSelectionUserLog):
         )
 
     async def emoji_not_purchased_to_select(
-        self, location: UserLocation, user: User, emoji: Emoji,
+        self,
+        location: UserLocation,
+        user: User,
+        emoji: Emoji,
     ) -> None:
         await self._logger.ainfo(
             "emoji_not_purchased_to_select",
@@ -146,7 +169,10 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
         )
 
     async def user_started_stars_puchase(
-        self, location: UserLocation, user: User, /,
+        self,
+        location: UserLocation,
+        user: User,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "user_started_stars_puchase",
@@ -155,7 +181,9 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
         )
 
     async def user_started_stars_puchase_payment(
-        self, user: User, /,
+        self,
+        user: User,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "user_started_stars_puchase_payment",
@@ -163,7 +191,9 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
         )
 
     async def stars_purshase_payment_completion_started(
-        self, payment: PaidStarsPurchasePayment, /,
+        self,
+        payment: PaidStarsPurchasePayment,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "stars_purshase_payment_completion_started",
@@ -173,7 +203,10 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
         )
 
     async def stars_purshase_payment_completed(
-        self, user: User, payment: PaidStarsPurchasePayment, /,
+        self,
+        user: User,
+        payment: PaidStarsPurchasePayment,
+        /,
     ) -> None:
         await self._logger.ainfo(
             "stars_purshase_payment_completed",
@@ -195,7 +228,10 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
         )
 
     async def invalid_stars_for_stars_purchase(
-        self, location: UserLocation, user: User, stars: Stars,
+        self,
+        location: UserLocation,
+        user: User,
+        stars: Stars,
     ) -> None:
         await self._logger.aerror(
             "invalid_stars_for_stars_purchase",
@@ -205,7 +241,9 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
         )
 
     async def double_stars_purchase_payment_start(
-        self, user: User, purchase_id: UUID,
+        self,
+        user: User,
+        purchase_id: UUID,
     ) -> None:
         await self._logger.ainfo(
             "double_stars_purchase_payment_start",
@@ -214,7 +252,9 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
         )
 
     async def no_purchase_to_start_stars_purchase_payment(
-        self, user: User, purchase_id: UUID,
+        self,
+        user: User,
+        purchase_id: UUID,
     ) -> None:
         await self._logger.aerror(
             "no_purchase_to_start_stars_purchase_payment",

@@ -7,12 +7,18 @@ from ttt.entities.core.user.user import User
 class CommonUserLog(ABC):
     @abstractmethod
     async def user_registered(
-        self, location: UserLocation, user: User, /,
+        self,
+        location: UserLocation,
+        user: User,
+        /,
     ) -> None: ...
 
     @abstractmethod
     async def user_double_registration(
-        self, location: UserLocation, user: User, /,
+        self,
+        location: UserLocation,
+        user: User,
+        /,
     ) -> None: ...
 
     @abstractmethod
@@ -20,5 +26,8 @@ class CommonUserLog(ABC):
 
     @abstractmethod
     async def user_removed_emoji(
-        self, location: UserLocation, user: User, /,
+        self,
+        location: UserLocation,
+        user: User,
+        /,
     ) -> None: ...

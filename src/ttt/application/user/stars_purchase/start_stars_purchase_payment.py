@@ -41,18 +41,23 @@ class StartStarsPurchasePayment:
             tracking = Tracking()
             try:
                 user.start_stars_purchase_payment(
-                    purchase_id, payment_id, current_datetime, tracking,
+                    purchase_id,
+                    payment_id,
+                    current_datetime,
+                    tracking,
                 )
             except PaymentIsAlreadyBeingMadeError:
                 await self.log.double_stars_purchase_payment_start(
-                    user, purchase_id,
+                    user,
+                    purchase_id,
                 )
                 await self.payment_gateway.stop_payment_due_to_dublicate(
                     payment_id,
                 )
             except NoPurchaseError:
                 await self.log.no_purchase_to_start_stars_purchase_payment(
-                    user, purchase_id,
+                    user,
+                    purchase_id,
                 )
                 await self.payment_gateway.stop_payment_due_to_error(
                     payment_id,

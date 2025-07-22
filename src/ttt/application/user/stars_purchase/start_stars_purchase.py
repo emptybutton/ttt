@@ -59,7 +59,9 @@ class StartStarsPurchase:
                 )
             except InvalidStarsForStarsPurchaseError:
                 await self.log.invalid_stars_for_stars_purchase(
-                    location, user, stars,
+                    location,
+                    user,
+                    stars,
                 )
                 await self.fsm.set(None)
                 await (

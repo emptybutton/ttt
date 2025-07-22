@@ -52,7 +52,8 @@ async def amain() -> None:
     sentry_sdk.init(secrets.sentry_dsn)
 
     await start_aiogram(
-        container_with_request_data, container_without_request_data,
+        container_with_request_data,
+        container_without_request_data,
     )
 
 

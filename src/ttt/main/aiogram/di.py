@@ -184,7 +184,8 @@ class AiogramRequestDataProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     def provide_pre_checkout_query(
-        self, event: TelegramObject,
+        self,
+        event: TelegramObject,
     ) -> PreCheckoutQuery | None:
         match event:
             case PreCheckoutQuery():
@@ -194,7 +195,8 @@ class AiogramRequestDataProvider(Provider):
 
     @provide(scope=Scope.REQUEST)
     def provide_fsm_context(
-        self, middleware_data: AiogramMiddlewareData,
+        self,
+        middleware_data: AiogramMiddlewareData,
     ) -> FSMContext:
         return cast(FSMContext, middleware_data["state"])
 
@@ -225,16 +227,20 @@ class ApplicationWithAiogramRequestDataProvider(Provider):
     provide_wait_emoji_to_buy = provide(WaitEmojiToBuy, scope=Scope.REQUEST)
     provide_select_emoji = provide(SelectEmoji, scope=Scope.REQUEST)
     provide_wait_emoji_to_select = provide(
-        WaitEmojiToSelect, scope=Scope.REQUEST,
+        WaitEmojiToSelect,
+        scope=Scope.REQUEST,
     )
     probide_wait_stars_to_start_stars_purshase = provide(
-        WaitStarsToStartStarsPurshase, scope=Scope.REQUEST,
+        WaitStarsToStartStarsPurshase,
+        scope=Scope.REQUEST,
     )
     provide_start_stars_purchase = provide(
-        StartStarsPurchase, scope=Scope.REQUEST,
+        StartStarsPurchase,
+        scope=Scope.REQUEST,
     )
     provide_start_stars_purchase_payment = provide(
-        StartStarsPurchasePayment, scope=Scope.REQUEST,
+        StartStarsPurchasePayment,
+        scope=Scope.REQUEST,
     )
 
 
@@ -243,17 +249,21 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
     provide_register_user = provide(RegisterUser, scope=Scope.REQUEST)
     provide_remove_emoji = provide(RemoveEmoji, scope=Scope.REQUEST)
     probide_complete_stars_purshase_payment = provide(
-        CompleteStarsPurshasePayment, scope=Scope.REQUEST,
+        CompleteStarsPurshasePayment,
+        scope=Scope.REQUEST,
     )
     probide_start_stars_purshase_payment_completion = provide(
-        StartStarsPurshasePaymentCompletion, scope=Scope.REQUEST,
+        StartStarsPurshasePaymentCompletion,
+        scope=Scope.REQUEST,
     )
 
     provide_wait_ai_type_to_start_game_with_ai = provide(
-        WaitAiTypeToStartGameWithAi, scope=Scope.REQUEST,
+        WaitAiTypeToStartGameWithAi,
+        scope=Scope.REQUEST,
     )
     provide_start_game_with_ai = provide(
-        StartGameWithAi, scope=Scope.REQUEST,
+        StartGameWithAi,
+        scope=Scope.REQUEST,
     )
     provide_start_game = provide(StartGame, scope=Scope.REQUEST)
     provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)

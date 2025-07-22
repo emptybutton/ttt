@@ -160,7 +160,10 @@ class Game:
         return self.result is not None
 
     def cancel(
-        self, user_id: int, game_result_id: UUID, tracking: Tracking,
+        self,
+        user_id: int,
+        game_result_id: UUID,
+        tracking: Tracking,
     ) -> None:
         """
         :raises ttt.entities.core.game.game.AlreadyCompletedGameError:
@@ -176,7 +179,9 @@ class Game:
             self.player2.leave_game(tracking)
 
         self.result = GameCancellationResult(
-            game_result_id, self.id, canceler.id,
+            game_result_id,
+            self.id,
+            canceler.id,
         )
         tracking.register_new(self.result)
         self.state = GameState.completed
@@ -199,7 +204,8 @@ class Game:
         """
 
         current_player = not_none(
-            self._current_player(), AlreadyCompletedGameError,
+            self._current_player(),
+            AlreadyCompletedGameError,
         )
         if not isinstance(current_player, User):
             raise TypeError
@@ -233,7 +239,8 @@ class Game:
                 win = current_player.win_against_ai(tracking)
             else:
                 win = current_player.win_against_user(
-                    player_win_random, tracking,
+                    player_win_random,
+                    tracking,
                 )
 
             if isinstance(not_current_player, User):
@@ -248,7 +255,9 @@ class Game:
                 not_current_player.be_draw(tracking)
 
             self._complete(
-                win=None, game_result_id=game_result_id, tracking=tracking,
+                win=None,
+                game_result_id=game_result_id,
+                tracking=tracking,
             )
 
         else:
@@ -278,7 +287,8 @@ class Game:
         """
 
         current_player = not_none(
-            self._current_player(), AlreadyCompletedGameError,
+            self._current_player(),
+            AlreadyCompletedGameError,
         )
         if not isinstance(current_player, Ai):
             raise NotAiCurrentMoveError
@@ -344,7 +354,9 @@ class Game:
             not_current_player.be_draw(tracking)
 
             self._complete(
-                win=None, game_result_id=game_result_id, tracking=tracking,
+                win=None,
+                game_result_id=game_result_id,
+                tracking=tracking,
             )
 
         else:
@@ -375,7 +387,9 @@ class Game:
             not_current_player.be_draw(tracking)
 
             self._complete(
-                win=None, game_result_id=game_result_id, tracking=tracking,
+                win=None,
+                game_result_id=game_result_id,
+                tracking=tracking,
             )
 
         else:
@@ -464,7 +478,10 @@ class Game:
         tracking.register_mutated(self)
 
     def _complete(
-        self, win: Win | None, game_result_id: UUID, tracking: Tracking,
+        self,
+        win: Win | None,
+        game_result_id: UUID,
+        tracking: Tracking,
     ) -> None:
         self.result = GameCompletionResult(game_result_id, self.id, win)
         tracking.register_new(self.result)

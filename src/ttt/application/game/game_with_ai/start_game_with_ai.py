@@ -67,7 +67,8 @@ class StartGameWithAi:
                 )
             except UserAlreadyInGameError:
                 await self.log.user_already_in_game_to_start_game(
-                    user, location,
+                    user,
+                    location,
                 )
                 await self.game_views.render_user_already_in_game_views(
                     [location],
@@ -78,16 +79,14 @@ class StartGameWithAi:
                 if started_game.next_move_ai_id is None:
                     await self.map_(tracking)
                     await (
-                        self.game_views
-                        .render_started_game_view_with_locations(
+                        self.game_views.render_started_game_view_with_locations(
                             [location.game(started_game.game.id)],
                             started_game.game,
                         )
                     )
                 else:
                     await (
-                        self.game_views
-                        .render_started_game_view_with_locations(
+                        self.game_views.render_started_game_view_with_locations(
                             [location.game(started_game.game.id)],
                             started_game.game,
                         )
@@ -109,7 +108,9 @@ class StartGameWithAi:
                         tracking,
                     )
                     await self.log.ai_move_maked(
-                        location, started_game.game, ai_move,
+                        location,
+                        started_game.game,
+                        ai_move,
                     )
 
                     await self.map_(tracking)

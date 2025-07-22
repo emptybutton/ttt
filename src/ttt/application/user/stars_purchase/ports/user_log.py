@@ -54,15 +54,25 @@ class StarsPurchaseUserLog(ABC):
 
     @abstractmethod
     async def invalid_stars_for_stars_purchase(
-        self, location: UserLocation, user: User, stars: Stars, /,
+        self,
+        location: UserLocation,
+        user: User,
+        stars: Stars,
+        /,
     ) -> None: ...
 
     @abstractmethod
     async def double_stars_purchase_payment_start(
-        self, user: User, purchase_id: UUID, /,
+        self,
+        user: User,
+        purchase_id: UUID,
+        /,
     ) -> None: ...
 
     @abstractmethod
     async def no_purchase_to_start_stars_purchase_payment(
-        self, user: User, purchase_id: UUID, /,
+        self,
+        user: User,
+        purchase_id: UUID,
+        /,
     ) -> None: ...

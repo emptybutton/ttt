@@ -24,5 +24,9 @@ class EmojiPurchaseUserLog(ABC):
 
     @abstractmethod
     async def emoji_already_purchased_to_buy(
-        self, user: User, location: UserLocation, emoji: Emoji, /,
+        self,
+        user: User,
+        location: UserLocation,
+        emoji: Emoji,
+        /,
     ) -> None: ...

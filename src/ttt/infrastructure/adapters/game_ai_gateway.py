@@ -14,7 +14,10 @@ class GeminiGameAiGateway(GameAiGateway):
     _gemini: Gemini
 
     async def next_move_cell_number_int(
-        self, game: Game, ai_id: UUID, /,
+        self,
+        game: Game,
+        ai_id: UUID,
+        /,
     ) -> int | None:
         if game.player1.id == ai_id:
             ai = cast(Ai, game.player1)
