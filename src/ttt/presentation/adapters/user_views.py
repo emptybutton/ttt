@@ -5,7 +5,16 @@ from aiogram import Bot
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.common.ports.user_views import CommonUserViews
+from ttt.application.user.emoji_purchase.ports.user_views import (
+    EmojiPurchaseUserViews,
+)
+from ttt.application.user.emoji_selection.ports.user_views import (
+    EmojiSelectionUserViews,
+)
+from ttt.application.user.stars_purchase.ports.user_views import (
+    StarsPurchaseUserViews,
+)
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import User
@@ -25,13 +34,13 @@ from ttt.presentation.aiogram.user.messages import (
     selected_emoji_removed_message,
     stars_added_message,
     stars_will_be_added_message,
-    wait_emoji_to_buy_message,
+    wait_emoji_message,
     wait_stars_to_start_stars_purshase_message,
 )
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class AiogramMessagesFromPostgresAsUserViews(UserViews):
+class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
     _bot: Bot
     _session: AsyncSession
 
@@ -102,73 +111,17 @@ class AiogramMessagesFromPostgresAsUserViews(UserViews):
     ) -> None:
         await help_message(self._bot, location.chat_id)
 
-    async def render_wait_emoji_to_buy_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await wait_emoji_to_buy_message(self._bot, location.chat_id)
-
-    async def render_not_enough_stars_to_buy_emoji_view(
-        self,
-        location: UserLocation,
-        stars_to_become_enough: Stars,
-        /,
-    ) -> None:
-        await not_enough_stars_to_buy_emoji_message(
-            self._bot,
-            location.chat_id,
-            stars_to_become_enough,
-        )
-
-    async def render_emoji_already_purchased_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await emoji_already_purchased_message(self._bot, location.chat_id)
-
-    async def render_emoji_was_purchased_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await emoji_was_purchased_message(self._bot, location.chat_id)
-
-    async def render_invalid_emoji_to_buy_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await invalid_emoji_message(self._bot, location.chat_id)
-
-    async def render_invalid_emoji_to_select_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await invalid_emoji_message(self._bot, location.chat_id)
-
-    async def render_emoji_not_purchased_to_select_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await emoji_not_purchased_to_select_message(self._bot, location.chat_id)
-
-    async def render_emoji_selected_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await emoji_selected_message(self._bot, location.chat_id)
-
     async def render_selected_emoji_removed_view(
         self,
         location: UserLocation,
         /,
     ) -> None:
         await selected_emoji_removed_message(self._bot, location.chat_id)
+
+
+@dataclass(frozen=True, unsafe_hash=False)
+class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
+    _bot: Bot
 
     async def render_wait_stars_to_start_stars_purshase_view(
         self,
@@ -202,3 +155,81 @@ class AiogramMessagesFromPostgresAsUserViews(UserViews):
         /,
     ) -> None:
         await stars_added_message(self._bot, location.chat_id)
+
+
+@dataclass(frozen=True, unsafe_hash=False)
+class AiogramMessagesAsEmojiSelectionUserViews(EmojiSelectionUserViews):
+    _bot: Bot
+
+    async def render_invalid_emoji_to_select_view(
+        self,
+        location: UserLocation,
+        /,
+    ) -> None:
+        await invalid_emoji_message(self._bot, location.chat_id)
+
+    async def render_emoji_not_purchased_to_select_view(
+        self,
+        location: UserLocation,
+        /,
+    ) -> None:
+        await emoji_not_purchased_to_select_message(self._bot, location.chat_id)
+
+    async def render_emoji_selected_view(
+        self,
+        location: UserLocation,
+        /,
+    ) -> None:
+        await emoji_selected_message(self._bot, location.chat_id)
+
+    async def render_wait_emoji_to_select_view(
+        self,
+        location: UserLocation,
+        /,
+    ) -> None:
+        await wait_emoji_message(self._bot, location.chat_id)
+
+
+@dataclass(frozen=True, unsafe_hash=False)
+class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
+    _bot: Bot
+
+    async def render_wait_emoji_to_buy_view(
+        self,
+        location: UserLocation,
+        /,
+    ) -> None:
+        await wait_emoji_message(self._bot, location.chat_id)
+
+    async def render_not_enough_stars_to_buy_emoji_view(
+        self,
+        location: UserLocation,
+        stars_to_become_enough: Stars,
+        /,
+    ) -> None:
+        await not_enough_stars_to_buy_emoji_message(
+            self._bot,
+            location.chat_id,
+            stars_to_become_enough,
+        )
+
+    async def render_emoji_already_purchased_view(
+        self,
+        location: UserLocation,
+        /,
+    ) -> None:
+        await emoji_already_purchased_message(self._bot, location.chat_id)
+
+    async def render_emoji_was_purchased_view(
+        self,
+        location: UserLocation,
+        /,
+    ) -> None:
+        await emoji_was_purchased_message(self._bot, location.chat_id)
+
+    async def render_invalid_emoji_to_buy_view(
+        self,
+        location: UserLocation,
+        /,
+    ) -> None:
+        await invalid_emoji_message(self._bot, location.chat_id)

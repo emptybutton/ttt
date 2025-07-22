@@ -58,7 +58,7 @@ async def profile_message(  # noqa: PLR0913, PLR0917
     await bot.send_message(chat_id, **content.as_kwargs())
 
 
-async def wait_emoji_to_buy_message(bot: Bot, chat_id: int) -> None:
+async def wait_emoji_message(bot: Bot, chat_id: int) -> None:
     await bot.send_message(chat_id, "🎭 Введите эмоджи")
 
 

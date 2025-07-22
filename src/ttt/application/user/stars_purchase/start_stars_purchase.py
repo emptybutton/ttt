@@ -9,10 +9,13 @@ from ttt.application.user.common.ports.stars_purchase_payment_gateway import (
     StarsPurchasePaymentGateway,
 )
 from ttt.application.user.common.ports.user_fsm import UserFsm
-from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.application.user.stars_purchase.ports.user_log import (
     StarsPurchaseUserLog,
+)
+from ttt.application.user.stars_purchase.ports.user_views import (
+    StarsPurchaseUserViews,
 )
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.location import UserLocation
@@ -30,7 +33,8 @@ class StartStarsPurchase:
     users: Users
     uuids: UUIDs
     clock: Clock
-    user_views: UserViews
+    common_views: CommonUserViews
+    stars_purshase_views: StarsPurchaseUserViews
     payment_gateway: StarsPurchasePaymentGateway
     map_: Map
     log: StarsPurchaseUserLog
@@ -43,7 +47,7 @@ class StartStarsPurchase:
             )
 
             if user is None:
-                await self.user_views.render_user_is_not_registered_view(
+                await self.common_views.render_user_is_not_registered_view(
                     location,
                 )
                 await self.fsm.set(None)
@@ -65,7 +69,7 @@ class StartStarsPurchase:
                 )
                 await self.fsm.set(None)
                 await (
-                    self.user_views
+                    self.stars_purshase_views
                     .render_invalid_stars_for_stars_purchase_view(location)
                 )
                 return

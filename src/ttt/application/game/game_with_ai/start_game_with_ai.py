@@ -10,7 +10,7 @@ from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.games import Games
 from ttt.application.game.common.ports.waiting_locations import WaitingLocations
 from ttt.application.game.game.ports.game_log import GameLog
-from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.ai import AiType
 from ttt.entities.core.game.game import start_game_with_ai
@@ -26,7 +26,7 @@ class StartGameWithAi:
     emojis: Emojis
     randoms: Randoms
     users: Users
-    user_views: UserViews
+    user_views: CommonUserViews
     games: Games
     game_views: GameViews
     waiting_locations: WaitingLocations

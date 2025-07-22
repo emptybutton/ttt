@@ -9,10 +9,13 @@ from ttt.application.user.common.ports.user_fsm import (
     UserFsm,
     WaitingEmojiToBuyState,
 )
-from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.application.user.emoji_purchase.ports.user_log import (
     EmojiPurchaseUserLog,
+)
+from ttt.application.user.emoji_purchase.ports.user_views import (
+    EmojiPurchaseUserViews,
 )
 from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import (
@@ -30,7 +33,8 @@ class BuyEmoji:
     clock: Clock
     transaction: Transaction
     users: Users
-    user_views: UserViews
+    common_views: CommonUserViews
+    emoji_purchase_views: EmojiPurchaseUserViews
     map_: Map
     log: EmojiPurchaseUserLog
 
@@ -42,13 +46,17 @@ class BuyEmoji:
         await self.fsm.state(WaitingEmojiToBuyState)
 
         if emoji_str is None:
-            await self.user_views.render_invalid_emoji_to_buy_view(location)
+            await self.emoji_purchase_views.render_invalid_emoji_to_buy_view(
+                location,
+            )
             return
 
         try:
             emoji = Emoji(emoji_str)
         except InvalidEmojiError:
-            await self.user_views.render_invalid_emoji_to_buy_view(location)
+            await self.emoji_purchase_views.render_invalid_emoji_to_buy_view(
+                location,
+            )
             return
 
         purchased_emoji_id, current_datetime = await gather(
@@ -60,7 +68,7 @@ class BuyEmoji:
             user = await self.users.user_with_id(location.user_id)
 
             if user is None:
-                await self.user_views.render_user_is_not_registered_view(
+                await self.common_views.render_user_is_not_registered_view(
                     location,
                 )
                 await self.fsm.set(None)
@@ -81,12 +89,12 @@ class BuyEmoji:
                     emoji,
                 )
                 await self.fsm.set(None)
-                await self.user_views.render_emoji_already_purchased_view(
+                await self.emoji_purchase_views.render_emoji_already_purchased_view(
                     location,
                 )
             except NotEnoughStarsError as error:
                 await self.fsm.set(None)
-                await self.user_views.render_not_enough_stars_to_buy_emoji_view(
+                await self.emoji_purchase_views.render_not_enough_stars_to_buy_emoji_view(
                     location,
                     error.stars_to_become_enough,
                 )
@@ -95,6 +103,6 @@ class BuyEmoji:
 
                 await self.map_(tracking)
                 await self.fsm.set(None)
-                await self.user_views.render_emoji_was_purchased_view(
+                await self.emoji_purchase_views.render_emoji_was_purchased_view(
                     location,
                 )
