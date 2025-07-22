@@ -14,5 +14,5 @@ class ViewUser:
 
     async def __call__(self, location: UserLocation) -> None:
         async with self.transaction:
-            await self.views.render_view_of_user_with_id(location)
+            await self.views.view_of_user_with_id(location)
             await self.log.user_viewed(location)

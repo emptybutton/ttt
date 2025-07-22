@@ -22,7 +22,7 @@ class RemoveEmoji:
             user = await self.users.user_with_id(location.user_id)
 
             if user is None:
-                await self.views.render_user_is_not_registered_view(location)
+                await self.views.user_is_not_registered_view(location)
                 return
 
             tracking = Tracking()
@@ -30,4 +30,4 @@ class RemoveEmoji:
             await self.log.user_removed_emoji(location, user)
 
             await self.map_(tracking)
-            await self.views.render_selected_emoji_removed_view(location)
+            await self.views.selected_emoji_removed_view(location)

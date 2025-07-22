@@ -38,7 +38,7 @@ class SelectEmoji:
         await self.fsm.state(WaitingEmojiToSelectState)
 
         if emoji_str is None:
-            await self.emoji_selection_views.invalid_emoji_to_select(
+            await self.emoji_selection_views.invalid_emoji_to_select_view(
                 location,
             )
             return
@@ -46,8 +46,9 @@ class SelectEmoji:
         try:
             emoji = Emoji(emoji_str)
         except InvalidEmojiError:
-            await self.emoji_selection_views.invalid_emoji_to_select(
-                location,
+            await (
+                self.emoji_selection_views
+                .invalid_emoji_to_select_view(location)
             )
             return
 
@@ -55,9 +56,7 @@ class SelectEmoji:
             user = await self.users.user_with_id(location.user_id)
 
             if user is None:
-                await self.user_views.user_is_not_registered(
-                    location,
-                )
+                await self.user_views.user_is_not_registered_view(location)
                 await self.fsm.set(None)
                 return
 
@@ -71,12 +70,13 @@ class SelectEmoji:
                     emoji,
                 )
                 await self.fsm.set(None)
-                await self.emoji_selection_views.render_emoji_not_purchased_to_select_view(
-                    location,
+                await (
+                    self.emoji_selection_views
+                    .emoji_not_purchased_to_select_view(location)
                 )
             else:
                 await self.log.user_selected_emoji(location, user, emoji)
 
                 await self.map_(tracking)
                 await self.fsm.set(None)
-                await self.emoji_selection_views.render_emoji_selected_view(location)
+                await self.emoji_selection_views.emoji_selected_view(location)

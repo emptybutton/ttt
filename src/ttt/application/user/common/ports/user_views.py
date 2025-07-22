@@ -5,35 +5,35 @@ from ttt.entities.core.user.location import UserLocation
 
 class CommonUserViews(ABC):
     @abstractmethod
-    async def render_view_of_user_with_id(
+    async def view_of_user_with_id(
         self,
         location: UserLocation,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def render_user_is_not_registered_view(
+    async def user_is_not_registered_view(
         self,
         location: UserLocation,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def render_user_already_registered_view(
+    async def user_already_registered_view(
         self,
         location: UserLocation,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def render_user_registered_view(
+    async def user_registered_view(
         self,
         location: UserLocation,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def render_selected_emoji_removed_view(
+    async def selected_emoji_removed_view(
         self,
         location: UserLocation,
         /,

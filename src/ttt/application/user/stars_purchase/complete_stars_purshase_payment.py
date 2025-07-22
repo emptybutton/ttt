@@ -39,7 +39,7 @@ class CompleteStarsPurshasePayment:
                 )
 
                 if user is None:
-                    await self.common_views.render_user_is_not_registered_view(
+                    await self.common_views.user_is_not_registered_view(
                         paid_payment.location,
                     )
                     continue
@@ -65,8 +65,7 @@ class CompleteStarsPurshasePayment:
 
                     await self.map_(tracking)
                     await (
-                        self.stars_purshase_views
-                        .render_completed_stars_purshase_view(
+                        self.stars_purshase_views.completed_stars_purshase_view(
                             user,
                             paid_payment.purshase_id,
                             paid_payment.location,

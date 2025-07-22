@@ -43,7 +43,7 @@ class MakeMoveInGame:
             game = await self.games.game_with_game_location(location.user_id)
 
             if game is None:
-                await self.game_views.render_no_game_view(location)
+                await self.game_views.no_game_view(location)
                 return
 
             locations = tuple(
@@ -71,7 +71,7 @@ class MakeMoveInGame:
                     location,
                     cell_number_int,
                 )
-                await self.game_views.render_game_already_complteted_view(
+                await self.game_views.game_already_complteted_view(
                     location,
                     game,
                 )
@@ -81,7 +81,7 @@ class MakeMoveInGame:
                     location,
                     cell_number_int,
                 )
-                await self.game_views.render_not_current_user_view(
+                await self.game_views.not_current_user_view(
                     location,
                     game,
                 )
@@ -91,14 +91,14 @@ class MakeMoveInGame:
                     location,
                     cell_number_int,
                 )
-                await self.game_views.render_no_cell_view(location, game)
+                await self.game_views.no_cell_view(location, game)
             except AlreadyFilledCellError:
                 await self.log.already_filled_cell_to_make_move(
                     game,
                     location,
                     cell_number_int,
                 )
-                await self.game_views.render_already_filled_cell_error(
+                await self.game_views.already_filled_cell_error(
                     location,
                     game,
                 )
@@ -106,7 +106,7 @@ class MakeMoveInGame:
                 await self.log.user_move_maked(location, game, user_move)
 
                 if user_move.next_move_ai_id is not None:
-                    await self.game_views.render_game_view_with_locations(
+                    await self.game_views.game_view_with_locations(
                         locations,
                         game,
                     )
@@ -137,7 +137,7 @@ class MakeMoveInGame:
                     await self.log.game_completed(location, game)
 
                 await self.map_(tracking)
-                await self.game_views.render_game_view_with_locations(
+                await self.game_views.game_view_with_locations(
                     locations,
                     game,
                 )

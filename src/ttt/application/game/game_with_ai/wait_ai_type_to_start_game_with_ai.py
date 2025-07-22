@@ -11,8 +11,7 @@ class WaitAiTypeToStartGameWithAi:
     log: GameLog
 
     async def __call__(self, location: UserLocation) -> None:
-        await (
-            self.game_views
-            .render_waiting_for_ai_type_to_start_game_with_ai_view(location)
+        await self.game_views.waiting_for_ai_type_to_start_game_with_ai_view(
+            location,
         )
         await self.log.user_intends_to_start_game_against_ai(location)

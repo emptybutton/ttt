@@ -46,7 +46,7 @@ class BuyEmoji:
         await self.fsm.state(WaitingEmojiToBuyState)
 
         if emoji_str is None:
-            await self.emoji_purchase_views.render_invalid_emoji_to_buy_view(
+            await self.emoji_purchase_views.invalid_emoji_to_buy_view(
                 location,
             )
             return
@@ -54,7 +54,7 @@ class BuyEmoji:
         try:
             emoji = Emoji(emoji_str)
         except InvalidEmojiError:
-            await self.emoji_purchase_views.render_invalid_emoji_to_buy_view(
+            await self.emoji_purchase_views.invalid_emoji_to_buy_view(
                 location,
             )
             return
@@ -68,7 +68,7 @@ class BuyEmoji:
             user = await self.users.user_with_id(location.user_id)
 
             if user is None:
-                await self.common_views.render_user_is_not_registered_view(
+                await self.common_views.user_is_not_registered_view(
                     location,
                 )
                 await self.fsm.set(None)
@@ -89,20 +89,23 @@ class BuyEmoji:
                     emoji,
                 )
                 await self.fsm.set(None)
-                await self.emoji_purchase_views.render_emoji_already_purchased_view(
+                await self.emoji_purchase_views.emoji_already_purchased_view(
                     location,
                 )
             except NotEnoughStarsError as error:
                 await self.fsm.set(None)
-                await self.emoji_purchase_views.render_not_enough_stars_to_buy_emoji_view(
-                    location,
-                    error.stars_to_become_enough,
+                await (
+                    self.emoji_purchase_views
+                    .not_enough_stars_to_buy_emoji_view(
+                        location,
+                        error.stars_to_become_enough,
+                    )
                 )
             else:
                 await self.log.user_bought_emoji(location, user, emoji)
 
                 await self.map_(tracking)
                 await self.fsm.set(None)
-                await self.emoji_purchase_views.render_emoji_was_purchased_view(
+                await self.emoji_purchase_views.emoji_was_purchased_view(
                     location,
                 )

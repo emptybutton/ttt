@@ -27,7 +27,7 @@ class RegisterUser:
                 await self.map_(tracking)
             except NotUniqueUserIdError:
                 await self.log.user_double_registration(location, user)
-                await self.views.render_user_already_registered_view(location)
+                await self.views.user_already_registered_view(location)
             else:
                 await self.log.user_registered(location, user)
-                await self.views.render_user_registered_view(location)
+                await self.views.user_registered_view(location)

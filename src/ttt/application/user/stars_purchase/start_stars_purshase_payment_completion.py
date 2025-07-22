@@ -24,7 +24,7 @@ class StartStarsPurshasePaymentCompletion:
     async def __call__(self) -> None:
         async for paid_payment in self.payment_gateway.paid_payment_stream():
             await self.inbox.push(paid_payment)
-            await self.views.render_stars_purchase_will_be_completed_view(
+            await self.views.stars_purchase_will_be_completed_view(
                 paid_payment.location,
             )
             await self.log.stars_purshase_payment_completion_started(

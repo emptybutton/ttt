@@ -47,7 +47,7 @@ class StartStarsPurchase:
             )
 
             if user is None:
-                await self.common_views.render_user_is_not_registered_view(
+                await self.common_views.user_is_not_registered_view(
                     location,
                 )
                 await self.fsm.set(None)
@@ -70,7 +70,7 @@ class StartStarsPurchase:
                 await self.fsm.set(None)
                 await (
                     self.stars_purshase_views
-                    .render_invalid_stars_for_stars_purchase_view(location)
+                    .invalid_stars_for_stars_purchase_view(location)
                 )
                 return
 

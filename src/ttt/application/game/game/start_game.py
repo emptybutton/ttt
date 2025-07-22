@@ -55,11 +55,11 @@ class StartGame:
                 )
 
                 if user1 is None:
-                    await self.user_views.render_user_is_not_registered_view(
+                    await self.user_views.user_is_not_registered_view(
                         user1_location,
                     )
                 if user2 is None:
-                    await self.user_views.render_user_is_not_registered_view(
+                    await self.user_views.user_is_not_registered_view(
                         user2_location,
                     )
                 if user1 is None or user2 is None:
@@ -112,7 +112,7 @@ class StartGame:
                     await self.waiting_locations.push_many(
                         locations_of_users_not_in_game,
                     )
-                    await self.game_views.render_user_already_in_game_views(
+                    await self.game_views.user_already_in_game_views(
                         locations_of_users_in_game,
                     )
                     continue
@@ -125,9 +125,7 @@ class StartGame:
                         user1_location.game(game.id),
                         user2_location.game(game.id),
                     )
-                    await (
-                        self.game_views.render_started_game_view_with_locations(
-                            game_locations,
-                            game,
-                        )
+                    await self.game_views.started_game_view_with_locations(
+                        game_locations,
+                        game,
                     )

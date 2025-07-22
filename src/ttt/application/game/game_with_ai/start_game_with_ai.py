@@ -46,7 +46,7 @@ class StartGameWithAi:
             user = await self.users.user_with_id(location.user_id)
 
             if user is None:
-                await self.user_views.render_user_is_not_registered_view(
+                await self.user_views.user_is_not_registered_view(
                     location,
                 )
                 return
@@ -70,7 +70,7 @@ class StartGameWithAi:
                     user,
                     location,
                 )
-                await self.game_views.render_user_already_in_game_views(
+                await self.game_views.user_already_in_game_views(
                     [location],
                 )
             else:
@@ -78,18 +78,14 @@ class StartGameWithAi:
 
                 if started_game.next_move_ai_id is None:
                     await self.map_(tracking)
-                    await (
-                        self.game_views.render_started_game_view_with_locations(
-                            [location.game(started_game.game.id)],
-                            started_game.game,
-                        )
+                    await self.game_views.started_game_view_with_locations(
+                        [location.game(started_game.game.id)],
+                        started_game.game,
                     )
                 else:
-                    await (
-                        self.game_views.render_started_game_view_with_locations(
-                            [location.game(started_game.game.id)],
-                            started_game.game,
-                        )
+                    await self.game_views.started_game_view_with_locations(
+                        [location.game(started_game.game.id)],
+                        started_game.game,
                     )
 
                     game_result_id = await self.uuids.random_uuid()
@@ -114,7 +110,7 @@ class StartGameWithAi:
                     )
 
                     await self.map_(tracking)
-                    await self.game_views.render_game_view_with_locations(
+                    await self.game_views.game_view_with_locations(
                         [location.game(started_game.game.id)],
                         started_game.game,
                     )

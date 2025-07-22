@@ -23,6 +23,6 @@ class WaitEmojiToSelect:
     async def __call__(self, location: UserLocation) -> None:
         await gather(
             self.fsm.set(WaitingEmojiToSelectState()),
-            self.views.render_wait_emoji_to_select_view(location),
+            self.views.wait_emoji_to_select_view(location),
         )
         await self.log.user_intends_to_select_emoji(location)
