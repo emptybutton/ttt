@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
 from ttt.application.common.ports.transaction import Transaction
-from ttt.application.game.common.ports.game_views import GameViews
-from ttt.application.game.common.ports.waiting_locations import WaitingLocations
 from ttt.application.game.game.ports.game_log import GameLog
+from ttt.application.game.game.ports.game_views import GameViews
+from ttt.application.game.game.ports.waiting_locations import WaitingLocations
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.user.location import UserLocation

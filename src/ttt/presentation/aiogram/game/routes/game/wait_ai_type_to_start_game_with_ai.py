@@ -4,7 +4,7 @@ from aiogram.fsm.state import any_state
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
-from ttt.application.game.game_with_ai.wait_ai_type_to_start_game_with_ai import (  # noqa: E501
+from ttt.application.game.game.wait_ai_type_to_start_game_with_ai import (
     WaitAiTypeToStartGameWithAi,
 )
 from ttt.entities.core.user.location import UserLocation

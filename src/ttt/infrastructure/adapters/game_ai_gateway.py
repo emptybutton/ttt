@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import cast
 from uuid import UUID
 
-from ttt.application.game.common.ports.game_ai_gateway import GameAiGateway
+from ttt.application.game.game.ports.game_ai_gateway import GameAiGateway
 from ttt.entities.core.game.ai import Ai, AiType
 from ttt.entities.core.game.game import Game
 from ttt.infrastructure.openai.gemini import Gemini

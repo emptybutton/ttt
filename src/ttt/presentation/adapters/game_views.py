@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from aiogram import Bot
 from aiogram.fsm.storage.base import BaseStorage
 
-from ttt.application.game.common.ports.game_views import GameViews
+from ttt.application.game.game.ports.game_views import GameViews
 from ttt.entities.core.game.game import Game
 from ttt.entities.core.user.location import UserGameLocation, UserLocation
 from ttt.infrastructure.background_tasks import BackgroundTasks

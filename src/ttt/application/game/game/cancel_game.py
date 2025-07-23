@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
-from ttt.application.game.common.ports.game_views import GameViews
-from ttt.application.game.common.ports.games import Games
 from ttt.application.game.game.ports.game_log import GameLog
+from ttt.application.game.game.ports.game_views import GameViews
+from ttt.application.game.game.ports.games import Games
 from ttt.entities.core.game.game import AlreadyCompletedGameError
 from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import User
