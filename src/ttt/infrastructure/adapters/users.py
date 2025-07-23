@@ -19,7 +19,7 @@ class InPostgresUsers(Users):
         id_: int,
         /,
     ) -> bool:
-        stmt = select(exists(1).where(TableUser.id == id_))
+        stmt = select(exists(1).where(TableUser.id == id_)).with_for_update()
 
         return bool(await self._session.execute(stmt))
 
@@ -50,6 +50,7 @@ class InPostgresUsers(Users):
         return tuple(users)
 
     async def user_with_id(self, id_: int, /) -> User | None:
-        table_user = await self._session.get(TableUser, id_)
+        stmt = select(TableUser).where(TableUser.id == id_).with_for_update()
+        table_user = await self._session.scalar(stmt)
 
         return None if table_user is None else table_user.entity()
