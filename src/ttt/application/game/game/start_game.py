@@ -5,9 +5,11 @@ from ttt.application.common.ports.emojis import Emojis
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
+from ttt.application.game.common.ports.game_starting_queue import (
+    GameStartingQueue,
+)
 from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.common.ports.games import Games
-from ttt.application.game.common.ports.waiting_locations import WaitingLocations
 from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
@@ -25,12 +27,12 @@ class StartGame:
     user_views: CommonUserViews
     games: Games
     game_views: GameViews
-    waiting_locations: WaitingLocations
+    game_starting_queue: GameStartingQueue
     transaction: Transaction
     log: GameLog
 
     async def __call__(self) -> None:
-        async for user1_location, user2_location in self.waiting_locations:
+        async for user1_location, user2_location in self.game_starting_queue:
             async with self.transaction, self.emojis:
                 user1, user2 = await self.users.users_with_ids(
                     (user1_location.user_id, user2_location.user_id),
@@ -63,7 +65,7 @@ class StartGame:
                         user2_location,
                     )
                 if user1 is None or user2 is None:
-                    await self.waiting_locations.push_many(
+                    await self.game_starting_queue.push_many(
                         tuple(
                             location
                             for user, location in users_and_locations
@@ -109,7 +111,7 @@ class StartGame:
                         )
                     )
 
-                    await self.waiting_locations.push_many(
+                    await self.game_starting_queue.push_many(
                         locations_of_users_not_in_game,
                     )
                     await self.game_views.user_already_in_game_views(

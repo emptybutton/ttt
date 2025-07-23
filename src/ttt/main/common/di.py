@@ -18,8 +18,10 @@ from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.common.ports.game_ai_gateway import GameAiGateway
+from ttt.application.game.common.ports.game_starting_queue import (
+    GameStartingQueue,
+)
 from ttt.application.game.common.ports.games import Games
-from ttt.application.game.common.ports.waiting_locations import WaitingLocations
 from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.user.common.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
     PaidStarsPurchasePaymentInbox,
@@ -38,6 +40,9 @@ from ttt.application.user.stars_purchase.ports.user_log import (
 from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.game_ai_gateway import GeminiGameAiGateway
 from ttt.infrastructure.adapters.game_log import StructlogGameLog
+from ttt.infrastructure.adapters.game_starting_queue import (
+    InRedisFixedBatchesWaitingLocations,
+)
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
 from ttt.infrastructure.adapters.paid_stars_purchase_payment_inbox import (
@@ -53,9 +58,6 @@ from ttt.infrastructure.adapters.user_log import (
 )
 from ttt.infrastructure.adapters.users import InPostgresUsers
 from ttt.infrastructure.adapters.uuids import UUIDv4s
-from ttt.infrastructure.adapters.waiting_locations import (
-    InRedisFixedBatchesWaitingLocations,
-)
 from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.infrastructure.nats.paid_stars_purchase_payment_inbox import (
     InNatsPaidStarsPurchasePaymentInbox as OriginalInNatsPaidStarsPurchasePaymentInbox,  # noqa: E501
@@ -216,15 +218,15 @@ class InfrastructureProvider(Provider):
         return MersenneTwisterRandoms()
 
     @provide(scope=Scope.REQUEST)
-    def provide_waiting_locations(
+    def provide_game_starting_queue(
         self,
         redis: Redis,
         envs: Envs,
-    ) -> WaitingLocations:
+    ) -> GameStartingQueue:
         return InRedisFixedBatchesWaitingLocations(
             InRedisFixedBatches(
                 redis,
-                "waiting_locations",
+                "game_starting_queue",
                 envs.game_waiting_queue_pulling_timeout_min_ms,
                 envs.game_waiting_queue_pulling_timeout_salt_ms,
             ),

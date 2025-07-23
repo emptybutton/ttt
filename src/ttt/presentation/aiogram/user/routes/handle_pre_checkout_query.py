@@ -6,7 +6,7 @@ from ttt.application.user.stars_purchase.start_stars_purchase_payment import (
     StartStarsPurchasePayment,
 )
 from ttt.presentation.aiogram.user.invoices import (
-    StarsPurshaseInvoicePayload,
+    StarsPurchaseInvoicePayload,
     invoce_payload_adapter,
 )
 
@@ -24,9 +24,9 @@ async def _(
     )
 
     match invoce_payload:
-        case StarsPurshaseInvoicePayload():
+        case StarsPurchaseInvoicePayload():
             action = await dishka_container.get(StartStarsPurchasePayment)
             await action(
                 invoce_payload.location_user_id,
-                invoce_payload.purshase_id,
+                invoce_payload.purchase_id,
             )

@@ -27,10 +27,10 @@ class AiogramInAndBufferOutStarsPurchasePaymentGateway(
 
     async def send_invoice(
         self,
-        purshase: StarsPurchase,
+        purchase: StarsPurchase,
         location: UserLocation,
     ) -> None:
-        await stars_invoce(self._bot, location, purshase, self._payments_token)
+        await stars_invoce(self._bot, location, purchase, self._payments_token)
 
     async def start_payment(self, payment_id: UUID) -> None:
         await not_none(self._pre_checkout_query).answer(ok=True)

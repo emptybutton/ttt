@@ -48,7 +48,7 @@ build-backend = "hatchling.build"
 packages = ["src/ttt"]
 
 [project.scripts]
-ttt = "ttt.main.aiogram_slim.__main__:main"
+ttt = "ttt.main.aiogram_prod.__main__:main"
 ttt-dev = "ttt.main.aiogram_dev.__main__:main"
 
 [tool.uv]

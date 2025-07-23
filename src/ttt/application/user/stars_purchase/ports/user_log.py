@@ -31,14 +31,14 @@ class StarsPurchaseUserLog(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def stars_purshase_payment_completion_started(
+    async def stars_purchase_payment_completion_started(
         self,
         payment: PaidStarsPurchasePayment,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def stars_purshase_payment_completed(
+    async def stars_purchase_payment_completed(
         self,
         user: User,
         payment: PaidStarsPurchasePayment,

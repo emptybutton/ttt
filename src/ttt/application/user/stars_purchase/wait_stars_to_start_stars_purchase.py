@@ -11,13 +11,13 @@ from ttt.entities.core.user.location import UserLocation
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class WaitStarsToStartStarsPurshase:
+class WaitStarsToStartStarsPurchase:
     fsm: UserFsm
     views: StarsPurchaseUserViews
     log: StarsPurchaseUserLog
 
     async def __call__(self, location: UserLocation) -> None:
         await self.log.user_intends_to_buy_stars(location)
-        await self.views.wait_stars_to_start_stars_purshase_view(
+        await self.views.wait_stars_to_start_stars_purchase_view(
             location,
         )

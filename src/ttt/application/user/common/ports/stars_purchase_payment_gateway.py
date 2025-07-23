@@ -11,7 +11,7 @@ class StarsPurchasePaymentGateway(ABC):
     @abstractmethod
     async def send_invoice(
         self,
-        purshase: StarsPurchase,
+        purchase: StarsPurchase,
         location: UserLocation,
     ) -> None: ...
 

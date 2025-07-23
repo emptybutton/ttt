@@ -19,14 +19,14 @@ from ttt.entities.tools.tracking import Tracking
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class CompleteStarsPurshasePayment:
+class CompleteStarsPurchasePayment:
     clock: Clock
     inbox: PaidStarsPurchasePaymentInbox
     users: Users
     transaction: Transaction
     map_: Map
     common_views: CommonUserViews
-    stars_purshase_views: StarsPurchaseUserViews
+    stars_purchase_views: StarsPurchaseUserViews
     log: StarsPurchaseUserLog
 
     async def __call__(self) -> None:
@@ -47,7 +47,7 @@ class CompleteStarsPurshasePayment:
                 tracking = Tracking()
                 try:
                     user.complete_stars_purchase_payment(
-                        paid_payment.purshase_id,
+                        paid_payment.purchase_id,
                         paid_payment.success,
                         current_datetime,
                         tracking,
@@ -58,16 +58,16 @@ class CompleteStarsPurshasePayment:
                         paid_payment,
                     )
                 else:
-                    await self.log.stars_purshase_payment_completed(
+                    await self.log.stars_purchase_payment_completed(
                         user,
                         paid_payment,
                     )
 
                     await self.map_(tracking)
                     await (
-                        self.stars_purshase_views.completed_stars_purshase_view(
+                        self.stars_purchase_views.completed_stars_purchase_view(
                             user,
-                            paid_payment.purshase_id,
+                            paid_payment.purchase_id,
                             paid_payment.location,
                         )
                     )
