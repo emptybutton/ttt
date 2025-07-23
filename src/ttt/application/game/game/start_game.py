@@ -100,13 +100,13 @@ class StartGame:
 
                     await (
                         self.log
-                        .users_already_in_game_to_start_game_via_matchmaking_queue(
+                        .users_already_in_game_to_start_game_via_game_starting_queue(
                             locations_of_users_in_game,
                         )
                     )
                     await (
                         self.log
-                        .bad_attempt_to_start_game_via_matchmaking_queue(
+                        .bad_attempt_to_start_game_via_game_starting_queue(
                             locations_of_users_not_in_game,
                         )
                     )

@@ -209,7 +209,7 @@ class StructlogGameLog(GameLog):
             game_id=game.id.hex,
         )
 
-    async def users_already_in_game_to_start_game_via_matchmaking_queue(
+    async def users_already_in_game_to_start_game_via_game_starting_queue(
         self,
         locations_of_users_in_game: Sequence[UserLocation],
         /,
@@ -217,7 +217,7 @@ class StructlogGameLog(GameLog):
         await gather(
             *(
                 self._logger.awarning(
-                    "user_already_in_game_to_start_game_via_matchmaking_queue",
+                    "user_already_in_game_to_start_game_via_game_starting_queue",
                     chat_id=location.chat_id,
                     user_id=location.user_id,
                 )
@@ -225,7 +225,7 @@ class StructlogGameLog(GameLog):
             ),
         )
 
-    async def bad_attempt_to_start_game_via_matchmaking_queue(
+    async def bad_attempt_to_start_game_via_game_starting_queue(
         self,
         locations_of_users_not_in_game: Sequence[UserLocation],
         /,
@@ -233,7 +233,7 @@ class StructlogGameLog(GameLog):
         await gather(
             *(
                 self._logger.awarning(
-                    "bad_attempt_to_start_game_via_matchmaking_queue",
+                    "bad_attempt_to_start_game_via_game_starting_queue",
                     chat_id=location.chat_id,
                     user_id=location.user_id,
                 )
