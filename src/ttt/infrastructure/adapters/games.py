@@ -17,13 +17,18 @@ class InPostgresGames(Games):
         game_location_user_id: int,
         /,
     ) -> Game | None:
-        join_condition = (TableUser.id == game_location_user_id) & (
-            TableUser.game_location_game_id == TableGame.id
+        lock_stmt = (
+            select(TableGame.id)
+            .where(TableUser.game_location_game_id == TableGame.id)
+            .with_for_update()
         )
-        stmt = (
-            select(TableGame).join(TableUser, join_condition).with_for_update()
-        )
+        await self._session.execute(lock_stmt)
 
+        join_condition = (
+            (TableUser.id == game_location_user_id)
+            & (TableUser.game_location_game_id == TableGame.id)
+        )
+        stmt = select(TableGame).join(TableUser, join_condition)
         table_game = await self._session.scalar(stmt)
 
         if table_game is None:
