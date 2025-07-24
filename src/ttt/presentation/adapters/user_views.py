@@ -68,7 +68,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         )
         emoji_stmt = (
             select(TableUserEmoji.emoji_str)
-            .where(TableUserEmoji.player_id == location.user_id)
+            .where(TableUserEmoji.user_id == location.user_id)
             .order_by(TableUserEmoji.datetime_of_purchase)
         )
 

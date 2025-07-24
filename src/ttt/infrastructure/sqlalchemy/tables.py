@@ -121,8 +121,8 @@ class TableUserEmoji(Base):
     __tablename__ = "user_emojis"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    player_id: Mapped[int] = mapped_column(
-        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
     emoji_str: Mapped[str] = mapped_column(CHAR(1))
@@ -131,7 +131,7 @@ class TableUserEmoji(Base):
     def entity(self) -> UserEmoji:
         return UserEmoji(
             self.id,
-            self.player_id,
+            self.user_id,
             Emoji(self.emoji_str),
             self.datetime_of_purchase,
         )
@@ -140,7 +140,7 @@ class TableUserEmoji(Base):
     def of(cls, it: UserEmoji) -> "TableUserEmoji":
         return TableUserEmoji(
             id=it.id,
-            player_id=it.user_id,
+            user_id=it.user_id,
             emoji_str=it.emoji.str_,
             datetime_of_purchase=it.datetime_of_purchase,
         )
@@ -150,8 +150,8 @@ class TableStarsPurchase(Base):
     __tablename__ = "stars_purchases"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    location_player_id: Mapped[int] = mapped_column(
-        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+    location_user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
     location_chat_id: Mapped[int] = mapped_column(BigInteger())
@@ -177,7 +177,7 @@ class TableStarsPurchase(Base):
         return StarsPurchase(
             id_=self.id,
             location=UserLocation(
-                self.location_player_id,
+                self.location_user_id,
                 self.location_chat_id,
             ),
             stars=self.stars,
@@ -188,7 +188,7 @@ class TableStarsPurchase(Base):
     def of(cls, it: StarsPurchase) -> "TableStarsPurchase":
         return TableStarsPurchase(
             id=it.id_,
-            location_player_id=it.location.user_id,
+            location_user_id=it.location.user_id,
             location_chat_id=it.location.chat_id,
             stars=it.stars,
             payment_id=None if it.payment is None else it.payment.id_,
@@ -196,9 +196,13 @@ class TableStarsPurchase(Base):
 
 
 class TableUser(Base):
-    __tablename__ = "players"
+    __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(BigInteger(), primary_key=True)
+    id: Mapped[int] = mapped_column(
+        BigInteger(),
+        primary_key=True,
+        autoincrement=False,
+    )
     account_stars: Mapped[int] = mapped_column(server_default="0")
     selected_emoji_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("user_emojis.id", deferrable=True, initially="DEFERRED"),
@@ -215,11 +219,11 @@ class TableUser(Base):
 
     emojis: Mapped[list[TableUserEmoji]] = relationship(
         lazy="selectin",
-        foreign_keys=[TableUserEmoji.player_id],
+        foreign_keys=[TableUserEmoji.user_id],
     )
     stars_purchases: Mapped[list[TableStarsPurchase]] = relationship(
         lazy="selectin",
-        foreign_keys=[TableStarsPurchase.location_player_id],
+        foreign_keys=[TableStarsPurchase.location_user_id],
     )
 
     def entity(self) -> User:
@@ -320,7 +324,7 @@ class TableGameResult(Base):
 
     win_winner_id: Mapped[int | None] = mapped_column(
         BigInteger(),
-        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
     win_new_stars: Mapped[int | None]
@@ -332,7 +336,7 @@ class TableGameResult(Base):
 
     canceler_id: Mapped[int | None] = mapped_column(
         BigInteger(),
-        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
 
@@ -409,9 +413,9 @@ class TableCell(Base):
     )
     board_position_x: Mapped[int]
     board_position_y: Mapped[int]
-    filler_id: Mapped[int | None] = mapped_column(
+    user_filler_id: Mapped[int | None] = mapped_column(
         BigInteger(),
-        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
     ai_filler_id: Mapped[UUID | None] = mapped_column(
@@ -424,7 +428,7 @@ class TableCell(Base):
             self.id,
             self.game_id,
             (self.board_position_x, self.board_position_y),
-            self.filler_id,
+            self.user_filler_id,
             self.ai_filler_id,
         )
 
@@ -435,7 +439,7 @@ class TableCell(Base):
             game_id=it.game_id,
             board_position_x=it.board_position[0],
             board_position_y=it.board_position[1],
-            filler_id=it.user_filler_id,
+            user_filler_id=it.user_filler_id,
             ai_filler_id=it.ai_filler_id,
         )
 
@@ -476,14 +480,14 @@ class TableGame(Base):
     __tablename__ = "games"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    player1_id: Mapped[int | None] = mapped_column(
+    user1_id: Mapped[int | None] = mapped_column(
         BigInteger(),
-        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
-    player2_id: Mapped[int | None] = mapped_column(
+    user2_id: Mapped[int | None] = mapped_column(
         BigInteger(),
-        ForeignKey("players.id", deferrable=True, initially="DEFERRED"),
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
     ai1_id: Mapped[UUID | None] = mapped_column(
@@ -499,13 +503,13 @@ class TableGame(Base):
     player2_emoji_str: Mapped[str] = mapped_column(server_default="⭕️")
 
     result: Mapped["TableGameResult | None"] = relationship(lazy="joined")
-    player1: Mapped["TableUser | None"] = relationship(
+    user1: Mapped["TableUser | None"] = relationship(
         lazy="joined",
-        foreign_keys=[player1_id],
+        foreign_keys=[user1_id],
     )
-    player2: Mapped["TableUser | None"] = relationship(
+    user2: Mapped["TableUser | None"] = relationship(
         lazy="joined",
-        foreign_keys=[player2_id],
+        foreign_keys=[user2_id],
     )
     ai1: Mapped["TableAi | None"] = relationship(
         lazy="joined",
@@ -522,8 +526,8 @@ class TableGame(Base):
 
         player1: Player
 
-        if self.player1 is not None:
-            player1 = self.player1.entity()
+        if self.user1 is not None:
+            player1 = self.user1.entity()
         elif self.ai1 is not None:
             player1 = self.ai1.entity()
         else:
@@ -531,8 +535,8 @@ class TableGame(Base):
 
         player2: Player
 
-        if self.player2 is not None:
-            player2 = self.player2.entity()
+        if self.user2 is not None:
+            player2 = self.user2.entity()
         elif self.ai2 is not None:
             player2 = self.ai2.entity()
         else:
@@ -568,10 +572,10 @@ class TableGame(Base):
 
         return TableGame(
             id=it.id,
-            player1_id=player1_id,
+            user1_id=player1_id,
             ai1_id=ai1_id,
             player1_emoji_str=it.player1_emoji.str_,
-            player2_id=player2_id,
+            user2_id=player2_id,
             ai2_id=ai2_id,
             player2_emoji_str=it.player2_emoji.str_,
             state=TableGameState.of(it.state),
