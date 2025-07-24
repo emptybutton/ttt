@@ -129,14 +129,14 @@ class GameLog(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def users_already_in_game_to_start_game_via_matchmaking_queue(
+    async def users_already_in_game_to_start_game_via_game_starting_queue(
         self,
         locations_of_users_in_game: Sequence[UserLocation],
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def bad_attempt_to_start_game_via_matchmaking_queue(
+    async def bad_attempt_to_start_game_via_game_starting_queue(
         self,
         locations_of_users_not_in_game: Sequence[UserLocation],
         /,

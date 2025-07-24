@@ -100,7 +100,7 @@ async def selected_emoji_removed_message(bot: Bot, chat_id: int) -> None:
     await bot.send_message(chat_id, "🎭 Эмоджи убран")
 
 
-async def wait_stars_to_start_stars_purshase_message(
+async def wait_stars_to_start_stars_purchase_message(
     bot: Bot,
     chat_id: int,
 ) -> None:

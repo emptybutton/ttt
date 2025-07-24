@@ -34,7 +34,7 @@ class StartStarsPurchase:
     uuids: UUIDs
     clock: Clock
     common_views: CommonUserViews
-    stars_purshase_views: StarsPurchaseUserViews
+    stars_purchase_views: StarsPurchaseUserViews
     payment_gateway: StarsPurchasePaymentGateway
     map_: Map
     log: StarsPurchaseUserLog
@@ -69,7 +69,7 @@ class StartStarsPurchase:
                 )
                 await self.fsm.set(None)
                 await (
-                    self.stars_purshase_views
+                    self.stars_purchase_views
                     .invalid_stars_for_stars_purchase_view(location)
                 )
                 return

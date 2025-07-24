@@ -187,7 +187,7 @@ class Game:
         self.state = GameState.completed
         tracking.register_mutated(self)
 
-    def make_move(
+    def make_user_move(
         self,
         user_id: int,
         cell_number_int: int,

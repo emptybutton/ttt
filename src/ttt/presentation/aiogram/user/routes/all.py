@@ -25,8 +25,8 @@ from ttt.presentation.aiogram.user.routes.remove_emoji import (
 from ttt.presentation.aiogram.user.routes.stars_purchase.start_stars_purchase import (  # noqa: E501
     start_stars_purchase_router,
 )
-from ttt.presentation.aiogram.user.routes.stars_purchase.wait_stars_to_start_stars_purshase import (  # noqa: E501
-    wait_stars_to_start_stars_purshase_router,
+from ttt.presentation.aiogram.user.routes.stars_purchase.wait_stars_to_start_stars_purchase import (  # noqa: E501
+    wait_stars_to_start_stars_purchase_router,
 )
 from ttt.presentation.aiogram.user.routes.view_user import (
     view_user_router,
@@ -44,5 +44,5 @@ user_routers = (
     start_stars_purchase_router,
     handle_payment_router,
     handle_pre_checkout_query_router,
-    wait_stars_to_start_stars_purshase_router,
+    wait_stars_to_start_stars_purchase_router,
 )

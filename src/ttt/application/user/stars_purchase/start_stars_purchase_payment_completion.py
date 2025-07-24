@@ -15,7 +15,7 @@ from ttt.application.user.stars_purchase.ports.user_views import (
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class StartStarsPurshasePaymentCompletion:
+class StartStarsPurchasePaymentCompletion:
     inbox: PaidStarsPurchasePaymentInbox
     payment_gateway: StarsPurchasePaymentGateway
     views: StarsPurchaseUserViews
@@ -27,6 +27,6 @@ class StartStarsPurshasePaymentCompletion:
             await self.views.stars_purchase_will_be_completed_view(
                 paid_payment.location,
             )
-            await self.log.stars_purshase_payment_completion_started(
+            await self.log.stars_purchase_payment_completion_started(
                 paid_payment,
             )

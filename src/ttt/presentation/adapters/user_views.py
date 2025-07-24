@@ -35,7 +35,7 @@ from ttt.presentation.aiogram.user.messages import (
     stars_added_message,
     stars_will_be_added_message,
     wait_emoji_message,
-    wait_stars_to_start_stars_purshase_message,
+    wait_stars_to_start_stars_purchase_message,
 )
 
 
@@ -123,12 +123,12 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
 class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
     _bot: Bot
 
-    async def wait_stars_to_start_stars_purshase_view(
+    async def wait_stars_to_start_stars_purchase_view(
         self,
         location: UserLocation,
         /,
     ) -> None:
-        await wait_stars_to_start_stars_purshase_message(
+        await wait_stars_to_start_stars_purchase_message(
             self._bot,
             location.chat_id,
         )
@@ -147,10 +147,10 @@ class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
     ) -> None:
         await stars_will_be_added_message(self._bot, location.chat_id)
 
-    async def completed_stars_purshase_view(
+    async def completed_stars_purchase_view(
         self,
         user: User,
-        purshase_id: UUID,
+        purchase_id: UUID,
         location: UserLocation,
         /,
     ) -> None:

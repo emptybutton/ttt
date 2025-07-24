@@ -7,7 +7,7 @@ from ttt.entities.core.user.user import User
 
 class StarsPurchaseUserViews(ABC):
     @abstractmethod
-    async def wait_stars_to_start_stars_purshase_view(
+    async def wait_stars_to_start_stars_purchase_view(
         self,
         location: UserLocation,
         /,
@@ -28,10 +28,10 @@ class StarsPurchaseUserViews(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def completed_stars_purshase_view(
+    async def completed_stars_purchase_view(
         self,
         user: User,
-        purshase_id: UUID,
+        purchase_id: UUID,
         location: UserLocation,
         /,
     ) -> None: ...

@@ -6,17 +6,17 @@ from ttt.entities.core.user.location import UserLocation
 
 
 @dataclass(frozen=True)
-class WaitingLocationsPush:
+class GameStartingQueuePush:
     was_location_dedublicated: bool
 
 
-class WaitingLocations(ABC):
+class GameStartingQueue(ABC):
     @abstractmethod
     async def push(
         self,
         location: UserLocation,
         /,
-    ) -> WaitingLocationsPush: ...
+    ) -> GameStartingQueuePush: ...
 
     @abstractmethod
     async def push_many(
