@@ -11,51 +11,51 @@ from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 
 
-class StarsPurshaseInvoicePayload(BaseModel):
+class StarsPurchaseInvoicePayload(BaseModel):
     type_: Literal["s"] = "s"
-    purshase_id: UUID = Field(alias="s")
+    purchase_id: UUID = Field(alias="s")
     location_user_id: int = Field(alias="p")
     location_chat_id: int = Field(alias="c")
 
     @classmethod
     def of(
         cls,
-        purshase_id: UUID,
+        purchase_id: UUID,
         location: UserLocation,
-    ) -> "StarsPurshaseInvoicePayload":
-        return StarsPurshaseInvoicePayload(
-            s=purshase_id,
+    ) -> "StarsPurchaseInvoicePayload":
+        return StarsPurchaseInvoicePayload(
+            s=purchase_id,
             p=location.user_id,
             c=location.chat_id,
         )
 
 
-type InvocePayload = StarsPurshaseInvoicePayload
+type InvocePayload = StarsPurchaseInvoicePayload
 invoce_payload_adapter = TypeAdapter[InvocePayload](InvocePayload)
 
 
 async def stars_invoce(
     bot: Bot,
     location: UserLocation,
-    purshase: StarsPurchase,
+    purchase: StarsPurchase,
     payments_token: str,
 ) -> None:
     price = LabeledPrice(
-        label=f"{purshase.stars} звёзд",
-        amount=price_of_stars(purshase.stars).total_kopecks(),
+        label=f"{purchase.stars} звёзд",
+        amount=price_of_stars(purchase.stars).total_kopecks(),
     )
 
-    payload_model = StarsPurshaseInvoicePayload.of(purshase.id_, location)
+    payload_model = StarsPurchaseInvoicePayload.of(purchase.id_, location)
     payload = payload_model.model_dump_json(by_alias=True)
 
     provider_data = json.dumps({
         "receipt": {
             "items": [
                 {
-                    "description": f"{purshase.stars} звёзд",
+                    "description": f"{purchase.stars} звёзд",
                     "quantity": 1,
                     "amount": {
-                        "value": float(price_of_stars(purshase.stars)),
+                        "value": float(price_of_stars(purchase.stars)),
                         "currency": "RUB",
                     },
                     "vat_code": 1,

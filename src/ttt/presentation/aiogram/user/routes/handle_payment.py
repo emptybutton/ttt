@@ -9,7 +9,7 @@ from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.buffer import Buffer
 from ttt.presentation.aiogram.user.invoices import (
-    StarsPurshaseInvoicePayload,
+    StarsPurchaseInvoicePayload,
     invoce_payload_adapter,
 )
 
@@ -35,13 +35,13 @@ async def _(
 
     parent_container = not_none(dishka_container.parent_container)
     match invoce_payload:
-        case StarsPurshaseInvoicePayload():
+        case StarsPurchaseInvoicePayload():
             buffer = await parent_container.get(
                 Buffer[PaidStarsPurchasePayment],
             )
             buffer.add(
                 PaidStarsPurchasePayment(
-                    invoce_payload.purshase_id,
+                    invoce_payload.purchase_id,
                     UserLocation(
                         invoce_payload.location_user_id,
                         invoce_payload.location_chat_id,

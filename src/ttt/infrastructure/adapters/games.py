@@ -20,7 +20,9 @@ class InPostgresGames(Games):
         join_condition = (TableUser.id == game_location_user_id) & (
             TableUser.game_location_game_id == TableGame.id
         )
-        stmt = select(TableGame).join(TableUser, join_condition)
+        stmt = (
+            select(TableGame).join(TableUser, join_condition).with_for_update()
+        )
 
         table_game = await self._session.scalar(stmt)
 

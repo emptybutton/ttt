@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import cast
 
@@ -53,8 +54,8 @@ from ttt.application.user.emoji_selection.wait_emoji_to_select import (
 )
 from ttt.application.user.register_user import RegisterUser
 from ttt.application.user.remove_emoji import RemoveEmoji
-from ttt.application.user.stars_purchase.complete_stars_purshase_payment import (  # noqa: E501
-    CompleteStarsPurshasePayment,
+from ttt.application.user.stars_purchase.complete_stars_purchase_payment import (  # noqa: E501
+    CompleteStarsPurchasePayment,
 )
 from ttt.application.user.stars_purchase.ports.user_views import (
     StarsPurchaseUserViews,
@@ -65,11 +66,11 @@ from ttt.application.user.stars_purchase.start_stars_purchase import (
 from ttt.application.user.stars_purchase.start_stars_purchase_payment import (
     StartStarsPurchasePayment,
 )
-from ttt.application.user.stars_purchase.start_stars_purshase_payment_completion import (  # noqa: E501
-    StartStarsPurshasePaymentCompletion,
+from ttt.application.user.stars_purchase.start_stars_purchase_payment_completion import (  # noqa: E501
+    StartStarsPurchasePaymentCompletion,
 )
-from ttt.application.user.stars_purchase.wait_stars_to_start_stars_purshase import (  # noqa: E501
-    WaitStarsToStartStarsPurshase,
+from ttt.application.user.stars_purchase.wait_stars_to_start_stars_purchase import (  # noqa: E501
+    WaitStarsToStartStarsPurchase,
 )
 from ttt.application.user.view_user import ViewUser
 from ttt.infrastructure.buffer import Buffer
@@ -122,11 +123,12 @@ class AiogramProvider(Provider):
         return dp
 
     @provide(scope=Scope.APP)
-    async def provide_bot(self, secrets: Secrets) -> Bot:
+    async def provide_bot(self, secrets: Secrets) -> AsyncIterator[Bot]:
         bot = Bot(secrets.bot_token)
-        await ttt_bot(bot)
 
-        return bot
+        async with bot:
+            await ttt_bot(bot)
+            yield bot
 
     provide_emoji = provide(
         PictographsAsEmojis,
@@ -180,15 +182,15 @@ class AiogramProvider(Provider):
         self,
         logger: FilteringBoundLogger,
         start_game: StartGame,
-        start_stars_purshase_payment_completion: (
-            StartStarsPurshasePaymentCompletion
+        start_stars_purchase_payment_completion: (
+            StartStarsPurchasePaymentCompletion
         ),
-        complete_stars_purshase_payment: CompleteStarsPurshasePayment,
+        complete_stars_purchase_payment: CompleteStarsPurchasePayment,
     ) -> UnkillableTasks:
         tasks = UnkillableTasks(logger)
         tasks.add(start_game)
-        tasks.add(start_stars_purshase_payment_completion)
-        tasks.add(complete_stars_purshase_payment)
+        tasks.add(start_stars_purchase_payment_completion)
+        tasks.add(complete_stars_purchase_payment)
 
         return tasks
 
@@ -257,8 +259,8 @@ class ApplicationWithAiogramRequestDataProvider(Provider):
         WaitEmojiToSelect,
         scope=Scope.REQUEST,
     )
-    probide_wait_stars_to_start_stars_purshase = provide(
-        WaitStarsToStartStarsPurshase,
+    probide_wait_stars_to_start_stars_purchase = provide(
+        WaitStarsToStartStarsPurchase,
         scope=Scope.REQUEST,
     )
     provide_start_stars_purchase = provide(
@@ -275,12 +277,12 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
     provide_view_user = provide(ViewUser, scope=Scope.REQUEST)
     provide_register_user = provide(RegisterUser, scope=Scope.REQUEST)
     provide_remove_emoji = provide(RemoveEmoji, scope=Scope.REQUEST)
-    probide_complete_stars_purshase_payment = provide(
-        CompleteStarsPurshasePayment,
+    probide_complete_stars_purchase_payment = provide(
+        CompleteStarsPurchasePayment,
         scope=Scope.REQUEST,
     )
-    probide_start_stars_purshase_payment_completion = provide(
-        StartStarsPurshasePaymentCompletion,
+    probide_start_stars_purchase_payment_completion = provide(
+        StartStarsPurchasePaymentCompletion,
         scope=Scope.REQUEST,
     )
 

@@ -4,16 +4,16 @@ from typing import ClassVar, cast
 
 from pydantic import TypeAdapter
 
-from ttt.application.game.game.ports.waiting_locations import (
-    WaitingLocations,
-    WaitingLocationsPush,
+from ttt.application.game.game.ports.game_starting_queue import (
+    GameStartingQueue,
+    GameStartingQueuePush,
 )
 from ttt.entities.core.user.location import UserLocation
 from ttt.infrastructure.redis.batches import InRedisFixedBatches
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class InRedisFixedBatchesWaitingLocations(WaitingLocations):
+class InRedisFixedBatchesWaitingLocations(GameStartingQueue):
     _batches: InRedisFixedBatches
 
     _adapter: ClassVar = TypeAdapter(UserLocation)
@@ -22,11 +22,11 @@ class InRedisFixedBatchesWaitingLocations(WaitingLocations):
         if locations:
             await self._batches.add(map(self._bytes, locations))
 
-    async def push(self, location: UserLocation, /) -> WaitingLocationsPush:
+    async def push(self, location: UserLocation, /) -> GameStartingQueuePush:
         push_code = await self._batches.add([self._bytes(location)])
         was_location_added_in_set = bool(push_code)
 
-        return WaitingLocationsPush(
+        return GameStartingQueuePush(
             was_location_dedublicated=not was_location_added_in_set,
         )
 

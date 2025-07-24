@@ -58,7 +58,7 @@ class MakeMoveInGame:
 
             try:
                 tracking = Tracking()
-                user_move = game.make_move(
+                user_move = game.make_user_move(
                     location.user_id,
                     cell_number_int,
                     game_result_id,

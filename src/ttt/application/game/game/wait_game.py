@@ -2,8 +2,10 @@ from dataclasses import dataclass
 
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.game.game.ports.game_log import GameLog
+from ttt.application.game.game.ports.game_starting_queue import (
+    GameStartingQueue,
+)
 from ttt.application.game.game.ports.game_views import GameViews
-from ttt.application.game.game.ports.waiting_locations import WaitingLocations
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.user.location import UserLocation
@@ -12,7 +14,7 @@ from ttt.entities.core.user.location import UserLocation
 @dataclass(frozen=True, unsafe_hash=False)
 class WaitGame:
     users: Users
-    waiting_locations: WaitingLocations
+    game_starting_queue: GameStartingQueue
     user_views: CommonUserViews
     game_views: GameViews
     transaction: Transaction
@@ -28,7 +30,7 @@ class WaitGame:
                 )
                 return
 
-            push = await self.waiting_locations.push(location)
+            push = await self.game_starting_queue.push(location)
 
             if push.was_location_dedublicated:
                 await self.log.double_waiting_for_game_start(location)
