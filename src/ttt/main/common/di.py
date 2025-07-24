@@ -236,7 +236,7 @@ class InfrastructureProvider(Provider):
         scope=Scope.APP,
     )
 
-    provide__game_log = provide(
+    provide_game_log = provide(
         StructlogGameLog,
         provides=GameLog,
         scope=Scope.REQUEST,

@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import cast
 
@@ -122,11 +123,12 @@ class AiogramProvider(Provider):
         return dp
 
     @provide(scope=Scope.APP)
-    async def provide_bot(self, secrets: Secrets) -> Bot:
+    async def provide_bot(self, secrets: Secrets) -> AsyncIterator[Bot]:
         bot = Bot(secrets.bot_token)
-        await ttt_bot(bot)
 
-        return bot
+        async with bot:
+            await ttt_bot(bot)
+            yield bot
 
     provide_emoji = provide(
         PictographsAsEmojis,
