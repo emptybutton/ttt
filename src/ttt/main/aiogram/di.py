@@ -33,9 +33,6 @@ from ttt.application.game.game.wait_ai_type_to_start_game_with_ai import (
 )
 from ttt.application.game.game.wait_game import WaitGame
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
-from ttt.application.user.common.ports.stars_purchase_payment_gateway import (
-    StarsPurchasePaymentGateway,
-)
 from ttt.application.user.common.ports.user_fsm import UserFsm
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
@@ -56,6 +53,9 @@ from ttt.application.user.register_user import RegisterUser
 from ttt.application.user.remove_emoji import RemoveEmoji
 from ttt.application.user.stars_purchase.complete_stars_purchase_payment import (  # noqa: E501
     CompleteStarsPurchasePayment,
+)
+from ttt.application.user.stars_purchase.ports.stars_purchase_payment_gateway import (  # noqa: E501
+    StarsPurchasePaymentGateway,
 )
 from ttt.application.user.stars_purchase.ports.user_views import (
     StarsPurchaseUserViews,

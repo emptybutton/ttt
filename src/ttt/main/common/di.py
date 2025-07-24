@@ -23,9 +23,6 @@ from ttt.application.game.game.ports.game_starting_queue import (
     GameStartingQueue,
 )
 from ttt.application.game.game.ports.games import Games
-from ttt.application.user.common.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
-    PaidStarsPurchasePaymentInbox,
-)
 from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.common.ports.users import Users
 from ttt.application.user.emoji_purchase.ports.user_log import (
@@ -33,6 +30,9 @@ from ttt.application.user.emoji_purchase.ports.user_log import (
 )
 from ttt.application.user.emoji_selection.ports.user_log import (
     EmojiSelectionUserLog,
+)
+from ttt.application.user.stars_purchase.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
+    PaidStarsPurchasePaymentInbox,
 )
 from ttt.application.user.stars_purchase.ports.user_log import (
     StarsPurchaseUserLog,

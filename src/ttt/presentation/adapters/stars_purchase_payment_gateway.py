@@ -6,7 +6,7 @@ from aiogram import Bot
 from aiogram.types import PreCheckoutQuery
 
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
-from ttt.application.user.common.ports.stars_purchase_payment_gateway import (
+from ttt.application.user.stars_purchase.ports.stars_purchase_payment_gateway import (  # noqa: E501
     StarsPurchasePaymentGateway,
 )
 from ttt.entities.core.user.location import UserLocation

@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.transaction import Transaction
-from ttt.application.user.common.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
-    PaidStarsPurchasePaymentInbox,
-)
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
+from ttt.application.user.stars_purchase.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
+    PaidStarsPurchasePaymentInbox,
+)
 from ttt.application.user.stars_purchase.ports.user_log import (
     StarsPurchaseUserLog,
 )

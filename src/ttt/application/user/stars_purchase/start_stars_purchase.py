@@ -5,12 +5,12 @@ from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
-from ttt.application.user.common.ports.stars_purchase_payment_gateway import (
-    StarsPurchasePaymentGateway,
-)
 from ttt.application.user.common.ports.user_fsm import UserFsm
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
+from ttt.application.user.stars_purchase.ports.stars_purchase_payment_gateway import (  # noqa: E501
+    StarsPurchasePaymentGateway,
+)
 from ttt.application.user.stars_purchase.ports.user_log import (
     StarsPurchaseUserLog,
 )
