@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.game.ports.game_log import GameLog
+from ttt.application.game.game.ports.game_views import GameViews
 from ttt.entities.core.user.location import UserLocation
 
 

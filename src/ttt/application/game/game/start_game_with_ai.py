@@ -5,13 +5,13 @@ from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
-from ttt.application.game.common.ports.game_ai_gateway import GameAiGateway
-from ttt.application.game.common.ports.game_starting_queue import (
+from ttt.application.game.game.ports.game_ai_gateway import GameAiGateway
+from ttt.application.game.game.ports.game_log import GameLog
+from ttt.application.game.game.ports.game_starting_queue import (
     GameStartingQueue,
 )
-from ttt.application.game.common.ports.game_views import GameViews
-from ttt.application.game.common.ports.games import Games
-from ttt.application.game.game.ports.game_log import GameLog
+from ttt.application.game.game.ports.game_views import GameViews
+from ttt.application.game.game.ports.games import Games
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.ai import AiType

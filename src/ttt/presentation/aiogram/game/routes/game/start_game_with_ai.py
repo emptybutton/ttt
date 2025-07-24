@@ -2,7 +2,7 @@ from aiogram import F, Router
 from aiogram.types import CallbackQuery, Message
 from dishka.integrations.aiogram import FromDishka, inject
 
-from ttt.application.game.game_with_ai.start_game_with_ai import (
+from ttt.application.game.game.start_game_with_ai import (
     StartGameWithAi,
 )
 from ttt.entities.core.game.ai import AiType

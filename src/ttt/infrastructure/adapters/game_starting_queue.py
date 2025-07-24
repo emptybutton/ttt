@@ -4,7 +4,7 @@ from typing import ClassVar, cast
 
 from pydantic import TypeAdapter
 
-from ttt.application.game.common.ports.game_starting_queue import (
+from ttt.application.game.game.ports.game_starting_queue import (
     GameStartingQueue,
     GameStartingQueuePush,
 )

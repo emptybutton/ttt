@@ -17,12 +17,12 @@ from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
-from ttt.application.game.common.ports.game_ai_gateway import GameAiGateway
-from ttt.application.game.common.ports.game_starting_queue import (
+from ttt.application.game.game.ports.game_ai_gateway import GameAiGateway
+from ttt.application.game.game.ports.game_log import GameLog
+from ttt.application.game.game.ports.game_starting_queue import (
     GameStartingQueue,
 )
-from ttt.application.game.common.ports.games import Games
-from ttt.application.game.game.ports.game_log import GameLog
+from ttt.application.game.game.ports.games import Games
 from ttt.application.user.common.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
     PaidStarsPurchasePaymentInbox,
 )

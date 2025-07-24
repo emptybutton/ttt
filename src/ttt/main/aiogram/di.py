@@ -23,15 +23,15 @@ from redis.asyncio import Redis
 from structlog.types import FilteringBoundLogger
 
 from ttt.application.common.ports.emojis import Emojis
-from ttt.application.game.common.ports.game_views import GameViews
 from ttt.application.game.game.cancel_game import CancelGame
 from ttt.application.game.game.make_move_in_game import MakeMoveInGame
+from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.start_game import StartGame
-from ttt.application.game.game.wait_game import WaitGame
-from ttt.application.game.game_with_ai.start_game_with_ai import StartGameWithAi
-from ttt.application.game.game_with_ai.wait_ai_type_to_start_game_with_ai import (  # noqa: E501
+from ttt.application.game.game.start_game_with_ai import StartGameWithAi
+from ttt.application.game.game.wait_ai_type_to_start_game_with_ai import (
     WaitAiTypeToStartGameWithAi,
 )
+from ttt.application.game.game.wait_game import WaitGame
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.stars_purchase_payment_gateway import (
     StarsPurchasePaymentGateway,
