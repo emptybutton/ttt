@@ -5,7 +5,7 @@ from typing import Any
 from ttt.entities.tools.assertion import assert_
 
 
-@dataclass(frozen=True)
+@dataclass
 class InconsistentMatrixError(Exception):
     matrix: "Matrix[Any]"
 
