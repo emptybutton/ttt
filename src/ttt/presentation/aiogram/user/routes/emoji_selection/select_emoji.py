@@ -4,7 +4,6 @@ from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 from ttt.presentation.aiogram.user.fsm import AiogramUserFsmState
@@ -29,6 +28,6 @@ async def _(
         )
         return
 
-    location = UserLocation(message.from_user.id, message.chat.id)
+    user_id = message.from_user.id
     emoji_str = parsed_emoji_str(message)
-    await select_emoji(location, emoji_str)
+    await select_emoji(user_id, emoji_str)

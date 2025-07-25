@@ -5,7 +5,6 @@ from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.user.remove_emoji import RemoveEmoji
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
@@ -26,4 +25,4 @@ async def _(
         )
         return
 
-    await remove_emoji(UserLocation(message.from_user.id, message.chat.id))
+    await remove_emoji(message.from_user.id)

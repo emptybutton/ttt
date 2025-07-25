@@ -5,7 +5,6 @@ from ttt.application.common.ports.transaction import Transaction
 from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.tools.tracking import Tracking
 
 
@@ -17,17 +16,17 @@ class RemoveEmoji:
     map_: Map
     log: CommonUserLog
 
-    async def __call__(self, location: UserLocation) -> None:
+    async def __call__(self, user_id: int) -> None:
         async with self.transaction:
-            user = await self.users.user_with_id(location.user_id)
+            user = await self.users.user_with_id(user_id)
 
             if user is None:
-                await self.views.user_is_not_registered_view(location)
+                await self.views.user_is_not_registered_view(user_id)
                 return
 
             tracking = Tracking()
             user.remove_selected_emoji(tracking)
-            await self.log.user_removed_emoji(location, user)
+            await self.log.user_removed_emoji(user_id, user)
 
             await self.map_(tracking)
-            await self.views.selected_emoji_removed_view(location)
+            await self.views.selected_emoji_removed_view(user_id)

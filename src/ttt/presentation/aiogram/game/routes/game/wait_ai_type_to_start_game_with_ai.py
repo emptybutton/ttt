@@ -7,7 +7,6 @@ from dishka.integrations.aiogram import FromDishka, inject
 from ttt.application.game.game.wait_ai_type_to_start_game_with_ai import (
     WaitAiTypeToStartGameWithAi,
 )
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
@@ -32,5 +31,5 @@ async def _(
         return
 
     await wait_ai_type_to_start_game_with_ai(
-        UserLocation(message.from_user.id, message.chat.id),
+        message.from_user.id,
     )

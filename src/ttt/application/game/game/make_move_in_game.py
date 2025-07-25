@@ -16,7 +16,6 @@ from ttt.entities.core.game.game import (
     NoCellError,
     NotCurrentPlayerError,
 )
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import User
 from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
@@ -36,14 +35,14 @@ class MakeMoveInGame:
 
     async def __call__(
         self,
-        location: UserLocation,
+        user_id: int,
         cell_number_int: int,
     ) -> None:
         async with self.transaction:
-            game = await self.games.game_with_game_location(location.user_id)
+            game = await self.games.game_with_game_location(user_id)
 
             if game is None:
-                await self.game_views.no_game_view(location)
+                await self.game_views.no_game_view(user_id)
                 return
 
             locations = tuple(
@@ -59,7 +58,7 @@ class MakeMoveInGame:
             try:
                 tracking = Tracking()
                 user_move = game.make_user_move(
-                    location.user_id,
+                    user_id,
                     cell_number_int,
                     game_result_id,
                     random,
@@ -68,42 +67,42 @@ class MakeMoveInGame:
             except AlreadyCompletedGameError:
                 await self.log.already_completed_game_to_make_move(
                     game,
-                    location,
+                    user_id,
                     cell_number_int,
                 )
                 await self.game_views.game_already_complteted_view(
-                    location,
+                    user_id,
                     game,
                 )
             except NotCurrentPlayerError:
                 await self.log.not_current_player_to_make_move(
                     game,
-                    location,
+                    user_id,
                     cell_number_int,
                 )
                 await self.game_views.not_current_user_view(
-                    location,
+                    user_id,
                     game,
                 )
             except NoCellError:
                 await self.log.no_cell_to_make_move(
                     game,
-                    location,
+                    user_id,
                     cell_number_int,
                 )
-                await self.game_views.no_cell_view(location, game)
+                await self.game_views.no_cell_view(user_id, game)
             except AlreadyFilledCellError:
                 await self.log.already_filled_cell_to_make_move(
                     game,
-                    location,
+                    user_id,
                     cell_number_int,
                 )
                 await self.game_views.already_filled_cell_error(
-                    location,
+                    user_id,
                     game,
                 )
             else:
-                await self.log.user_move_maked(location, game, user_move)
+                await self.log.user_move_maked(user_id, game, user_move)
 
                 if user_move.next_move_ai_id is not None:
                     await self.game_views.game_view_with_locations(
@@ -128,13 +127,13 @@ class MakeMoveInGame:
                     )
 
                     await self.log.ai_move_maked(
-                        location,
+                        user_id,
                         game,
                         ai_move,
                     )
 
                 if game.is_completed():
-                    await self.log.game_completed(location, game)
+                    await self.log.game_completed(user_id, game)
 
                 await self.map_(tracking)
                 await self.game_views.game_view_with_locations(

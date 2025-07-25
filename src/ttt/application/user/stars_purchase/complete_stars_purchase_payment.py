@@ -35,12 +35,12 @@ class CompleteStarsPurchasePayment:
 
             async with self.transaction:
                 user = await self.users.user_with_id(
-                    paid_payment.location.user_id,
+                    paid_payment.user_id,
                 )
 
                 if user is None:
                     await self.common_views.user_is_not_registered_view(
-                        paid_payment.location,
+                        paid_payment.user_id,
                     )
                     continue
 
@@ -68,6 +68,5 @@ class CompleteStarsPurchasePayment:
                         self.stars_purchase_views.completed_stars_purchase_view(
                             user,
                             paid_payment.purchase_id,
-                            paid_payment.location,
                         )
                     )

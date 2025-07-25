@@ -7,7 +7,6 @@ from ttt.entities.core.stars import (
     has_stars_price,
     price_of_stars,
 )
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.finance.payment.payment import Payment
 from ttt.entities.tools.assertion import assert_
 from ttt.entities.tools.tracking import Tracking
@@ -28,7 +27,7 @@ class StarsPurchase:
     """
 
     id_: UUID
-    location: UserLocation
+    user_id: int
     stars: Stars
     payment: Payment | None
 
@@ -62,7 +61,7 @@ class StarsPurchase:
     def start(
         cls,
         purchase_id: UUID,
-        purchase_location: UserLocation,
+        purchase_user_id: int,
         purchase_stars: Stars,
         tracking: Tracking,
     ) -> "StarsPurchase":
@@ -72,7 +71,7 @@ class StarsPurchase:
 
         purchase = StarsPurchase(
             id_=purchase_id,
-            location=purchase_location,
+            user_id=purchase_user_id,
             stars=purchase_stars,
             payment=None,
         )

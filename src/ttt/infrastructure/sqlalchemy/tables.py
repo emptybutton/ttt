@@ -24,7 +24,7 @@ from ttt.entities.core.game.player import Player
 from ttt.entities.core.game.win import AiWin, Win
 from ttt.entities.core.user.account import Account
 from ttt.entities.core.user.emoji import UserEmoji
-from ttt.entities.core.user.location import UserGameLocation, UserLocation
+from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.user import User
 from ttt.entities.core.user.win import UserWin
@@ -176,10 +176,7 @@ class TableStarsPurchase(Base):
     def entity(self) -> StarsPurchase:
         return StarsPurchase(
             id_=self.id,
-            location=UserLocation(
-                self.location_user_id,
-                self.location_chat_id,
-            ),
+            user_id=self.location_user_id,
             stars=self.stars,
             payment=None if self.payment is None else self.payment.entity(),
         )
@@ -188,8 +185,8 @@ class TableStarsPurchase(Base):
     def of(cls, it: StarsPurchase) -> "TableStarsPurchase":
         return TableStarsPurchase(
             id=it.id_,
-            location_user_id=it.location.user_id,
-            location_chat_id=it.location.chat_id,
+            location_user_id=it.user_id,
+            location_chat_id=it.user_id,
             stars=it.stars,
             payment_id=None if it.payment is None else it.payment.id_,
         )
@@ -227,13 +224,9 @@ class TableUser(Base):
     )
 
     def entity(self) -> User:
-        if (
-            self.game_location_game_id is not None
-            and self.game_location_chat_id is not None
-        ):
+        if self.game_location_game_id is not None:
             location = UserGameLocation(
                 self.id,
-                self.game_location_chat_id,
                 self.game_location_game_id,
             )
         else:
@@ -258,7 +251,7 @@ class TableUser(Base):
             game_location_chat_id = None
         else:
             game_location_game_id = it.game_location.game_id
-            game_location_chat_id = it.game_location.chat_id
+            game_location_chat_id = it.game_location.user_id
 
         return TableUser(
             id=it.id,

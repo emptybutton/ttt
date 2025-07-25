@@ -14,7 +14,7 @@ from ttt.application.game.game.ports.games import Games
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.game import UsersAlreadyInGameError, start_game
-from ttt.entities.core.user.location import UserLocation
+from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
 
 
@@ -32,17 +32,10 @@ class StartGame:
     log: GameLog
 
     async def __call__(self) -> None:
-        async for user1_location, user2_location in self.game_starting_queue:
+        async for user1_id, user2_id in self.game_starting_queue:
             async with self.transaction, self.emojis:
                 user1, user2 = await self.users.users_with_ids(
-                    (user1_location.user_id, user2_location.user_id),
-                )
-                users_and_locations = tuple(
-                    zip(
-                        (user1, user2),
-                        (user1_location, user2_location),
-                        strict=True,
-                    ),
+                    (user1_id, user2_id),
                 )
                 (
                     game_id,
@@ -57,18 +50,14 @@ class StartGame:
                 )
 
                 if user1 is None:
-                    await self.user_views.user_is_not_registered_view(
-                        user1_location,
-                    )
+                    await self.user_views.user_is_not_registered_view(user1_id)
                 if user2 is None:
-                    await self.user_views.user_is_not_registered_view(
-                        user2_location,
-                    )
+                    await self.user_views.user_is_not_registered_view(user2_id)
                 if user1 is None or user2 is None:
                     await self.game_starting_queue.push_many(
                         tuple(
-                            location
-                            for user, location in users_and_locations
+                            user.id
+                            for user in (user1, user2)
                             if user is not None
                         ),
                     )
@@ -81,41 +70,39 @@ class StartGame:
                         game_id,
                         user1,
                         user1_emoji,
-                        user1_location.chat_id,
                         user2,
                         user2_emoji,
-                        user2_location.chat_id,
                         tracking,
                     )
 
                 except UsersAlreadyInGameError as error:
-                    locations_of_users_not_in_game = list[UserLocation]()
-                    locations_of_users_in_game = list[UserLocation]()
+                    ids_of_users_not_in_game = list[int]()
+                    ids_of_users_in_game = list[int]()
 
-                    for user, location in users_and_locations:
+                    for user in (user1, user2):
                         if user in error.users:
-                            locations_of_users_in_game.append(location)
+                            ids_of_users_in_game.append(user.id)
                         else:
-                            locations_of_users_not_in_game.append(location)
+                            ids_of_users_not_in_game.append(user.id)
 
                     await (
                         self.log
                         .users_already_in_game_to_start_game_via_game_starting_queue(
-                            locations_of_users_in_game,
+                            ids_of_users_in_game,
                         )
                     )
                     await (
                         self.log
                         .bad_attempt_to_start_game_via_game_starting_queue(
-                            locations_of_users_not_in_game,
+                            ids_of_users_not_in_game,
                         )
                     )
 
                     await self.game_starting_queue.push_many(
-                        locations_of_users_not_in_game,
+                        ids_of_users_not_in_game,
                     )
-                    await self.game_views.user_already_in_game_views(
-                        locations_of_users_in_game,
+                    await self.game_views.users_already_in_game_views(
+                        ids_of_users_in_game,
                     )
                     continue
 
@@ -124,8 +111,8 @@ class StartGame:
                     await self.map_(tracking)
 
                     game_locations = (
-                        user1_location.game(game.id),
-                        user2_location.game(game.id),
+                        not_none(user1.game_location),
+                        not_none(user2.game_location),
                     )
                     await self.game_views.started_game_view_with_locations(
                         game_locations,

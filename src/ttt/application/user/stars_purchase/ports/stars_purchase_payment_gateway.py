@@ -3,17 +3,12 @@ from collections.abc import AsyncIterable
 from uuid import UUID
 
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 
 
 class StarsPurchasePaymentGateway(ABC):
     @abstractmethod
-    async def send_invoice(
-        self,
-        purchase: StarsPurchase,
-        location: UserLocation,
-    ) -> None: ...
+    async def send_invoice(self, purchase: StarsPurchase) -> None: ...
 
     @abstractmethod
     async def start_payment(self, payment_id: UUID) -> None: ...

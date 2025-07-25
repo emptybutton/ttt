@@ -14,7 +14,6 @@ from ttt.application.user.emoji_selection.ports.user_log import (
 from ttt.application.user.emoji_selection.ports.user_views import (
     EmojiSelectionUserViews,
 )
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import EmojiNotPurchasedError
 from ttt.entities.text.emoji import Emoji, InvalidEmojiError
 from ttt.entities.tools.tracking import Tracking
@@ -32,14 +31,14 @@ class SelectEmoji:
 
     async def __call__(
         self,
-        location: UserLocation,
+        user_id: int,
         emoji_str: str | None,
     ) -> None:
         await self.fsm.state(WaitingEmojiToSelectState)
 
         if emoji_str is None:
             await self.emoji_selection_views.invalid_emoji_to_select_view(
-                location,
+                user_id,
             )
             return
 
@@ -48,15 +47,15 @@ class SelectEmoji:
         except InvalidEmojiError:
             await (
                 self.emoji_selection_views
-                .invalid_emoji_to_select_view(location)
+                .invalid_emoji_to_select_view(user_id)
             )
             return
 
         async with self.transaction:
-            user = await self.users.user_with_id(location.user_id)
+            user = await self.users.user_with_id(user_id)
 
             if user is None:
-                await self.user_views.user_is_not_registered_view(location)
+                await self.user_views.user_is_not_registered_view(user_id)
                 await self.fsm.set(None)
                 return
 
@@ -64,19 +63,15 @@ class SelectEmoji:
             try:
                 user.select_emoji(emoji, tracking)
             except EmojiNotPurchasedError:
-                await self.log.emoji_not_purchased_to_select(
-                    location,
-                    user,
-                    emoji,
-                )
+                await self.log.emoji_not_purchased_to_select(user, emoji)
                 await self.fsm.set(None)
                 await (
                     self.emoji_selection_views
-                    .emoji_not_purchased_to_select_view(location)
+                    .emoji_not_purchased_to_select_view(user_id)
                 )
             else:
-                await self.log.user_selected_emoji(location, user, emoji)
+                await self.log.user_selected_emoji(user, emoji)
 
                 await self.map_(tracking)
                 await self.fsm.set(None)
-                await self.emoji_selection_views.emoji_selected_view(location)
+                await self.emoji_selection_views.emoji_selected_view(user_id)

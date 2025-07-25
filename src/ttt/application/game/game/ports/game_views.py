@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
 from ttt.entities.core.game.game import Game
-from ttt.entities.core.user.location import UserGameLocation, UserLocation
+from ttt.entities.core.user.location import UserGameLocation
 
 
 class GameViews(ABC):
@@ -25,14 +25,14 @@ class GameViews(ABC):
     @abstractmethod
     async def no_game_view(
         self,
-        user_location: UserLocation,
+        user_id: int,
         /,
     ) -> None: ...
 
     @abstractmethod
     async def game_already_complteted_view(
         self,
-        user_location: UserLocation,
+        user_id: int,
         game: Game,
         /,
     ) -> None: ...
@@ -40,7 +40,7 @@ class GameViews(ABC):
     @abstractmethod
     async def not_current_user_view(
         self,
-        user_location: UserLocation,
+        user_id: int,
         game: Game,
         /,
     ) -> None: ...
@@ -48,7 +48,7 @@ class GameViews(ABC):
     @abstractmethod
     async def no_cell_view(
         self,
-        user_location: UserLocation,
+        user_id: int,
         game: Game,
         /,
     ) -> None: ...
@@ -56,35 +56,35 @@ class GameViews(ABC):
     @abstractmethod
     async def already_filled_cell_error(
         self,
-        user_location: UserLocation,
+        user_id: int,
         game: Game,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def user_already_in_game_views(
+    async def users_already_in_game_views(
         self,
-        locations: Sequence[UserLocation],
+        user_ids: Sequence[int],
         /,
     ) -> None: ...
 
     @abstractmethod
     async def waiting_for_game_view(
         self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None: ...
 
     @abstractmethod
     async def double_waiting_for_game_view(
         self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None: ...
 
     @abstractmethod
     async def waiting_for_ai_type_to_start_game_with_ai_view(
         self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None: ...

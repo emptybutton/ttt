@@ -8,7 +8,6 @@ from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.ports.games import Games
 from ttt.entities.core.game.game import AlreadyCompletedGameError
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import User
 from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
@@ -23,14 +22,14 @@ class CancelGame:
     transaction: Transaction
     log: GameLog
 
-    async def __call__(self, location: UserLocation) -> None:
+    async def __call__(self, user_id: int) -> None:
         async with self.transaction:
             game, game_result_id = await gather(
-                self.games.game_with_game_location(location.user_id),
+                self.games.game_with_game_location(user_id),
                 self.uuids.random_uuid(),
             )
             if game is None:
-                await self.game_views.no_game_view(location)
+                await self.game_views.no_game_view(user_id)
                 return
 
             locations = tuple(
@@ -41,19 +40,16 @@ class CancelGame:
 
             try:
                 tracking = Tracking()
-                game.cancel(location.user_id, game_result_id, tracking)
+                game.cancel(user_id, game_result_id, tracking)
             except AlreadyCompletedGameError:
-                await self.log.already_completed_game_to_cancel(
-                    game,
-                    location,
-                )
+                await self.log.already_completed_game_to_cancel(game, user_id)
                 await self.game_views.game_already_complteted_view(
-                    location,
+                    user_id,
                     game,
                 )
                 return
 
-            await self.log.game_cancelled(location, game)
+            await self.log.game_cancelled(user_id, game)
 
             await self.map_(tracking)
             await self.game_views.game_view_with_locations(

@@ -7,7 +7,6 @@ from ttt.application.user.stars_purchase.start_stars_purchase import (
     StartStarsPurchase,
 )
 from ttt.entities.core.stars import Stars
-from ttt.entities.core.user.location import UserLocation
 
 
 start_stars_purchase_router = Router(name=__name__)
@@ -66,8 +65,5 @@ async def _route(
         raise TypeError
 
     user_id = callback.from_user.id
-    chat_id = callback.message.chat.id
-    location = UserLocation(user_id, chat_id)
-
-    await start_stars_purchase(location, stars)
+    await start_stars_purchase(user_id, stars)
     await callback.answer()

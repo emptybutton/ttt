@@ -4,7 +4,6 @@ from dishka import AsyncContainer
 from dishka.integrations.aiogram import inject
 
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.buffer import Buffer
@@ -42,10 +41,7 @@ async def _(
             buffer.add(
                 PaidStarsPurchasePayment(
                     invoce_payload.purchase_id,
-                    UserLocation(
-                        invoce_payload.location_user_id,
-                        invoce_payload.location_chat_id,
-                    ),
+                    invoce_payload.user_id,
                     success,
                 ),
             )

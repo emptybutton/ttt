@@ -7,26 +7,23 @@ from aiogram.types import LabeledPrice
 from pydantic import BaseModel, Field, TypeAdapter
 
 from ttt.entities.core.stars import price_of_stars
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 
 
 class StarsPurchaseInvoicePayload(BaseModel):
     type_: Literal["s"] = "s"
     purchase_id: UUID = Field(alias="s")
-    location_user_id: int = Field(alias="p")
-    location_chat_id: int = Field(alias="c")
+    user_id: int = Field(alias="p")
 
     @classmethod
     def of(
         cls,
         purchase_id: UUID,
-        location: UserLocation,
+        user_id: int,
     ) -> "StarsPurchaseInvoicePayload":
         return StarsPurchaseInvoicePayload(
             s=purchase_id,
-            p=location.user_id,
-            c=location.chat_id,
+            p=user_id,
         )
 
 
@@ -36,7 +33,6 @@ invoce_payload_adapter = TypeAdapter[InvocePayload](InvocePayload)
 
 async def stars_invoce(
     bot: Bot,
-    location: UserLocation,
     purchase: StarsPurchase,
     payments_token: str,
 ) -> None:
@@ -45,7 +41,9 @@ async def stars_invoce(
         amount=price_of_stars(purchase.stars).total_kopecks(),
     )
 
-    payload_model = StarsPurchaseInvoicePayload.of(purchase.id_, location)
+    payload_model = StarsPurchaseInvoicePayload.of(
+        purchase.id_, purchase.user_id,
+    )
     payload = payload_model.model_dump_json(by_alias=True)
 
     provider_data = json.dumps({
@@ -65,7 +63,7 @@ async def stars_invoce(
     })
 
     await bot.send_invoice(
-        location.chat_id,
+        purchase.user_id,
         title="Звёзды",
         description="Покупка звёзд",
         payload=payload,

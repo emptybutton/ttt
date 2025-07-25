@@ -6,7 +6,6 @@ from ttt.application.game.game.start_game_with_ai import (
     StartGameWithAi,
 )
 from ttt.entities.core.game.ai import AiType
-from ttt.entities.core.user.location import UserLocation
 
 
 start_game_with_ai_router = Router(name=__name__)
@@ -23,11 +22,8 @@ async def _(
     if not isinstance(callback.message, Message):
         raise TypeError
 
-    user_id = callback.from_user.id
-    chat_id = callback.message.chat.id
-
     await start_game_with_ai(
-        UserLocation(user_id, chat_id),
+        callback.from_user.id,
         AiType.gemini_2_0_flash,
     )
     await callback.answer()

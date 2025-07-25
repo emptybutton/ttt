@@ -7,7 +7,6 @@ from dishka.integrations.aiogram import FromDishka, inject
 from ttt.application.user.stars_purchase.wait_stars_to_start_stars_purchase import (  # noqa: E501
     WaitStarsToStartStarsPurchase,
 )
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
@@ -33,5 +32,5 @@ async def _(
         )
         return
 
-    location = UserLocation(message.from_user.id, message.chat.id)
+    location = message.from_user.id
     await wait_stars_to_start_stars_purchase(location)

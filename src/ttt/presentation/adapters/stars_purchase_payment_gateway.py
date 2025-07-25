@@ -9,7 +9,6 @@ from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.stars_purchase.ports.stars_purchase_payment_gateway import (  # noqa: E501
     StarsPurchasePaymentGateway,
 )
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.buffer import Buffer
@@ -28,9 +27,8 @@ class AiogramInAndBufferOutStarsPurchasePaymentGateway(
     async def send_invoice(
         self,
         purchase: StarsPurchase,
-        location: UserLocation,
     ) -> None:
-        await stars_invoce(self._bot, location, purchase, self._payments_token)
+        await stars_invoce(self._bot, purchase, self._payments_token)
 
     async def start_payment(self, payment_id: UUID) -> None:
         await not_none(self._pre_checkout_query).answer(ok=True)

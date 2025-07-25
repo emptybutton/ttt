@@ -1,14 +1,11 @@
 from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
-from typing import ClassVar, cast
-
-from pydantic import TypeAdapter
+from typing import cast
 
 from ttt.application.game.game.ports.game_starting_queue import (
     GameStartingQueue,
     GameStartingQueuePush,
 )
-from ttt.entities.core.user.location import UserLocation
 from ttt.infrastructure.redis.batches import InRedisFixedBatches
 
 
@@ -16,14 +13,12 @@ from ttt.infrastructure.redis.batches import InRedisFixedBatches
 class InRedisFixedBatchesWaitingLocations(GameStartingQueue):
     _batches: InRedisFixedBatches
 
-    _adapter: ClassVar = TypeAdapter(UserLocation)
+    async def push_many(self, user_ids: Sequence[int], /) -> None:
+        if user_ids:
+            await self._batches.add(map(self._bytes, user_ids))
 
-    async def push_many(self, locations: Sequence[UserLocation], /) -> None:
-        if locations:
-            await self._batches.add(map(self._bytes, locations))
-
-    async def push(self, location: UserLocation, /) -> GameStartingQueuePush:
-        push_code = await self._batches.add([self._bytes(location)])
+    async def push(self, user_id: int, /) -> GameStartingQueuePush:
+        push_code = await self._batches.add([self._bytes(user_id)])
         was_location_added_in_set = bool(push_code)
 
         return GameStartingQueuePush(
@@ -32,15 +27,27 @@ class InRedisFixedBatchesWaitingLocations(GameStartingQueue):
 
     async def __aiter__(
         self,
-    ) -> AsyncIterator[tuple[UserLocation, UserLocation]]:
-        async for location1_bytes, location2_bytes in self._batches.with_len(2):
-            yield (
-                self._entity(location1_bytes),
-                self._entity(location2_bytes),
+    ) -> AsyncIterator[tuple[int, int]]:
+        async for user1_id_bytes, user2_id_bytes in self._batches.with_len(2):
+            user1_id = self._user_id(user1_id_bytes)
+            user2_id = self._user_id(user2_id_bytes)
+
+            user_ids = (user1_id, user2_id)
+            ok_user_ids = tuple(
+                user_id for user_id in user_ids if user_id is not None
             )
 
-    def _entity(self, bytes_: bytes) -> UserLocation:
-        return cast(UserLocation, self._adapter.validate_json(bytes_))
+            if len(user_ids) != len(ok_user_ids):
+                await self._batches.add(map(self._bytes, ok_user_ids))
+                continue
 
-    def _bytes(self, entity: UserLocation) -> bytes:
-        return cast(bytes, self._adapter.dump_json(entity))
+            yield cast(tuple[int, int], ok_user_ids)
+
+    def _bytes(self, user_id: int) -> bytes:
+        return str(user_id).encode()
+
+    def _user_id(self, bytes_: bytes) -> int | None:
+        try:
+            return int(bytes_.decode())
+        except ValueError:
+            return None

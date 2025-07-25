@@ -6,7 +6,7 @@ from uuid import UUID
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.account import Account
 from ttt.entities.core.user.emoji import UserEmoji
-from ttt.entities.core.user.location import UserGameLocation, UserLocation
+from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.finance.payment.payment import (
@@ -65,7 +65,6 @@ class User:
     def be_in_game(
         self,
         game_id: UUID,
-        chat_id: int,
         tracking: Tracking,
     ) -> None:
         """
@@ -74,7 +73,7 @@ class User:
 
         assert_(not self.is_in_game(), else_=UserAlreadyInGameError(self))
 
-        self.game_location = UserGameLocation(self.id, chat_id, game_id)
+        self.game_location = UserGameLocation(self.id, game_id)
         tracking.register_mutated(self)
 
     def lose(self, tracking: Tracking) -> None:
@@ -200,7 +199,6 @@ class User:
     def start_stars_purchase(
         self,
         purchase_id: UUID,
-        purchase_chat_id: int,
         purchase_stars: Stars,
         tracking: Tracking,
     ) -> None:
@@ -210,7 +208,7 @@ class User:
 
         stars_purchase = StarsPurchase.start(
             purchase_id,
-            UserLocation(self.id, purchase_chat_id),
+            self.id,
             purchase_stars,
             tracking,
         )

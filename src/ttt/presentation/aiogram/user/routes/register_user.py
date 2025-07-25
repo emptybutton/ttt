@@ -25,4 +25,4 @@ async def _(
         )
         return
 
-    await register_user(message.from_user.id, message.chat.id)
+    await register_user(message.from_user.id)

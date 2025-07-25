@@ -7,7 +7,6 @@ from dishka.integrations.aiogram import FromDishka, inject
 from ttt.application.user.emoji_purchase.wait_emoji_to_buy import (
     WaitEmojiToBuy,
 )
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
@@ -28,5 +27,4 @@ async def _(
         )
         return
 
-    location = UserLocation(message.from_user.id, message.chat.id)
-    await wait_emoji_to_buy(location)
+    await wait_emoji_to_buy(message.from_user.id)

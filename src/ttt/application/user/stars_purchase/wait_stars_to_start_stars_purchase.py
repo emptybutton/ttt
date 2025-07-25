@@ -7,7 +7,6 @@ from ttt.application.user.stars_purchase.ports.user_log import (
 from ttt.application.user.stars_purchase.ports.user_views import (
     StarsPurchaseUserViews,
 )
-from ttt.entities.core.user.location import UserLocation
 
 
 @dataclass(frozen=True, unsafe_hash=False)
@@ -16,8 +15,6 @@ class WaitStarsToStartStarsPurchase:
     views: StarsPurchaseUserViews
     log: StarsPurchaseUserLog
 
-    async def __call__(self, location: UserLocation) -> None:
-        await self.log.user_intends_to_buy_stars(location)
-        await self.views.wait_stars_to_start_stars_purchase_view(
-            location,
-        )
+    async def __call__(self, user_id: int) -> None:
+        await self.log.user_intends_to_buy_stars(user_id)
+        await self.views.wait_stars_to_start_stars_purchase_view(user_id)

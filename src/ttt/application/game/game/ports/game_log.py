@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
 from ttt.entities.core.game.game import AiMove, Game, UserMove
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import User
 
 
@@ -10,14 +9,14 @@ class GameLog(ABC):
     @abstractmethod
     async def waiting_for_game_start(
         self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None: ...
 
     @abstractmethod
     async def double_waiting_for_game_start(
         self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None: ...
 
@@ -31,7 +30,7 @@ class GameLog(ABC):
     @abstractmethod
     async def user_intends_to_start_game_against_ai(
         self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None: ...
 
@@ -45,7 +44,7 @@ class GameLog(ABC):
     @abstractmethod
     async def game_cancelled(
         self,
-        location: UserLocation,
+        user_id: int,
         game: Game,
         /,
     ) -> None: ...
@@ -53,7 +52,7 @@ class GameLog(ABC):
     @abstractmethod
     async def user_move_maked(
         self,
-        location: UserLocation,
+        user_id: int,
         game: Game,
         move: UserMove,
         /,
@@ -62,7 +61,7 @@ class GameLog(ABC):
     @abstractmethod
     async def ai_move_maked(
         self,
-        location: UserLocation,
+        user_id: int,
         game: Game,
         move: AiMove,
         /,
@@ -71,24 +70,20 @@ class GameLog(ABC):
     @abstractmethod
     async def game_completed(
         self,
-        location: UserLocation,
+        user_id: int,
         game: Game,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def user_already_in_game_to_start_game(
-        self,
-        user: User,
-        location: UserLocation,
-        /,
-    ) -> None: ...
+    async def user_already_in_game_to_start_game(self, user: User, /) -> None:
+        ...
 
     @abstractmethod
     async def already_completed_game_to_make_move(
         self,
         game: Game,
-        location: UserLocation,
+        user_id: int,
         cell_number_int: int,
         /,
     ) -> None: ...
@@ -97,7 +92,7 @@ class GameLog(ABC):
     async def not_current_player_to_make_move(
         self,
         game: Game,
-        location: UserLocation,
+        user_id: int,
         cell_number_int: int,
         /,
     ) -> None: ...
@@ -106,7 +101,7 @@ class GameLog(ABC):
     async def no_cell_to_make_move(
         self,
         game: Game,
-        location: UserLocation,
+        user_id: int,
         cell_number_int: int,
         /,
     ) -> None: ...
@@ -115,7 +110,7 @@ class GameLog(ABC):
     async def already_filled_cell_to_make_move(
         self,
         game: Game,
-        location: UserLocation,
+        user_id: int,
         cell_number_int: int,
         /,
     ) -> None: ...
@@ -124,20 +119,20 @@ class GameLog(ABC):
     async def already_completed_game_to_cancel(
         self,
         game: Game,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None: ...
 
     @abstractmethod
     async def users_already_in_game_to_start_game_via_game_starting_queue(
         self,
-        locations_of_users_in_game: Sequence[UserLocation],
+        user_ids: Sequence[int],
         /,
     ) -> None: ...
 
     @abstractmethod
     async def bad_attempt_to_start_game_via_game_starting_queue(
         self,
-        locations_of_users_not_in_game: Sequence[UserLocation],
+        user_ids: Sequence[int],
         /,
     ) -> None: ...

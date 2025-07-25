@@ -6,7 +6,7 @@ from aiogram.fsm.storage.base import BaseStorage
 
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.entities.core.game.game import Game
-from ttt.entities.core.user.location import UserGameLocation, UserLocation
+from ttt.entities.core.user.location import UserGameLocation
 from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.presentation.aiogram.game.messages import (
     already_completed_game_message,
@@ -58,7 +58,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
             self._tasks.create_task(
                 started_game_message(
                     self._bot,
-                    location.chat_id,
+                    location.user_id,
                     game,
                     location.user_id,
                 ),
@@ -66,84 +66,84 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
 
     async def no_game_view(
         self,
-        user_location: UserLocation,
+        user_id: int,
         /,
     ) -> None:
         self._tasks.create_task(
-            no_game_message(self._bot, user_location.chat_id),
+            no_game_message(self._bot, user_id),
         )
 
     async def not_current_user_view(
         self,
-        user_location: UserLocation,
+        user_id: int,
         game: Game,
         /,
     ) -> None:
         self._tasks.create_task(
-            not_current_user_message(self._bot, user_location.chat_id),
+            not_current_user_message(self._bot, user_id),
         )
 
     async def no_cell_view(
         self,
-        user_location: UserLocation,
+        user_id: int,
         game: Game,
         /,
     ) -> None:
         self._tasks.create_task(
-            no_cell_message(self._bot, user_location.chat_id),
+            no_cell_message(self._bot, user_id),
         )
 
     async def already_filled_cell_error(
         self,
-        user_location: UserLocation,
+        user_id: int,
         game: Game,
         /,
     ) -> None:
         self._tasks.create_task(
-            already_filled_cell_message(self._bot, user_location.chat_id),
+            already_filled_cell_message(self._bot, user_id),
         )
 
     async def game_already_complteted_view(
         self,
-        user_location: UserLocation,
+        user_id: int,
         game: Game,
         /,
     ) -> None:
         self._tasks.create_task(
-            already_completed_game_message(self._bot, user_location.chat_id),
+            already_completed_game_message(self._bot, user_id),
         )
 
-    async def user_already_in_game_views(
+    async def users_already_in_game_views(
         self,
-        locations: Sequence[UserLocation],
+        user_ids: Sequence[int],
     ) -> None:
-        for location in locations:
+        for user_id in user_ids:
             self._tasks.create_task(
-                user_already_in_game_message(self._bot, location.chat_id),
+                user_already_in_game_message(self._bot, user_id),
             )
 
     async def waiting_for_game_view(
         self,
-        location: UserLocation,
+        user_id: int,
     ) -> None:
         self._tasks.create_task(
-            waiting_for_game_message(self._bot, location.chat_id),
+            waiting_for_game_message(self._bot, user_id),
         )
 
     async def waiting_for_ai_type_to_start_game_with_ai_view(
         self,
-        location: UserLocation,
+        user_id: int,
     ) -> None:
         self._tasks.create_task(
-            message_to_start_game_with_ai(self._bot, location.chat_id),
+            message_to_start_game_with_ai(self._bot, user_id),
         )
 
     async def double_waiting_for_game_view(
         self,
-        location: UserLocation,
+        user_id: int,
     ) -> None:
         self._tasks.create_task(
-            double_waiting_for_game_message(self._bot, location.chat_id),
+            double_waiting_for_game_message(self._bot, user_id),
         )
 
     def _to_next_move_message_background_broadcast(
@@ -155,7 +155,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
             self._tasks.create_task(
                 maked_move_message(
                     self._bot,
-                    location.chat_id,
+                    location.user_id,
                     game,
                     location.user_id,
                 ),
@@ -170,7 +170,7 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
             self._tasks.create_task(
                 completed_game_messages(
                     self._bot,
-                    location.chat_id,
+                    location.user_id,
                     game,
                     location.user_id,
                 ),

@@ -5,7 +5,6 @@ from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.user.view_user import ViewUser
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
@@ -26,5 +25,4 @@ async def _(
         )
         return
 
-    location = UserLocation(message.from_user.id, message.chat.id)
-    await view_user(location)
+    await view_user(message.from_user.id)

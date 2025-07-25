@@ -502,10 +502,8 @@ def start_game(  # noqa: PLR0913, PLR0917
     game_id: UUID,
     player1: User,
     player1_random_emoji: Emoji,
-    player1_chat_id: int,
     player2: User,
     player2_random_emoji: Emoji,
-    player2_chat_id: int,
     tracking: Tracking,
 ) -> Game:
     """
@@ -541,12 +539,12 @@ def start_game(  # noqa: PLR0913, PLR0917
     players_in_game = []
 
     try:
-        player1.be_in_game(game_id, player1_chat_id, tracking)
+        player1.be_in_game(game_id, tracking)
     except UserAlreadyInGameError:
         players_in_game.append(player1)
 
     try:
-        player2.be_in_game(game_id, player2_chat_id, tracking)
+        player2.be_in_game(game_id, tracking)
     except UserAlreadyInGameError:
         players_in_game.append(player2)
 
@@ -567,7 +565,6 @@ def start_game_with_ai(  # noqa: PLR0913, PLR0917
     game_id: UUID,
     user: User,
     user_random_emoji: Emoji,
-    user_chat_id: int,
     ai_id: UUID,
     ai_type: AiType,
     ai_random_emoji: Emoji,
@@ -616,6 +613,6 @@ def start_game_with_ai(  # noqa: PLR0913, PLR0917
     )
     tracking.register_new(game)
 
-    user.be_in_game(game_id, user_chat_id, tracking)
+    user.be_in_game(game_id, tracking)
 
     return StartedGameWithAi(game, next_move_ai_id)

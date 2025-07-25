@@ -16,7 +16,7 @@ from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.ai import AiType
 from ttt.entities.core.game.game import start_game_with_ai
-from ttt.entities.core.user.location import UserLocation
+from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.user import UserAlreadyInGameError
 from ttt.entities.tools.tracking import Tracking
 
@@ -36,7 +36,7 @@ class StartGameWithAi:
     ai_gateway: GameAiGateway
     log: GameLog
 
-    async def __call__(self, location: UserLocation, ai_type: AiType) -> None:
+    async def __call__(self, user_id: int, ai_type: AiType) -> None:
         game_id = await self.uuids.random_uuid()
         ai_id = await self.uuids.random_uuid()
         cell_id_matrix = await self.uuids.random_uuid_matrix((3, 3))
@@ -45,12 +45,10 @@ class StartGameWithAi:
         player_order_random = await self.randoms.random()
 
         async with self.transaction:
-            user = await self.users.user_with_id(location.user_id)
+            user = await self.users.user_with_id(user_id)
 
             if user is None:
-                await self.user_views.user_is_not_registered_view(
-                    location,
-                )
+                await self.user_views.user_is_not_registered_view(user_id)
                 return
 
             try:
@@ -60,7 +58,6 @@ class StartGameWithAi:
                     game_id,
                     user,
                     user_emoji,
-                    location.chat_id,
                     ai_id,
                     ai_type,
                     ai_emoji,
@@ -68,25 +65,20 @@ class StartGameWithAi:
                     tracking,
                 )
             except UserAlreadyInGameError:
-                await self.log.user_already_in_game_to_start_game(
-                    user,
-                    location,
-                )
-                await self.game_views.user_already_in_game_views(
-                    [location],
-                )
+                await self.log.user_already_in_game_to_start_game(user)
+                await self.game_views.users_already_in_game_views([user_id])
             else:
                 await self.log.game_against_ai_started(started_game.game)
 
                 if started_game.next_move_ai_id is None:
                     await self.map_(tracking)
                     await self.game_views.started_game_view_with_locations(
-                        [location.game(started_game.game.id)],
+                        [UserGameLocation(user_id, started_game.game.id)],
                         started_game.game,
                     )
                 else:
                     await self.game_views.started_game_view_with_locations(
-                        [location.game(started_game.game.id)],
+                        [UserGameLocation(user_id, started_game.game.id)],
                         started_game.game,
                     )
 
@@ -106,13 +98,13 @@ class StartGameWithAi:
                         tracking,
                     )
                     await self.log.ai_move_maked(
-                        location,
+                        user_id,
                         started_game.game,
                         ai_move,
                     )
 
                     await self.map_(tracking)
                     await self.game_views.game_view_with_locations(
-                        [location.game(started_game.game.id)],
+                        [UserGameLocation(user_id, started_game.game.id)],
                         started_game.game,
                     )

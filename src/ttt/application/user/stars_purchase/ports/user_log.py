@@ -3,7 +3,6 @@ from uuid import UUID
 
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.entities.core.stars import Stars
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import User
 
 
@@ -11,14 +10,13 @@ class StarsPurchaseUserLog(ABC):
     @abstractmethod
     async def user_intends_to_buy_stars(
         self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None: ...
 
     @abstractmethod
     async def user_started_stars_puchase(
         self,
-        location: UserLocation,
         user: User,
         /,
     ) -> None: ...
@@ -55,7 +53,6 @@ class StarsPurchaseUserLog(ABC):
     @abstractmethod
     async def invalid_stars_for_stars_purchase(
         self,
-        location: UserLocation,
         user: User,
         stars: Stars,
         /,
