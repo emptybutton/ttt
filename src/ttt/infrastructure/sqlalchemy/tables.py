@@ -24,6 +24,7 @@ from ttt.entities.core.game.player import Player
 from ttt.entities.core.game.win import AiWin, Win
 from ttt.entities.core.user.account import Account
 from ttt.entities.core.user.emoji import UserEmoji
+from ttt.entities.core.user.last_game import LastGame
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.user import User
@@ -190,6 +191,33 @@ class TableStarsPurchase(Base):
         )
 
 
+class TableLastGame(Base):
+    __tablename__ = "last_games"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
+    )
+    game_id: Mapped[UUID] = mapped_column(
+        ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
+    )
+
+    def entity(self) -> LastGame:
+        return LastGame(
+            id=self.id,
+            user_id=self.user_id,
+            game_id=self.game_id,
+        )
+
+    @classmethod
+    def of(cls, it: LastGame) -> "TableLastGame":
+        return TableLastGame(
+            id=it.id,
+            user_id=it.user_id,
+            game_id=it.game_id,
+        )
+
+
 class TableUser(Base):
     __tablename__ = "users"
 
@@ -219,6 +247,10 @@ class TableUser(Base):
         lazy="selectin",
         foreign_keys=[TableStarsPurchase.user_id],
     )
+    last_games: Mapped[list[TableLastGame]] = relationship(
+        lazy="selectin",
+        foreign_keys=[TableLastGame.user_id],
+    )
 
     def entity(self) -> User:
         if self.game_location_game_id is not None:
@@ -234,6 +266,7 @@ class TableUser(Base):
             Account(self.account_stars),
             [it.entity() for it in self.emojis],
             [it.entity() for it in self.stars_purchases],
+            [it.entity() for it in self.last_games],
             self.selected_emoji_id,
             self.number_of_wins,
             self.number_of_draws,
@@ -583,7 +616,9 @@ class TableGame(Base):
         return Matrix(lines)
 
 
-type TableUserAtomic = TableUser | TableUserEmoji | TableStarsPurchase
+type TableUserAtomic = (
+    TableUser | TableUserEmoji | TableStarsPurchase | TableLastGame
+)
 type TableGameAtomic = TableGame | TableGameResult | TableCell | TableAi
 type TablePaymentAtomic = TablePayment
 
@@ -598,6 +633,8 @@ def table_entity(entity: Atomic) -> TableAtomic:  # noqa: PLR0911
             return TableUserEmoji.of(entity)
         case StarsPurchase():
             return TableStarsPurchase.of(entity)
+        case LastGame():
+            return TableLastGame.of(entity)
 
         case Game():
             return TableGame.of(entity)

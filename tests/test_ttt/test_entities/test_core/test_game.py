@@ -18,6 +18,7 @@ from ttt.entities.core.game.game import (
     OneUserError,
 )
 from ttt.entities.core.user.account import Account
+from ttt.entities.core.user.last_game import LastGame
 from ttt.entities.core.user.user import User
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.math.matrix import Matrix
@@ -284,7 +285,15 @@ def test_make_move_with_completed_game(  # noqa: PLR0913, PLR0917
     )
 
     with raises(AlreadyCompletedGameError):
-        game.make_user_move(1, 1, UUID(int=8), middle_random, tracking)
+        game.make_user_move(
+            1,
+            1,
+            UUID(int=8),
+            UUID(int=9),
+            UUID(int=10),
+            middle_random,
+            tracking,
+        )
 
 
 def test_make_move_with_not_user(
@@ -293,7 +302,15 @@ def test_make_move_with_not_user(
     tracking: Tracking,
 ) -> None:
     with raises(NotPlayerError):
-        game.make_user_move(100, 9, UUID(int=8), middle_random, tracking)
+        game.make_user_move(
+            100,
+            9,
+            UUID(int=8),
+            UUID(int=9),
+            UUID(int=10),
+            middle_random,
+            tracking,
+        )
 
 
 def test_make_move_with_not_current_user(
@@ -302,7 +319,15 @@ def test_make_move_with_not_current_user(
     tracking: Tracking,
 ) -> None:
     with raises(NotCurrentPlayerError):
-        game.make_user_move(2, 9, UUID(int=8), middle_random, tracking)
+        game.make_user_move(
+            2,
+            9,
+            UUID(int=8),
+            UUID(int=9),
+            UUID(int=10),
+            middle_random,
+            tracking,
+        )
 
 
 def test_make_move_with_no_cell(
@@ -311,7 +336,15 @@ def test_make_move_with_no_cell(
     tracking: Tracking,
 ) -> None:
     with raises(NoCellError):
-        game.make_user_move(1, 10, UUID(int=8), middle_random, tracking)
+        game.make_user_move(
+            1,
+            10,
+            UUID(int=8),
+            UUID(int=9),
+            UUID(int=10),
+            middle_random,
+            tracking,
+        )
 
 
 def test_make_move_with_already_filled_cell(
@@ -319,10 +352,20 @@ def test_make_move_with_already_filled_cell(
     middle_random: Random,
     tracking: Tracking,
 ) -> None:
-    game.make_user_move(1, 1, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 1, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
 
     with raises(AlreadyFilledCellError):
-        game.make_user_move(2, 1, UUID(int=8), middle_random, tracking)
+        game.make_user_move(
+            2,
+            1,
+            UUID(int=8),
+            UUID(int=9),
+            UUID(int=10),
+            middle_random,
+            tracking,
+        )
 
 
 def test_make_move_with_double_move(
@@ -330,10 +373,20 @@ def test_make_move_with_double_move(
     middle_random: Random,
     tracking: Tracking,
 ) -> None:
-    game.make_user_move(1, 1, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 1, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
 
     with raises(NotCurrentPlayerError):
-        game.make_user_move(1, 2, UUID(int=8), middle_random, tracking)
+        game.make_user_move(
+            1,
+            2,
+            UUID(int=8),
+            UUID(int=9),
+            UUID(int=10),
+            middle_random,
+            tracking,
+        )
 
 
 @mark.parametrize("object_", ["result", "user1", "user2", "extra_move"])
@@ -351,13 +404,23 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
     ___
     """
 
-    game.make_user_move(1, 1, UUID(int=8), middle_random, tracking)
-    game.make_user_move(2, 4, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 1, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 4, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
 
-    game.make_user_move(1, 2, UUID(int=8), middle_random, tracking)
-    game.make_user_move(2, 5, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 2, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 5, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
 
-    game.make_user_move(1, 3, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 3, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
     result = game.result
 
     if object_ == "result":
@@ -372,6 +435,9 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             id=1,
             account=Account(50),
             emojis=[],
+            last_games=[
+                LastGame(id=UUID(int=9), user_id=1, game_id=UUID(int=0)),
+            ],
             stars_purchases=[],
             selected_emoji_id=None,
             number_of_wins=1,
@@ -385,6 +451,9 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             id=2,
             account=Account(0),
             emojis=[],
+            last_games=[
+                LastGame(id=UUID(int=10), user_id=2, game_id=UUID(int=0)),
+            ],
             stars_purchases=[],
             selected_emoji_id=None,
             number_of_wins=0,
@@ -395,7 +464,15 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
 
     if object_ == "extra_move":
         with raises(AlreadyCompletedGameError):
-            game.make_user_move(2, 6, UUID(int=8), middle_random, tracking)
+            game.make_user_move(
+                2,
+                6,
+                UUID(int=8),
+                UUID(int=9),
+                UUID(int=10),
+                middle_random,
+                tracking,
+            )
 
 
 @mark.parametrize("object_", ["result", "user1", "user2", "extra_move"])
@@ -413,19 +490,37 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
     OXO
     """
 
-    game.make_user_move(1, 1, UUID(int=8), middle_random, tracking)
-    game.make_user_move(2, 2, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 1, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 2, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
 
-    game.make_user_move(1, 3, UUID(int=8), middle_random, tracking)
-    game.make_user_move(2, 5, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 3, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 5, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
 
-    game.make_user_move(1, 4, UUID(int=8), middle_random, tracking)
-    game.make_user_move(2, 7, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 4, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 7, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
 
-    game.make_user_move(1, 6, UUID(int=8), middle_random, tracking)
-    game.make_user_move(2, 9, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 6, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 9, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
 
-    game.make_user_move(1, 8, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 8, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
     result = game.result
 
     if object_ == "result":
@@ -440,6 +535,9 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             id=1,
             account=Account(0),
             emojis=[],
+            last_games=[
+                LastGame(id=UUID(int=9), user_id=1, game_id=UUID(int=0)),
+            ],
             stars_purchases=[],
             selected_emoji_id=None,
             number_of_wins=0,
@@ -454,6 +552,9 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             account=Account(0),
             emojis=[],
             stars_purchases=[],
+            last_games=[
+                LastGame(id=UUID(int=10), user_id=2, game_id=UUID(int=0)),
+            ],
             selected_emoji_id=None,
             number_of_wins=0,
             number_of_draws=1,
@@ -463,7 +564,15 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
 
     if object_ == "extra_move":
         with raises(AlreadyCompletedGameError):
-            game.make_user_move(2, 5, UUID(int=8), middle_random, tracking)
+            game.make_user_move(
+                2,
+                5,
+                UUID(int=8),
+                UUID(int=9),
+                UUID(int=10),
+                middle_random,
+                tracking,
+            )
 
 
 @mark.parametrize("object_", ["result", "user1", "user2", "extra_move"])
@@ -481,19 +590,37 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
     XXO
     """
 
-    game.make_user_move(1, 1, UUID(int=8), middle_random, tracking)
-    game.make_user_move(2, 2, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 1, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 2, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
 
-    game.make_user_move(1, 3, UUID(int=8), middle_random, tracking)
-    game.make_user_move(2, 4, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 3, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 4, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
 
-    game.make_user_move(1, 5, UUID(int=8), middle_random, tracking)
-    game.make_user_move(2, 6, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 5, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 6, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
 
-    game.make_user_move(1, 8, UUID(int=8), middle_random, tracking)
-    game.make_user_move(2, 9, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 8, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 9, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
 
-    game.make_user_move(1, 7, UUID(int=8), middle_random, tracking)
+    game.make_user_move(
+        1, 7, UUID(int=8), UUID(int=9), UUID(int=10), middle_random, tracking,
+    )
     result = game.result
 
     if object_ == "result":
@@ -509,6 +636,9 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             account=Account(50),
             emojis=[],
             stars_purchases=[],
+            last_games=[
+                LastGame(id=UUID(int=9), user_id=1, game_id=UUID(int=0)),
+            ],
             selected_emoji_id=None,
             number_of_wins=1,
             number_of_draws=0,
@@ -522,6 +652,9 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             account=Account(0),
             emojis=[],
             stars_purchases=[],
+            last_games=[
+                LastGame(id=UUID(int=10), user_id=2, game_id=UUID(int=0)),
+            ],
             selected_emoji_id=None,
             number_of_wins=0,
             number_of_draws=0,
@@ -531,4 +664,12 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
 
     if object_ == "extra_move":
         with raises(AlreadyCompletedGameError):
-            game.make_user_move(2, 5, UUID(int=8), middle_random, tracking)
+            game.make_user_move(
+                2,
+                5,
+                UUID(int=8),
+                UUID(int=9),
+                UUID(int=10),
+                middle_random,
+                tracking,
+            )

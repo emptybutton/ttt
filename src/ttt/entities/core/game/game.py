@@ -163,20 +163,23 @@ class Game:
         self,
         user_id: int,
         game_result_id: UUID,
+        user1_last_game_id: UUID,
+        user2_last_game_id: UUID,
         tracking: Tracking,
     ) -> None:
         """
         :raises ttt.entities.core.game.game.AlreadyCompletedGameError:
         :raises ttt.entities.core.game.game.NotPlayerError:
+        :raises ttt.entities.core.user.user.UserAlreadyLeftGameError:
         """
 
         none(self.result, else_=AlreadyCompletedGameError)
         canceler = not_none(self._user(user_id), else_=NotPlayerError)
 
         if isinstance(self.player1, User):
-            self.player1.leave_game(tracking)
+            self.player1.leave_game(user1_last_game_id, self.id, tracking)
         if isinstance(self.player2, User):
-            self.player2.leave_game(tracking)
+            self.player2.leave_game(user2_last_game_id, self.id, tracking)
 
         self.result = GameCancellationResult(
             game_result_id,
@@ -187,11 +190,13 @@ class Game:
         self.state = GameState.completed
         tracking.register_mutated(self)
 
-    def make_user_move(
+    def make_user_move(  # noqa: PLR0913, PLR0917
         self,
         user_id: int,
         cell_number_int: int,
         game_result_id: UUID,
+        current_user_last_game_id: UUID,
+        not_current_user_last_game_id: UUID,
         player_win_random: Random,
         tracking: Tracking,
     ) -> UserMove:
@@ -236,23 +241,33 @@ class Game:
 
         if self._is_player_winner(current_player, cell.board_position):
             if self.is_against_ai():
-                win = current_player.win_against_ai(tracking)
+                win = current_player.win_against_ai(
+                    current_user_last_game_id, self.id, tracking,
+                )
             else:
                 win = current_player.win_against_user(
                     player_win_random,
+                    current_user_last_game_id,
+                    self.id,
                     tracking,
                 )
 
             if isinstance(not_current_player, User):
-                not_current_player.lose(tracking)
+                not_current_player.lose(
+                    not_current_user_last_game_id, self.id, tracking,
+                )
 
             self._complete(win, game_result_id, tracking)
 
         elif not self._can_continue():
-            current_player.be_draw(tracking)
+            current_player.be_draw(current_user_last_game_id, self.id, tracking)
 
             if isinstance(not_current_player, User):
-                not_current_player.be_draw(tracking)
+                not_current_player.be_draw(
+                    not_current_user_last_game_id,
+                    self.id,
+                    tracking,
+                )
 
             self._complete(
                 win=None,
@@ -273,11 +288,12 @@ class Game:
             filled_cell_number=cell.number(),
         )
 
-    def make_ai_move(
+    def make_ai_move(  # noqa: PLR0913, PLR0917
         self,
         ai_id: UUID,
         cell_number_int: int | None,
         game_result_id: UUID,
+        not_current_user_last_game_id: UUID,
         free_cell_random: Random,
         tracking: Tracking,
     ) -> AiMove:
@@ -301,6 +317,7 @@ class Game:
             return self._make_random_ai_move(
                 current_player,
                 not_current_player,
+                not_current_user_last_game_id,
                 free_cell_random,
                 game_result_id,
                 tracking,
@@ -312,6 +329,7 @@ class Game:
             return self._make_random_ai_move(
                 current_player,
                 not_current_player,
+                not_current_user_last_game_id,
                 free_cell_random,
                 game_result_id,
                 tracking,
@@ -325,6 +343,7 @@ class Game:
             return self._make_random_ai_move(
                 current_player,
                 not_current_player,
+                not_current_user_last_game_id,
                 free_cell_random,
                 game_result_id,
                 tracking,
@@ -336,6 +355,7 @@ class Game:
             return self._make_random_ai_move(
                 current_player,
                 not_current_player,
+                not_current_user_last_game_id,
                 free_cell_random,
                 game_result_id,
                 tracking,
@@ -346,12 +366,16 @@ class Game:
 
         if self._is_player_winner(current_player, cell_position):
             win = current_player.win()
-            not_current_player.lose(tracking)
+            not_current_player.lose(
+                not_current_user_last_game_id, self.id, tracking,
+            )
 
             self._complete(win, game_result_id, tracking)
 
         elif not self._can_continue():
-            not_current_player.be_draw(tracking)
+            not_current_player.be_draw(
+                not_current_user_last_game_id, self.id, tracking,
+            )
 
             self._complete(
                 win=None,
@@ -364,10 +388,11 @@ class Game:
 
         return AiMove(was_random=False, filled_cell_number=cell.number())
 
-    def _make_random_ai_move(
+    def _make_random_ai_move(  # noqa: PLR0913, PLR0917
         self,
         current_player: Ai,
         not_current_player: User,
+        not_current_user_last_game_id: UUID,
         free_cell_random: Random,
         game_result_id: UUID,
         tracking: Tracking,
@@ -379,12 +404,16 @@ class Game:
 
         if self._is_player_winner(current_player, cell.board_position):
             win = current_player.win()
-            not_current_player.lose(tracking)
+            not_current_player.lose(
+                not_current_user_last_game_id, self.id, tracking,
+            )
 
             self._complete(win, game_result_id, tracking)
 
         elif not self._can_continue():
-            not_current_player.be_draw(tracking)
+            not_current_player.be_draw(
+                not_current_user_last_game_id, self.id, tracking,
+            )
 
             self._complete(
                 win=None,
