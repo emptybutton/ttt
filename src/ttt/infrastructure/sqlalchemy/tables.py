@@ -150,11 +150,10 @@ class TableStarsPurchase(Base):
     __tablename__ = "stars_purchases"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
-    location_user_id: Mapped[int] = mapped_column(
+    user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
-    location_chat_id: Mapped[int] = mapped_column(BigInteger())
     stars: Mapped[int]
     payment_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("payments.id", deferrable=True, initially="DEFERRED"),
@@ -176,7 +175,7 @@ class TableStarsPurchase(Base):
     def entity(self) -> StarsPurchase:
         return StarsPurchase(
             id_=self.id,
-            user_id=self.location_user_id,
+            user_id=self.user_id,
             stars=self.stars,
             payment=None if self.payment is None else self.payment.entity(),
         )
@@ -185,8 +184,7 @@ class TableStarsPurchase(Base):
     def of(cls, it: StarsPurchase) -> "TableStarsPurchase":
         return TableStarsPurchase(
             id=it.id_,
-            location_user_id=it.user_id,
-            location_chat_id=it.user_id,
+            user_id=it.user_id,
             stars=it.stars,
             payment_id=None if it.payment is None else it.payment.id_,
         )
@@ -212,7 +210,6 @@ class TableUser(Base):
         ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
-    game_location_chat_id: Mapped[int | None] = mapped_column(BigInteger())
 
     emojis: Mapped[list[TableUserEmoji]] = relationship(
         lazy="selectin",
@@ -220,7 +217,7 @@ class TableUser(Base):
     )
     stars_purchases: Mapped[list[TableStarsPurchase]] = relationship(
         lazy="selectin",
-        foreign_keys=[TableStarsPurchase.location_user_id],
+        foreign_keys=[TableStarsPurchase.user_id],
     )
 
     def entity(self) -> User:
@@ -248,10 +245,8 @@ class TableUser(Base):
     def of(cls, it: User) -> "TableUser":
         if it.game_location is None:
             game_location_game_id = None
-            game_location_chat_id = None
         else:
             game_location_game_id = it.game_location.game_id
-            game_location_chat_id = it.game_location.user_id
 
         return TableUser(
             id=it.id,
@@ -261,7 +256,6 @@ class TableUser(Base):
             number_of_draws=it.number_of_draws,
             number_of_defeats=it.number_of_defeats,
             game_location_game_id=game_location_game_id,
-            game_location_chat_id=game_location_chat_id,
         )
 
 
