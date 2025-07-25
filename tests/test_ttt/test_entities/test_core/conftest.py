@@ -31,7 +31,7 @@ def user1() -> User:
         number_of_wins=0,
         number_of_draws=0,
         number_of_defeats=0,
-        game_location=UserGameLocation(1, 64, UUID(int=0)),
+        game_location=UserGameLocation(1, UUID(int=0)),
     )
 
 
@@ -46,7 +46,7 @@ def user2() -> User:
         number_of_wins=0,
         number_of_draws=0,
         number_of_defeats=0,
-        game_location=UserGameLocation(2, 64, UUID(int=0)),
+        game_location=UserGameLocation(2, UUID(int=0)),
     )
 
 
