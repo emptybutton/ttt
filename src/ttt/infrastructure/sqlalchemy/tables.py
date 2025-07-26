@@ -9,23 +9,27 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from ttt.entities.atomic import Atomic
-from ttt.entities.core.game.ai import Ai, AiType
+from ttt.entities.core.game.ai import Ai, AiDraw, AiLoss, AiType, AiWin
 from ttt.entities.core.game.board import Board
 from ttt.entities.core.game.cell import Cell
 from ttt.entities.core.game.game import (
     Game,
-    GameCancellationResult,
-    GameCompletionResult,
-    GameResult,
     GameState,
     number_of_unfilled_cells,
 )
+from ttt.entities.core.game.game_result import (
+    CancelledGameResult,
+    DecidedGameResult,
+    DrawGameResult,
+    GameResult,
+)
 from ttt.entities.core.game.player import Player
-from ttt.entities.core.game.win import AiWin, Win
 from ttt.entities.core.user.account import Account
+from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.last_game import LastGame
 from ttt.entities.core.user.location import UserGameLocation
+from ttt.entities.core.user.loss import UserLoss
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.user import User
 from ttt.entities.core.user.win import UserWin
@@ -34,7 +38,6 @@ from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.finance.rubles import Rubles
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.text.emoji import Emoji
-from ttt.entities.tools.assertion import not_none
 
 
 class Base(DeclarativeBase): ...
@@ -231,6 +234,7 @@ class TableUser(Base):
         ForeignKey("user_emojis.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
+    rating: Mapped[float]
     number_of_wins: Mapped[int]
     number_of_draws: Mapped[int]
     number_of_defeats: Mapped[int]
@@ -262,16 +266,17 @@ class TableUser(Base):
             location = None
 
         return User(
-            self.id,
-            Account(self.account_stars),
-            [it.entity() for it in self.emojis],
-            [it.entity() for it in self.stars_purchases],
-            [it.entity() for it in self.last_games],
-            self.selected_emoji_id,
-            self.number_of_wins,
-            self.number_of_draws,
-            self.number_of_defeats,
-            location,
+            id=self.id,
+            account=Account(self.account_stars),
+            emojis=[it.entity() for it in self.emojis],
+            stars_purchases=[it.entity() for it in self.stars_purchases],
+            last_games=[it.entity() for it in self.last_games],
+            selected_emoji_id=self.selected_emoji_id,
+            rating=self.rating,
+            number_of_wins=self.number_of_wins,
+            number_of_draws=self.number_of_draws,
+            number_of_defeats=self.number_of_defeats,
+            game_location=location,
         )
 
     @classmethod
@@ -285,6 +290,7 @@ class TableUser(Base):
             id=it.id,
             account_stars=it.account.stars,
             selected_emoji_id=it.selected_emoji_id,
+            rating_float=float(it.rating),
             number_of_wins=it.number_of_wins,
             number_of_draws=it.number_of_draws,
             number_of_defeats=it.number_of_defeats,
@@ -322,105 +328,6 @@ class TableAi(Base):
     @classmethod
     def of(cls, it: Ai) -> "TableAi":
         return TableAi(id=it.id, type=TableAiType.of(it.type))
-
-
-class TableGameResultType(StrEnum):
-    completed = "completed"
-    cancelled = "cancelled"
-
-
-game_result_type = postgresql.ENUM(TableGameResultType, name="game_result_type")
-
-
-class TableGameResult(Base):
-    __tablename__ = "game_results"
-
-    id: Mapped[UUID] = mapped_column(primary_key=True)
-    game_id: Mapped[UUID] = mapped_column(
-        ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
-        unique=True,
-    )
-    type: Mapped[TableGameResultType] = mapped_column(game_result_type)
-
-    win_winner_id: Mapped[int | None] = mapped_column(
-        BigInteger(),
-        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
-        index=True,
-    )
-    win_new_stars: Mapped[int | None]
-
-    ai_win_ai_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("ais.id", deferrable=True, initially="DEFERRED"),
-        index=True,
-    )
-
-    canceler_id: Mapped[int | None] = mapped_column(
-        BigInteger(),
-        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
-        index=True,
-    )
-
-    def entity(self) -> GameResult:
-        win: Win | None
-
-        if self.ai_win_ai_id is not None:
-            win = AiWin(self.ai_win_ai_id)
-        elif self.win_winner_id is None:
-            win = None
-        else:
-            win = UserWin(self.win_winner_id, self.win_new_stars)
-
-        match self.type:
-            case TableGameResultType.completed:
-                return GameCompletionResult(
-                    self.id,
-                    self.game_id,
-                    win,
-                )
-            case TableGameResultType.cancelled:
-                return GameCancellationResult(
-                    self.id,
-                    self.game_id,
-                    not_none(self.canceler_id),
-                )
-
-    @classmethod
-    def of(cls, it: GameResult) -> "TableGameResult":
-        match it:
-            case GameCompletionResult():
-                if it.win is None:
-                    win_winner_id = None
-                    win_new_stars = None
-                    ai_win_ai_id = None
-                elif isinstance(it.win, UserWin):
-                    win_winner_id = it.win.user_id
-                    win_new_stars = it.win.new_stars
-                    ai_win_ai_id = None
-                else:
-                    win_winner_id = None
-                    win_new_stars = None
-                    ai_win_ai_id = it.win.ai_id
-
-                return TableGameResult(
-                    id=it.id,
-                    game_id=it.game_id,
-                    type=TableGameResultType.completed,
-                    win_winner_id=win_winner_id,
-                    win_new_stars=win_new_stars,
-                    ai_win_ai_id=ai_win_ai_id,
-                    canceler_id=None,
-                )
-
-            case GameCancellationResult():
-                return TableGameResult(
-                    id=it.id,
-                    game_id=it.game_id,
-                    type=TableGameResultType.cancelled,
-                    win_winner_id=None,
-                    win_new_stars=None,
-                    ai_win_ai_id=None,
-                    canceler_id=it.canceler_id,
-                )
 
 
 class TableCell(Base):
@@ -522,7 +429,39 @@ class TableGame(Base):
     player1_emoji_str: Mapped[str] = mapped_column(server_default="❌")
     player2_emoji_str: Mapped[str] = mapped_column(server_default="⭕️")
 
-    result: Mapped["TableGameResult | None"] = relationship(lazy="joined")
+    result_decided_game_ai_win_ai_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("ais.id", deferrable=True, initially="DEFERRED"),
+    )
+    result_decided_game_user_win_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
+    )
+    result_decided_game_user_win_new_stars: Mapped[int | None]
+    result_decided_game_user_win_rating_vector: Mapped[float | None]
+    result_decided_game_ai_loss_ai_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("ais.id", deferrable=True, initially="DEFERRED"),
+    )
+    result_decided_game_user_loss_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
+    )
+    result_decided_game_user_loss_rating_vector: Mapped[float | None]
+    result_draw_game_ai_draw1_ai_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("ais.id", deferrable=True, initially="DEFERRED"),
+    )
+    result_draw_game_user_draw1_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
+    )
+    result_draw_game_user_draw1_rating_vector: Mapped[float | None]
+    result_draw_game_ai_draw2_ai_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("ais.id", deferrable=True, initially="DEFERRED"),
+    )
+    result_draw_game_user_draw2_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
+    )
+    result_draw_game_user_draw2_rating_vector: Mapped[float | None]
+    result_cancelled_game_canceler_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
+    )
+
     user1: Mapped["TableUser | None"] = relationship(
         lazy="joined",
         foreign_keys=[user1_id],
@@ -541,38 +480,151 @@ class TableGame(Base):
     )
     cells: Mapped[list["TableCell"]] = relationship(lazy="selectin")
 
+    __table_args__ = (
+        Index(
+            "ix_games_result_decided_game_ai_win_ai_id",
+            result_decided_game_ai_win_ai_id,
+            postgresql_where=(result_decided_game_ai_win_ai_id.is_not(None)),
+        ),
+        Index(
+            "ix_games_result_decided_game_user_win_user_id",
+            result_decided_game_user_win_user_id,
+            postgresql_where=(
+                result_decided_game_user_win_user_id.is_not(None)
+            ),
+        ),
+        Index(
+            "ix_games_result_decided_game_ai_loss_ai_id",
+            result_decided_game_ai_loss_ai_id,
+            postgresql_where=(result_decided_game_ai_loss_ai_id.is_not(None)),
+        ),
+        Index(
+            "ix_games_result_decided_game_user_loss_user_id",
+            result_decided_game_user_loss_user_id,
+            postgresql_where=result_decided_game_user_loss_user_id.is_not(None),
+        ),
+        Index(
+            "ix_games_result_draw_game_ai_draw1_ai_id",
+            result_draw_game_ai_draw1_ai_id,
+            postgresql_where=result_draw_game_ai_draw1_ai_id.is_not(None),
+        ),
+        Index(
+            "ix_games_result_draw_game_user_draw1_user_id",
+            result_draw_game_user_draw1_user_id,
+            postgresql_where=result_draw_game_user_draw1_user_id.is_not(None),
+        ),
+        Index(
+            "ix_games_result_draw_game_ai_draw2_ai_id",
+            result_draw_game_ai_draw2_ai_id,
+            postgresql_where=result_draw_game_ai_draw2_ai_id.is_not(None),
+        ),
+        Index(
+            "ix_games_result_draw_game_user_draw2_user_id",
+            result_draw_game_user_draw2_user_id,
+            postgresql_where=result_draw_game_user_draw2_user_id.is_not(None),
+        ),
+        Index(
+            "ix_games_result_cancelled_game_canceler_id",
+            result_draw_game_user_draw2_user_id,
+            postgresql_where=result_draw_game_user_draw2_user_id.is_not(None),
+        ),
+    )
+
     def entity(self) -> Game:
         board = self._board(it.entity() for it in self.cells)
 
-        player1: Player
-
-        if self.user1 is not None:
-            player1 = self.user1.entity()
-        elif self.ai1 is not None:
-            player1 = self.ai1.entity()
-        else:
-            raise ValueError
-
-        player2: Player
-
-        if self.user2 is not None:
-            player2 = self.user2.entity()
-        elif self.ai2 is not None:
-            player2 = self.ai2.entity()
-        else:
-            raise ValueError
-
         return Game(
             self.id,
-            player1,
+            self._player1(),
             Emoji(self.player1_emoji_str),
-            player2,
+            self._player2(),
             Emoji(self.player2_emoji_str),
             board,
             number_of_unfilled_cells(board),
-            None if self.result is None else self.result.entity(),
+            self._result(),
             self.state.entity(),
         )
+
+    def _player1(self) -> Player:
+        if self.user1 is not None:
+            return self.user1.entity()
+
+        if self.ai1 is not None:
+            return self.ai1.entity()
+
+        raise ValueError
+
+    def _player2(self) -> Player:
+        if self.user2 is not None:
+            return self.user2.entity()
+
+        if self.ai2 is not None:
+            return self.ai2.entity()
+
+        raise ValueError
+
+    def _result(self) -> GameResult | None:  # noqa: C901, PLR0912
+        if self.result_cancelled_game_canceler_id is not None:
+            return CancelledGameResult(self.result_cancelled_game_canceler_id)
+
+        if (
+            self.result_draw_game_user_draw1_user_id is not None
+            or self.result_draw_game_ai_draw1_ai_id is not None
+            or self.result_draw_game_user_draw2_user_id is not None
+            or self.result_draw_game_ai_draw2_ai_id is not None
+        ):
+            if self.result_draw_game_user_draw1_user_id is not None:
+                draw1 = UserDraw(
+                    self.result_draw_game_user_draw1_user_id,
+                    self.result_draw_game_user_draw1_rating_vector,
+                )
+            elif self.result_draw_game_ai_draw1_ai_id is not None:
+                draw1 = AiDraw(self.result_draw_game_ai_draw1_ai_id)
+            else:
+                raise ValueError
+
+            if self.result_draw_game_user_draw2_user_id is not None:
+                draw2 = UserDraw(
+                    self.result_draw_game_user_draw2_user_id,
+                    self.result_draw_game_user_draw2_rating_vector,
+                )
+            elif self.result_draw_game_ai_draw2_ai_id is not None:
+                draw2 = AiDraw(self.result_draw_game_ai_draw2_ai_id)
+            else:
+                raise ValueError
+
+            return DrawGameResult(draw1, draw2)
+
+        if (
+            self.result_decided_game_ai_win_ai_id is not None
+            or self.result_decided_game_user_win_user_id is not None
+            or self.result_decided_game_ai_loss_ai_id is not None
+            or self.result_decided_game_user_loss_user_id is not None
+        ):
+            if self.result_decided_game_ai_win_ai_id is not None:
+                win = AiWin(self.result_decided_game_ai_win_ai_id)
+            elif self.result_decided_game_user_win_user_id is not None:
+                win = UserWin(
+                    self.result_decided_game_user_win_user_id,
+                    self.result_decided_game_user_win_new_stars,
+                    self.result_decided_game_user_win_rating_vector,
+                )
+            else:
+                raise ValueError
+
+            if self.result_decided_game_ai_loss_ai_id is not None:
+                loss = AiLoss(self.result_decided_game_ai_loss_ai_id)
+            elif self.result_decided_game_user_loss_user_id is not None:
+                loss = UserLoss(
+                    self.result_decided_game_user_loss_user_id,
+                    self.result_decided_game_user_loss_rating_vector,
+                )
+            else:
+                raise ValueError
+
+            return DecidedGameResult(win, loss)
+
+        return None
 
     @classmethod
     def of(cls, it: Game) -> "TableGame":
@@ -619,7 +671,7 @@ class TableGame(Base):
 type TableUserAtomic = (
     TableUser | TableUserEmoji | TableStarsPurchase | TableLastGame
 )
-type TableGameAtomic = TableGame | TableGameResult | TableCell | TableAi
+type TableGameAtomic = TableGame | TableCell | TableAi
 type TablePaymentAtomic = TablePayment
 
 type TableAtomic = TableUserAtomic | TableGameAtomic | TablePaymentAtomic
@@ -638,8 +690,6 @@ def table_entity(entity: Atomic) -> TableAtomic:  # noqa: PLR0911
 
         case Game():
             return TableGame.of(entity)
-        case GameCancellationResult() | GameCompletionResult():
-            return TableGameResult.of(entity)
         case Cell():
             return TableCell.of(entity)
         case Ai():
