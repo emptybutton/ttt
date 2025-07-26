@@ -51,12 +51,10 @@ class MakeMoveInGame:
                 if isinstance(user, User)
             )
             (
-                game_result_id,
                 random,
                 current_user_last_game_id,
                 not_current_user_last_game_id,
             ) = await gather(
-                self.uuids.random_uuid(),
                 self.randoms.random(),
                 self.uuids.random_uuid(),
                 self.uuids.random_uuid(),
@@ -67,7 +65,6 @@ class MakeMoveInGame:
                 user_move = game.make_user_move(
                     user_id,
                     cell_number_int,
-                    game_result_id,
                     current_user_last_game_id,
                     not_current_user_last_game_id,
                     random,
@@ -120,12 +117,10 @@ class MakeMoveInGame:
                     )
 
                     (
-                        game_result_id,
                         free_cell_random,
                         ai_move_cell_number_int,
                         not_current_user_last_game_id,
                     ) = await gather(
-                        self.uuids.random_uuid(),
                         self.randoms.random(),
                         self.ai_gateway.next_move_cell_number_int(
                             game,
@@ -136,7 +131,6 @@ class MakeMoveInGame:
                     ai_move = game.make_ai_move(
                         user_move.next_move_ai_id,
                         ai_move_cell_number_int,
-                        game_result_id,
                         not_current_user_last_game_id,
                         free_cell_random,
                         tracking,

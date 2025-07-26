@@ -26,12 +26,10 @@ class CancelGame:
         async with self.transaction:
             (
                 game,
-                game_result_id,
                 user1_last_game_id,
                 user2_last_game_id,
             ) = await gather(
                 self.games.game_with_game_location(user_id),
-                self.uuids.random_uuid(),
                 self.uuids.random_uuid(),
                 self.uuids.random_uuid(),
             )
@@ -49,7 +47,6 @@ class CancelGame:
                 tracking = Tracking()
                 game.cancel(
                     user_id,
-                    game_result_id,
                     user1_last_game_id,
                     user2_last_game_id,
                     tracking,

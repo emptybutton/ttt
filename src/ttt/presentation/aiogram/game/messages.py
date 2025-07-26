@@ -2,13 +2,16 @@ from aiogram.client.bot import Bot
 from aiogram.types import ReplyKeyboardRemove
 from aiogram.utils.formatting import Bold, Text, Underline, as_list
 
+from ttt.entities.core.game.ai import AiWin
 from ttt.entities.core.game.game import (
     Game,
-    GameCancellationResult,
-    GameCompletionResult,
     GameState,
 )
-from ttt.entities.core.game.win import AiWin
+from ttt.entities.core.game.game_result import (
+    CancelledGameResult,
+    DecidedGameResult,
+    DrawGameResult,
+)
 from ttt.entities.core.user.win import UserWin
 from ttt.presentation.aiogram.game.keyboards import (
     game_keyboard,
@@ -95,23 +98,26 @@ async def completed_game_messages(
     user_id: int,
 ) -> None:
     match game.result:
-        case GameCompletionResult(
+        case DecidedGameResult(
             win=UserWin(user_id=winner_id, new_stars=None) as win,
         ) if winner_id == user_id:
             result_emoji = "🎆"
             about_result = "Вы победили!"
-        case GameCompletionResult(
+        case DecidedGameResult(
             win=UserWin(user_id=winner_id, new_stars=int()) as win,
         ) if winner_id == user_id:
             result_emoji = "🎆"
-            about_result = f"Вы победили! +{win.new_stars} 🌟"
-        case GameCompletionResult(win=None):
-            result_emoji = "🕊"
-            about_result = "Ничья!"
-        case GameCompletionResult(win=UserWin(_) | AiWin()):
+            about_result = (
+                f"Вы победили! +{win.new_stars} 🌟"
+                f" и +{win.rating_vector} рейтинга"
+            )
+        case DecidedGameResult(win=UserWin(_) | AiWin()):
             result_emoji = "💀"
             about_result = "Вы проиграли!"
-        case GameCancellationResult():
+        case DrawGameResult():
+            result_emoji = "🕊"
+            about_result = "Ничья!"
+        case CancelledGameResult():
             result_emoji = "👻"
             about_result = "Игра отменена!"
         case _:

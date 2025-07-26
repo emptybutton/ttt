@@ -215,47 +215,55 @@ class Game:
         tracking.register_mutated(self)
 
         if self._is_player_winner(current_player, cell.board_position):
-            if isinstance(not_current_player, User):
-                win = current_player.win_against_user(
-                    not_current_player.rating,
-                    player_win_random,
-                    current_user_last_game_id,
-                    self.id,
-                    tracking,
-                )
-                loss = not_current_player.lose_to_user(
-                    current_player.rating,
-                    not_current_user_last_game_id,
-                    self.id,
-                    tracking,
-                )
-            else:
-                win = current_player.win_against_ai(
-                    current_user_last_game_id, self.id, tracking,
-                )
-                loss = not_current_player.lose()
+            win: PlayerWin
+            loss: PlayerLoss
+
+            match not_current_player:
+                case User():
+                    win = current_player.win_against_user(
+                        not_current_player.rating,
+                        player_win_random,
+                        current_user_last_game_id,
+                        self.id,
+                        tracking,
+                    )
+                    loss = not_current_player.lose_to_user(
+                        current_player.rating,
+                        not_current_user_last_game_id,
+                        self.id,
+                        tracking,
+                    )
+                case Ai():
+                    win = current_player.win_against_ai(
+                        current_user_last_game_id, self.id, tracking,
+                    )
+                    loss = not_current_player.lose()
 
             self._complete_as_decided(win, loss, tracking)
 
         elif not self._can_continue():
-            if isinstance(not_current_player, User):
-                draw1 = current_player.be_draw_against_user(
-                    not_current_player.rating,
-                    current_user_last_game_id,
-                    self.id,
-                    tracking,
-                )
-                draw2 = not_current_player.be_draw_against_user(
-                    not_current_player.rating,
-                    not_current_user_last_game_id,
-                    self.id,
-                    tracking,
-                )
-            else:
-                draw1 = current_player.be_draw_against_ai(
-                    current_user_last_game_id, self.id, tracking,
-                )
-                draw2 = not_current_player.be_draw()
+            draw1: PlayerDraw
+            draw2: PlayerDraw
+
+            match not_current_player:
+                case User():
+                    draw1 = current_player.be_draw_against_user(
+                        not_current_player.rating,
+                        current_user_last_game_id,
+                        self.id,
+                        tracking,
+                    )
+                    draw2 = not_current_player.be_draw_against_user(
+                        not_current_player.rating,
+                        not_current_user_last_game_id,
+                        self.id,
+                        tracking,
+                    )
+                case Ai():
+                    draw1 = current_player.be_draw_against_ai(
+                        current_user_last_game_id, self.id, tracking,
+                    )
+                    draw2 = not_current_player.be_draw()
 
             self._complete_as_draw(draw1, draw2, tracking)
 
@@ -496,7 +504,7 @@ class Game:
 
 
 type GameAtomic = Game | Cell | Ai
-
+    
 
 @dataclass(frozen=True)
 class UsersAlreadyInGameError(Exception):

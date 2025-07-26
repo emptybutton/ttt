@@ -24,6 +24,7 @@ from ttt.entities.core.game.game_result import (
     GameResult,
 )
 from ttt.entities.core.game.player import Player
+from ttt.entities.core.game.player_result import PlayerDraw, PlayerLoss, PlayerWin
 from ttt.entities.core.user.account import Account
 from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.emoji import UserEmoji
@@ -573,6 +574,8 @@ class TableGame(Base):
             or self.result_draw_game_user_draw2_user_id is not None
             or self.result_draw_game_ai_draw2_ai_id is not None
         ):
+            draw1: PlayerDraw
+
             if self.result_draw_game_user_draw1_user_id is not None:
                 draw1 = UserDraw(
                     self.result_draw_game_user_draw1_user_id,
@@ -582,6 +585,8 @@ class TableGame(Base):
                 draw1 = AiDraw(self.result_draw_game_ai_draw1_ai_id)
             else:
                 raise ValueError
+
+            draw2: PlayerDraw
 
             if self.result_draw_game_user_draw2_user_id is not None:
                 draw2 = UserDraw(
@@ -601,6 +606,8 @@ class TableGame(Base):
             or self.result_decided_game_ai_loss_ai_id is not None
             or self.result_decided_game_user_loss_user_id is not None
         ):
+            win: PlayerWin
+
             if self.result_decided_game_ai_win_ai_id is not None:
                 win = AiWin(self.result_decided_game_ai_win_ai_id)
             elif self.result_decided_game_user_win_user_id is not None:
@@ -611,6 +618,8 @@ class TableGame(Base):
                 )
             else:
                 raise ValueError
+
+            loss: PlayerLoss
 
             if self.result_decided_game_ai_loss_ai_id is not None:
                 loss = AiLoss(self.result_decided_game_ai_loss_ai_id)

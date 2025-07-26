@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from structlog.types import FilteringBoundLogger
 
 from ttt.application.game.game.ports.game_log import GameLog
-from ttt.entities.core.game.game import AiMove, Game, UserMove
+from ttt.entities.core.game.game import Game
+from ttt.entities.core.game.move import AiMove, UserMove
 from ttt.entities.core.user.user import User
 
 

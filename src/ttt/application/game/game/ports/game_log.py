@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
-from ttt.entities.core.game.game import AiMove, Game, UserMove
+from ttt.entities.core.game.game import Game
+from ttt.entities.core.game.move import AiMove, UserMove
 from ttt.entities.core.user.user import User
 
 
