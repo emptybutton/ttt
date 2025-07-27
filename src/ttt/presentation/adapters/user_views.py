@@ -54,6 +54,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
                 TableUser.number_of_draws,
                 TableUser.number_of_defeats,
                 TableUser.account_stars,
+                TableUser.rating,
                 TableUserEmoji.emoji_str.label("selected_emoji_str"),
                 TableUser.game_location_game_id.is_not(None).label(
                     "is_in_game",
@@ -84,6 +85,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
             self._bot,
             user_id,
             user_row.account_stars,
+            user_row.rating,
             tuple(emojis),
             user_row.selected_emoji_str,
             user_row.number_of_wins,

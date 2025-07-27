@@ -4,6 +4,7 @@ from aiogram import Bot
 from aiogram.utils.formatting import Bold, Text, as_list
 
 from ttt.entities.core.stars import Stars
+from ttt.presentation.aiogram.common.texts import short_float_text
 from ttt.presentation.aiogram.user.keyboards import stars_prices_keyboard
 
 
@@ -11,6 +12,7 @@ async def profile_message(  # noqa: PLR0913, PLR0917
     bot: Bot,
     chat_id: int,
     stars: int,
+    rating: float,
     emojis: Sequence[str],
     selected_emoji: str | None,
     number_of_wins: int,
@@ -44,6 +46,7 @@ async def profile_message(  # noqa: PLR0913, PLR0917
 
     content = as_list(
         f"🌟 Звёзд: {stars}",
+        f"🏅 Рейтинг: {short_float_text(rating)}",
         *emoji_texts,
         f"🏆 Побед: {number_of_wins}",
         f"💀 Поражений: {number_of_defeats}",

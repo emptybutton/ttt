@@ -13,6 +13,7 @@ from ttt.entities.core.game.game_result import (
     DrawGameResult,
 )
 from ttt.entities.core.user.win import UserWin
+from ttt.presentation.aiogram.common.texts import short_float_text
 from ttt.presentation.aiogram.game.keyboards import (
     game_keyboard,
     keyboard_to_start_game_with_ai,
@@ -98,20 +99,25 @@ async def completed_game_messages(
     user_id: int,
 ) -> None:
     match game.result:
-        case DecidedGameResult(
-            win=UserWin(user_id=winner_id, new_stars=None) as win,
-        ) if winner_id == user_id:
+        case DecidedGameResult(win=UserWin(
+            user_id=winner_id, new_stars=None, rating_vector=None,
+        )) if winner_id == user_id:
             result_emoji = "🎆"
             about_result = "Вы победили!"
-        case DecidedGameResult(
-            win=UserWin(user_id=winner_id, new_stars=int()) as win,
-        ) if winner_id == user_id:
+        case DecidedGameResult(win=UserWin(
+            user_id=winner_id,
+            new_stars=int() as new_stars,
+            rating_vector=float() as rating_vector,
+        )) if winner_id == user_id:
             result_emoji = "🎆"
             about_result = (
-                f"Вы победили! +{win.new_stars} 🌟"
-                f" и +{win.rating_vector} рейтинга"
+                f"Вы победили!"
+                f"\n+{new_stars} 🌟"
+                f"\n+{short_float_text(rating_vector)} 🏅"
             )
-        case DecidedGameResult(win=UserWin(_) | AiWin()):
+        case DecidedGameResult(
+            win=UserWin(user_id=winner_id) | AiWin(ai_id=winner_id),
+        ) if winner_id != user_id:
             result_emoji = "💀"
             about_result = "Вы проиграли!"
         case DrawGameResult():
