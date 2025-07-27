@@ -166,7 +166,7 @@ class Game:
         self.state = GameState.completed
         tracking.register_mutated(self)
 
-    def make_user_move(  # noqa: PLR0913, PLR0917
+    def make_user_move(  # noqa: C901, PLR0913, PLR0917
         self,
         user_id: int,
         cell_number_int: int,
@@ -504,7 +504,7 @@ class Game:
 
 
 type GameAtomic = Game | Cell | Ai
-    
+
 
 @dataclass(frozen=True)
 class UsersAlreadyInGameError(Exception):
