@@ -24,7 +24,11 @@ from ttt.entities.core.game.game_result import (
     GameResult,
 )
 from ttt.entities.core.game.player import Player
-from ttt.entities.core.game.player_result import PlayerDraw, PlayerLoss, PlayerWin
+from ttt.entities.core.game.player_result import (
+    PlayerDraw,
+    PlayerLoss,
+    PlayerWin,
+)
 from ttt.entities.core.user.account import Account
 from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.emoji import UserEmoji
@@ -291,7 +295,7 @@ class TableUser(Base):
             id=it.id,
             account_stars=it.account.stars,
             selected_emoji_id=it.selected_emoji_id,
-            rating_float=float(it.rating),
+            rating=it.rating,
             number_of_wins=it.number_of_wins,
             number_of_draws=it.number_of_draws,
             number_of_defeats=it.number_of_defeats,
@@ -636,7 +640,7 @@ class TableGame(Base):
         return None
 
     @classmethod
-    def of(cls, it: Game) -> "TableGame":
+    def of(cls, it: Game) -> "TableGame":  # noqa: C901, PLR0912, PLR0914, PLR0915
         if isinstance(it.player1, User):
             player1_id = it.player1.id
             ai1_id = None
@@ -651,6 +655,70 @@ class TableGame(Base):
             player2_id = None
             ai2_id = it.player2.id
 
+        result_decided_game_ai_win_ai_id = None
+        result_decided_game_user_win_user_id = None
+        result_decided_game_user_win_new_stars = None
+        result_decided_game_user_win_rating_vector = None
+        result_decided_game_ai_loss_ai_id = None
+        result_decided_game_user_loss_user_id = None
+        result_decided_game_user_loss_rating_vector = None
+        result_draw_game_ai_draw1_ai_id = None
+        result_draw_game_user_draw1_user_id = None
+        result_draw_game_user_draw1_rating_vector = None
+        result_draw_game_ai_draw2_ai_id = None
+        result_draw_game_user_draw2_user_id = None
+        result_draw_game_user_draw2_rating_vector = None
+        result_cancelled_game_canceler_id = None
+
+        match it.result:
+            case CancelledGameResult():
+                result_cancelled_game_canceler_id = it.result.canceler_id
+            case DrawGameResult():
+                if isinstance(it.result.draw1, UserDraw):
+                    result_draw_game_user_draw1_user_id = (
+                        it.result.draw1.user_id
+                    )
+                    result_draw_game_user_draw1_rating_vector = (
+                        it.result.draw1.rating_vector
+                    )
+                else:
+                    result_draw_game_ai_draw1_ai_id = it.result.draw1.ai_id
+
+                if isinstance(it.result.draw2, UserDraw):
+                    result_draw_game_user_draw2_user_id = (
+                        it.result.draw2.user_id
+                    )
+                    result_draw_game_user_draw2_rating_vector = (
+                        it.result.draw2.rating_vector
+                    )
+                else:
+                    result_draw_game_ai_draw2_ai_id = it.result.draw2.ai_id
+
+            case DecidedGameResult():
+                if isinstance(it.result.win, UserWin):
+                    result_decided_game_user_win_user_id = it.result.win.user_id
+                    result_decided_game_user_win_new_stars = (
+                        it.result.win.new_stars
+                    )
+                    result_decided_game_user_win_rating_vector = (
+                        it.result.win.rating_vector
+                    )
+                else:
+                    result_decided_game_ai_win_ai_id = it.result.win.ai_id
+
+                if isinstance(it.result.loss, UserLoss):
+                    result_decided_game_user_loss_user_id = (
+                        it.result.loss.user_id
+                    )
+                    result_decided_game_user_loss_rating_vector = (
+                        it.result.loss.rating_vector
+                    )
+                else:
+                    result_decided_game_ai_loss_ai_id = it.result.loss.ai_id
+
+            case None:
+                ...
+
         return TableGame(
             id=it.id,
             user1_id=player1_id,
@@ -660,6 +728,20 @@ class TableGame(Base):
             ai2_id=ai2_id,
             player2_emoji_str=it.player2_emoji.str_,
             state=TableGameState.of(it.state),
+            result_decided_game_ai_win_ai_id=result_decided_game_ai_win_ai_id,
+            result_decided_game_user_win_user_id=result_decided_game_user_win_user_id,
+            result_decided_game_user_win_new_stars=result_decided_game_user_win_new_stars,
+            result_decided_game_user_win_rating_vector=result_decided_game_user_win_rating_vector,
+            result_decided_game_ai_loss_ai_id=result_decided_game_ai_loss_ai_id,
+            result_decided_game_user_loss_user_id=result_decided_game_user_loss_user_id,
+            result_decided_game_user_loss_rating_vector=result_decided_game_user_loss_rating_vector,
+            result_draw_game_ai_draw1_ai_id=result_draw_game_ai_draw1_ai_id,
+            result_draw_game_user_draw1_user_id=result_draw_game_user_draw1_user_id,
+            result_draw_game_user_draw1_rating_vector=result_draw_game_user_draw1_rating_vector,
+            result_draw_game_ai_draw2_ai_id=result_draw_game_ai_draw2_ai_id,
+            result_draw_game_user_draw2_user_id=result_draw_game_user_draw2_user_id,
+            result_draw_game_user_draw2_rating_vector=result_draw_game_user_draw2_rating_vector,
+            result_cancelled_game_canceler_id=result_cancelled_game_canceler_id,
         )
 
     def _board(self, cells: Iterable[Cell]) -> Board:
