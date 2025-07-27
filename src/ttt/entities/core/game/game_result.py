@@ -10,7 +10,7 @@ from ttt.entities.core.game.player_result import (
 @dataclass(frozen=True)
 class DecidedGameResult:
     win: PlayerWin
-    lose: PlayerLoss
+    loss: PlayerLoss
 
 
 @dataclass(frozen=True)
