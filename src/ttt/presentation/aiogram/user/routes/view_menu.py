@@ -4,21 +4,19 @@ from aiogram.fsm.state import any_state
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
-from ttt.application.user.view_user import ViewUser
+from ttt.application.user.view_menu import ViewMenu
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
 
-view_user_router = Router(name=__name__)
+view_menu_router = Router(name=__name__)
 
 
-@view_user_router.message(
-    any_state, or_f(Command("profile"), (F.text == "Профиль")),
-)
+@view_menu_router.message(any_state, or_f(Command("menu"), (F.text == "Меню")))
 @inject
 async def _(
     message: Message,
-    view_user: FromDishka[ViewUser],
+    view_menu: FromDishka[ViewMenu],
 ) -> None:
     if message.from_user is None:
         await anons_are_rohibited_message(
@@ -27,4 +25,4 @@ async def _(
         )
         return
 
-    await view_user(message.from_user.id)
+    await view_menu(message.from_user.id)

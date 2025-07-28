@@ -19,7 +19,6 @@ from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.user import User
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
 from ttt.presentation.aiogram.common.messages import (
-    help_message,
     need_to_start_message,
 )
 from ttt.presentation.aiogram.user.messages import (
@@ -28,6 +27,7 @@ from ttt.presentation.aiogram.user.messages import (
     emoji_selected_message,
     emoji_was_purchased_message,
     invalid_emoji_message,
+    menu_message,
     not_enough_stars_to_buy_emoji_message,
     profile_message,
     selected_emoji_removed_message,
@@ -35,6 +35,7 @@ from ttt.presentation.aiogram.user.messages import (
     stars_will_be_added_message,
     wait_emoji_message,
     wait_stars_to_start_stars_purchase_message,
+    welcome_message,
 )
 
 
@@ -96,9 +97,9 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
 
     async def user_registered_view(
         self,
-        user_id: int,
+        user: User,
     ) -> None:
-        await help_message(self._bot, user_id)
+        await welcome_message(self._bot, user.id, user.is_in_game())
 
     async def user_is_not_registered_view(
         self,
@@ -108,9 +109,9 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
 
     async def user_already_registered_view(
         self,
-        user_id: int,
+        user: User,
     ) -> None:
-        await help_message(self._bot, user_id)
+        await welcome_message(self._bot, user.id, user.is_in_game())
 
     async def selected_emoji_removed_view(
         self,
@@ -118,6 +119,23 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         /,
     ) -> None:
         await selected_emoji_removed_message(self._bot, user_id)
+
+    async def menu_view(
+        self,
+        user_id: int,
+        /,
+    ) -> None:
+        stmt = (
+            select(TableUser.game_location_game_id.is_not(None))
+            .where(TableUser.id == user_id)
+        )
+        is_user_in_game = await self._session.scalar(stmt)
+
+        if is_user_in_game is None:
+            await need_to_start_message(self._bot, user_id)
+            return
+
+        await menu_message(self._bot, user_id, is_user_in_game)
 
 
 @dataclass(frozen=True, unsafe_hash=False)

@@ -4,21 +4,22 @@ from aiogram.fsm.state import any_state
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
-from ttt.application.user.view_user import ViewUser
+from ttt.application.game.game.back_to_game import BackToGame
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
 
-view_user_router = Router(name=__name__)
+back_to_game_router = Router(name=__name__)
 
 
-@view_user_router.message(
-    any_state, or_f(Command("profile"), (F.text == "Профиль")),
+@back_to_game_router.message(
+    any_state,
+    or_f(Command("back_to_game"), (F.text == "Вернуться к игре")),
 )
 @inject
 async def _(
     message: Message,
-    view_user: FromDishka[ViewUser],
+    back_to_game: FromDishka[BackToGame],
 ) -> None:
     if message.from_user is None:
         await anons_are_rohibited_message(
@@ -27,4 +28,4 @@ async def _(
         )
         return
 
-    await view_user(message.from_user.id)
+    await back_to_game(message.from_user.id)

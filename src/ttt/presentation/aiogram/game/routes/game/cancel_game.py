@@ -1,5 +1,5 @@
-from aiogram import Router
-from aiogram.filters import Command
+from aiogram import F, Router
+from aiogram.filters import Command, or_f
 from aiogram.fsm.state import any_state
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
@@ -12,7 +12,10 @@ from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 cancel_game_router = Router(name=__name__)
 
 
-@cancel_game_router.message(any_state, Command("cancel_game"))
+@cancel_game_router.message(
+    any_state,
+    or_f(Command("cancel_game"), (F.text == "Отменить игру")),
+)
 @inject
 async def _(
     message: Message,

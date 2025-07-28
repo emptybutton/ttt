@@ -224,3 +224,23 @@ class StructlogGameLog(GameLog):
                 for user_id in user_ids
             ),
         )
+
+    async def current_game_viewed(
+        self,
+        user_id: int,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "current_game_viewed",
+            user_id=user_id,
+        )
+
+    async def user_intends_to_start_game(
+        self,
+        user_id: int,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_intends_to_start_game",
+            user_id=user_id,
+        )

@@ -25,26 +25,24 @@ class StructlogCommonUserLog(CommonUserLog):
 
     async def user_registered(
         self,
-        user_id: int,
         user: User,
         /,
     ) -> None:
         await self._logger.ainfo(
             "user_registered",
-            chat_id=user_id,
-            user_id=user_id,
+            chat_id=user.id,
+            user_id=user.id,
         )
 
     async def user_double_registration(
         self,
-        user_id: int,
         user: User,
         /,
     ) -> None:
         await self._logger.ainfo(
             "user_double_registration",
-            chat_id=user_id,
-            user_id=user_id,
+            chat_id=user.id,
+            user_id=user.id,
         )
 
     async def user_viewed(self, user_id: int, /) -> None:
@@ -56,12 +54,18 @@ class StructlogCommonUserLog(CommonUserLog):
 
     async def user_removed_emoji(
         self,
-        user_id: int,
         user: User,
         /,
     ) -> None:
         await self._logger.ainfo(
             "user_removed_emoji",
+            chat_id=user.id,
+            user_id=user.id,
+        )
+
+    async def menu_viewed(self, user_id: int) -> None:
+        await self._logger.ainfo(
+            "menu_viewed",
             chat_id=user_id,
             user_id=user_id,
         )

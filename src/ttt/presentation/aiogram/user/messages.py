@@ -1,11 +1,20 @@
 from collections.abc import Sequence
 
 from aiogram import Bot
-from aiogram.utils.formatting import Bold, Text, as_list
+from aiogram.utils.formatting import (
+    Bold,
+    Italic,
+    Text,
+    Underline,
+    as_list,
+)
 
 from ttt.entities.core.stars import Stars
 from ttt.presentation.aiogram.common.texts import short_float_text
-from ttt.presentation.aiogram.user.keyboards import stars_prices_keyboard
+from ttt.presentation.aiogram.user.keyboards import (
+    main_menu_keyboard,
+    stars_prices_keyboard,
+)
 
 
 async def profile_message(  # noqa: PLR0913, PLR0917
@@ -126,3 +135,28 @@ async def stars_added_message(
     chat_id: int,
 ) -> None:
     await bot.send_message(chat_id, "🌟 Звезды начислились!")
+
+
+async def welcome_message(
+    bot: Bot, chat_id: int, is_user_in_game: bool,  # noqa: FBT001
+) -> None:
+    description = Text(
+        Underline(Italic(Bold("ttt!"))),
+        " — многопользовательские онлайн-крестики-нолики в Telegram.",
+    )
+
+    await bot.send_message(
+        chat_id,
+        reply_markup=main_menu_keyboard(is_user_in_game),
+        **description.as_kwargs(),
+    )
+
+
+async def menu_message(bot: Bot, chat_id: int, is_user_in_game: bool) -> None:  # noqa: FBT001
+    text = "🧭 Выбери свой путь"
+
+    await bot.send_message(
+        chat_id,
+        text=text,
+        reply_markup=main_menu_keyboard(is_user_in_game),
+    )

@@ -7,7 +7,6 @@ class CommonUserLog(ABC):
     @abstractmethod
     async def user_registered(
         self,
-        user_id: int,
         user: User,
         /,
     ) -> None: ...
@@ -15,7 +14,6 @@ class CommonUserLog(ABC):
     @abstractmethod
     async def user_double_registration(
         self,
-        user_id: int,
         user: User,
         /,
     ) -> None: ...
@@ -26,7 +24,9 @@ class CommonUserLog(ABC):
     @abstractmethod
     async def user_removed_emoji(
         self,
-        user_id: int,
         user: User,
         /,
     ) -> None: ...
+
+    @abstractmethod
+    async def menu_viewed(self, user_id: int) -> None: ...

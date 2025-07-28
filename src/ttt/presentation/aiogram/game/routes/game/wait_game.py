@@ -1,7 +1,7 @@
-from aiogram import Router
+from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.state import any_state
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.game.game.wait_game import WaitGame
@@ -26,3 +26,15 @@ async def _(
         return
 
     await wait_game(message.from_user.id)
+
+
+@wait_game_router.callback_query(
+    any_state, F.data == "game_mode_against_user_to_start_game",
+)
+@inject
+async def _(
+    callback: CallbackQuery,
+    wait_game: FromDishka[WaitGame],
+) -> None:
+    await wait_game(callback.from_user.id)
+    await callback.answer()

@@ -1,10 +1,8 @@
 from aiogram.client.bot import Bot
-from aiogram.types import ReplyKeyboardRemove
-from aiogram.utils.formatting import Bold, Text, Underline, as_list
+from aiogram.utils.formatting import Bold, Text, as_list
 
 from ttt.entities.core.game.game import (
     Game,
-    GameState,
 )
 from ttt.entities.core.game.game_result import (
     CancelledGameResult,
@@ -14,15 +12,37 @@ from ttt.entities.core.game.game_result import (
 from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.loss import UserLoss
 from ttt.entities.core.user.win import UserWin
+from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.texts import (
     copy_signed_text,
     short_float_text,
 )
 from ttt.presentation.aiogram.game.keyboards import (
     game_keyboard,
+    keyboard_to_select_game_mode,
     keyboard_to_start_game_with_ai,
 )
-from ttt.presentation.aiogram.game.texts import game_cell
+from ttt.presentation.aiogram.game.texts import (
+    game_cell,
+    move_hint_text_with_emoji,
+    move_hint_text_without_emoji,
+    player_order_text,
+)
+from ttt.presentation.aiogram.user.keyboards import main_menu_keyboard
+
+
+async def game_modes_to_get_started_message(
+    bot: Bot,
+    chat_id: int,
+) -> None:
+    text = Text("⚔️ Выберите режим игры")
+    keyboard = keyboard_to_select_game_mode()
+
+    await bot.send_message(
+        chat_id,
+        **text.as_kwargs(),
+        reply_markup=keyboard,
+    )
 
 
 async def message_to_start_game_with_ai(
@@ -45,25 +65,13 @@ async def started_game_message(
     game: Game,
     user_id: int,
 ) -> None:
-    if user_id == game.player1.id:
-        about_users = Text(
-            Underline("Вы"),
-            f" — {game.player1_emoji.str_}",
-            f", Враг — {game.player2_emoji.str_}",
-        )
-        about_move = "Ходите"
-    else:
-        about_users = Text(
-            f"Враг — {game.player1_emoji.str_}, ",
-            Underline("Вы"),
-            f" — {game.player2_emoji.str_}",
-        )
-        about_move = "Ждите хода врага"
+    player_order_text_ = player_order_text(game, user_id)
+    move_hint_text = move_hint_text_without_emoji(game, user_id)
 
     content = as_list(
         "⚔️ Игра началась",
-        about_users,
-        about_move,
+        player_order_text_,
+        move_hint_text,
     )
     await bot.send_message(
         chat_id,
@@ -78,25 +86,29 @@ async def maked_move_message(
     game: Game,
     user_id: int,
 ) -> None:
-    match user_id, game.state:
-        case (game.player1.id, GameState.wait_player1) | (
-            game.player2.id,
-            GameState.wait_player2,
-        ):
-            message = "🎯 Ходите"
-        case (game.player2.id, GameState.wait_player1) | (
-            game.player1.id,
-            GameState.wait_player2,
-        ):
-            message = "🎯 Ждите хода врага"
-        case _:
-            raise ValueError(game.state, user_id)
+    message = move_hint_text_with_emoji(game, user_id)
 
     keyboard = game_keyboard(game)
     await bot.send_message(chat_id, message, reply_markup=keyboard)
 
 
-async def completed_game_messages(
+async def game_message(
+    bot: Bot,
+    chat_id: int,
+    game: Game,
+    user_id: int,
+) -> None:
+    content = as_list(
+        player_order_text(game, user_id),
+        move_hint_text_without_emoji(game, user_id),
+    )
+
+    await bot.send_message(
+        chat_id, **content.as_kwargs(), reply_markup=game_keyboard(game),
+    )
+
+
+async def completed_game_messages(  # noqa: PLR0914
     bot: Bot,
     chat_id: int,
     game: Game,
@@ -179,14 +191,16 @@ async def completed_game_messages(
         ),
         sep="\n░░░░░░░░░░\n",
     )
-
     content = as_list(about_result, board_content, sep="\n\n")
+
+    user = not_none(game.user(user_id))
+    keyboard = main_menu_keyboard(user.is_in_game())
 
     await bot.send_message(chat_id, result_emoji)
     await bot.send_message(
         chat_id,
         **content.as_kwargs(),
-        reply_markup=ReplyKeyboardRemove(),
+        reply_markup=keyboard,
     )
 
 

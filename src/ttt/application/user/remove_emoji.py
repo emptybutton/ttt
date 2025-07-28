@@ -26,7 +26,7 @@ class RemoveEmoji:
 
             tracking = Tracking()
             user.remove_selected_emoji(tracking)
-            await self.log.user_removed_emoji(user_id, user)
+            await self.log.user_removed_emoji(user)
 
             await self.map_(tracking)
             await self.views.selected_emoji_removed_view(user_id)

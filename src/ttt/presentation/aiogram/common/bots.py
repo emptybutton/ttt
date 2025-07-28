@@ -15,6 +15,7 @@ async def ttt_bot(bot: Bot) -> None:
         ),
         BotCommand(command="buy_emoji", description="Купить эмоджи"),
         BotCommand(command="buy_stars", description="Купить звёзды"),
+        BotCommand(command="back_to_game", description="Вернуться к игре"),
         BotCommand(command="start", description="Запустить бота"),
-        BotCommand(command="help", description="Справка"),
+        BotCommand(command="menu", description="Отобразить меню"),
     ])

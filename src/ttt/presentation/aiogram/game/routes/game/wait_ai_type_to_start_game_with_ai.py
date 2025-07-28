@@ -1,7 +1,7 @@
-from aiogram import Router
+from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.state import any_state
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.game.game.wait_ai_type_to_start_game_with_ai import (
@@ -33,3 +33,16 @@ async def _(
     await wait_ai_type_to_start_game_with_ai(
         message.from_user.id,
     )
+
+
+@wait_ai_type_to_start_game_with_ai_router.callback_query(
+    any_state,
+    F.data == "game_mode_against_ai_to_wait_ai_type_to_start_game",
+)
+@inject
+async def _(
+    callback: CallbackQuery,
+    wait_ai_type_to_start_game_with_ai: FromDishka[WaitAiTypeToStartGameWithAi],
+) -> None:
+    await wait_ai_type_to_start_game_with_ai(callback.from_user.id)
+    await callback.answer()

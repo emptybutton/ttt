@@ -23,11 +23,15 @@ from redis.asyncio import Redis
 from structlog.types import FilteringBoundLogger
 
 from ttt.application.common.ports.emojis import Emojis
+from ttt.application.game.game.back_to_game import BackToGame
 from ttt.application.game.game.cancel_game import CancelGame
 from ttt.application.game.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.start_game import StartGame
 from ttt.application.game.game.start_game_with_ai import StartGameWithAi
+from ttt.application.game.game.view_game_modes_to_get_started import (
+    ViewGameModesToGetStarted,
+)
 from ttt.application.game.game.wait_ai_type_to_start_game_with_ai import (
     WaitAiTypeToStartGameWithAi,
 )
@@ -72,12 +76,13 @@ from ttt.application.user.stars_purchase.start_stars_purchase_payment_completion
 from ttt.application.user.stars_purchase.wait_stars_to_start_stars_purchase import (  # noqa: E501
     WaitStarsToStartStarsPurchase,
 )
+from ttt.application.user.view_menu import ViewMenu
 from ttt.application.user.view_user import ViewUser
 from ttt.infrastructure.buffer import Buffer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
-    BackroundAiogramMessagesAsGameViews,
+    BackroundAiogramMessagesFromPostgresAsGameViews,
 )
 from ttt.presentation.adapters.stars_purchase_payment_gateway import (
     AiogramInAndBufferOutStarsPurchasePaymentGateway,
@@ -137,9 +142,9 @@ class AiogramProvider(Provider):
     )
 
     provide_game_views = provide(
-        BackroundAiogramMessagesAsGameViews,
+        BackroundAiogramMessagesFromPostgresAsGameViews,
         provides=GameViews,
-        scope=Scope.APP,
+        scope=Scope.REQUEST,
     )
 
     provide_user_views = provide(
@@ -285,7 +290,12 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
         StartStarsPurchasePaymentCompletion,
         scope=Scope.REQUEST,
     )
+    provide_view_menu = provide(ViewMenu, scope=Scope.REQUEST)
 
+    provide_view_game_modes_to_get_started = provide(
+        ViewGameModesToGetStarted,
+        scope=Scope.REQUEST,
+    )
     provide_wait_ai_type_to_start_game_with_ai = provide(
         WaitAiTypeToStartGameWithAi,
         scope=Scope.REQUEST,
@@ -298,3 +308,4 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
     provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
     provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
     provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)
+    provide_back_to_game = provide(BackToGame, scope=Scope.REQUEST)

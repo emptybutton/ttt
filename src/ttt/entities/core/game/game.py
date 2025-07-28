@@ -138,6 +138,13 @@ class Game:
     def is_against_user(self) -> bool:
         return not self.is_against_ai()
 
+    def user(self, user_id: int) -> User | None:
+        for user in self._users():
+            if user.id == user_id:
+                return user
+
+        return None
+
     def is_completed(self) -> bool:
         return self.result is not None
 
@@ -155,7 +162,7 @@ class Game:
         """
 
         none(self.result, else_=AlreadyCompletedGameError)
-        canceler = not_none(self._user(user_id), else_=NotPlayerError)
+        canceler = not_none(self.user(user_id), else_=NotPlayerError)
 
         if isinstance(self.player1, User):
             self.player1.leave_game(user1_last_game_id, self.id, tracking)
@@ -446,13 +453,6 @@ class Game:
                 return self.player2
             case GameState.completed:
                 return None
-
-    def _user(self, user_id: int) -> User | None:
-        for user in self._users():
-            if user.id == user_id:
-                return user
-
-        return None
 
     def _players(self) -> tuple[Player, ...]:
         return self.player1, self.player2

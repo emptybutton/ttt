@@ -3,16 +3,22 @@ from dataclasses import dataclass
 
 from aiogram import Bot
 from aiogram.fsm.storage.base import BaseStorage
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.entities.core.game.game import Game
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.infrastructure.background_tasks import BackgroundTasks
+from ttt.infrastructure.sqlalchemy.tables.game import TableGame
+from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 from ttt.presentation.aiogram.game.messages import (
     already_completed_game_message,
     already_filled_cell_message,
     completed_game_messages,
     double_waiting_for_game_message,
+    game_message,
+    game_modes_to_get_started_message,
     maked_move_message,
     message_to_start_game_with_ai,
     no_cell_message,
@@ -25,10 +31,29 @@ from ttt.presentation.aiogram.game.messages import (
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class BackroundAiogramMessagesAsGameViews(GameViews):
+class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
+    _session: AsyncSession
     _tasks: BackgroundTasks
     _bot: Bot
     _storage: BaseStorage
+
+    async def current_game_view_with_user_id(self, user_id: int, /) -> None:
+        join_condition = (
+            (TableUser.id == user_id)
+            & (TableUser.game_location_game_id == TableGame.id)
+        )
+        stmt = select(TableGame).join(TableUser, join_condition)
+        table_game = await self._session.scalar(stmt)
+
+        if table_game is None:
+            self._tasks.create_task(no_game_message(self._bot, user_id))
+        else:
+            self._tasks.create_task(game_message(
+                self._bot,
+                user_id,
+                table_game.entity(),
+                user_id,
+            ))
 
     async def game_view_with_locations(
         self,
@@ -144,6 +169,15 @@ class BackroundAiogramMessagesAsGameViews(GameViews):
     ) -> None:
         self._tasks.create_task(
             double_waiting_for_game_message(self._bot, user_id),
+        )
+
+    async def game_modes_to_get_started_view(
+        self,
+        user_id: int,
+        /,
+    ) -> None:
+        self._tasks.create_task(
+            game_modes_to_get_started_message(self._bot, user_id),
         )
 
     def _to_next_move_message_background_broadcast(

@@ -137,3 +137,17 @@ class GameLog(ABC):
         user_ids: Sequence[int],
         /,
     ) -> None: ...
+
+    @abstractmethod
+    async def current_game_viewed(
+        self,
+        user_id: int,
+        /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def user_intends_to_start_game(
+        self,
+        user_id: int,
+        /,
+    ) -> None: ...
