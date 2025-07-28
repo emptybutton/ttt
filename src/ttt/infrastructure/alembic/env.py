@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from ttt.infrastructure.pydantic_settings.envs import Envs
-from ttt.infrastructure.sqlalchemy.tables import Base
+from ttt.infrastructure.sqlalchemy.tables.common import Base
 
 
 config = context.config

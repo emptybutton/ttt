@@ -503,7 +503,7 @@ class Game:
         tracking.register_mutated(self)
 
 
-type GameAtomic = Game | Cell | Ai
+GameAtomic = Game | Cell | Ai
 
 
 @dataclass(frozen=True)

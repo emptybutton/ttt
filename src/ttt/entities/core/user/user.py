@@ -417,7 +417,7 @@ class User:
         return None
 
 
-type UserAtomic = User | UserEmoji | StarsPurchase | LastGame
+UserAtomic = User | UserEmoji | StarsPurchase | LastGame
 
 
 def register_user(user_id: int, tracking: Tracking) -> User:

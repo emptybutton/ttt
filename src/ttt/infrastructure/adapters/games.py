@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.game.game.ports.games import Games
 from ttt.entities.core.game.game import Game
-from ttt.infrastructure.sqlalchemy.tables import TableGame, TableUser
+from ttt.infrastructure.sqlalchemy.tables.game import TableGame
+from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 
 
 @dataclass(frozen=True, unsafe_hash=False)

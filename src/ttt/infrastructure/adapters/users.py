@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.user.user import User
-from ttt.infrastructure.sqlalchemy.tables import TableUser
+from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 
 
 @dataclass(frozen=True, unsafe_hash=False)

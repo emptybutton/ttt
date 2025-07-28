@@ -17,7 +17,7 @@ from ttt.application.user.stars_purchase.ports.user_views import (
 )
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.user import User
-from ttt.infrastructure.sqlalchemy.tables import TableUser, TableUserEmoji
+from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
 from ttt.presentation.aiogram.common.messages import (
     help_message,
     need_to_start_message,

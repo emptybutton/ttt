@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from ttt.infrastructure.pydantic_settings.envs import Envs
-from ttt.infrastructure.sqlalchemy.tables import Base
+from ttt.infrastructure.sqlalchemy.tables.common import Base
 
 
 @fixture(scope="session")

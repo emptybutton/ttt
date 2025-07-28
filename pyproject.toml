@@ -109,6 +109,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"src/ttt/infrastructure/sqlalchemy/tables/__init__.py" = ["F401"]
 "src/ttt/infrastructure/adapters/*" = ["ARG002"]
 "src/ttt/presentation/adapters/*" = ["ARG002"]
 "src/ttt/presentation/*" = ["RUF001"]
