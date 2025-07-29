@@ -41,3 +41,6 @@ class CommonUserViews(ABC):
 
     @abstractmethod
     async def menu_view(self, user_id: int, /) -> None: ...
+
+    @abstractmethod
+    async def emoji_menu_view(self, user_id: int, /) -> None: ...

@@ -17,20 +17,25 @@ from ttt.application.user.stars_purchase.ports.user_views import (
 )
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.user import User
-from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
+from ttt.infrastructure.sqlalchemy.stmts import (
+    selected_user_emoji_str_from_postgres,
+    user_emojis_from_postgres,
+    user_exists_in_postgres,
+)
+from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
 from ttt.presentation.aiogram.user.messages import (
     emoji_already_purchased_message,
+    emoji_list_message,
+    emoji_menu_message,
     emoji_not_purchased_to_select_message,
-    emoji_selected_message,
     emoji_was_purchased_message,
     invalid_emoji_message,
     menu_message,
     not_enough_stars_to_buy_emoji_message,
     profile_message,
-    selected_emoji_removed_message,
     stars_added_message,
     stars_will_be_added_message,
     wait_emoji_message,
@@ -56,39 +61,24 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
                 TableUser.number_of_defeats,
                 TableUser.account_stars,
                 TableUser.rating,
-                TableUserEmoji.emoji_str.label("selected_emoji_str"),
                 TableUser.game_location_game_id.is_not(None).label(
                     "is_in_game",
                 ),
             )
-            .outerjoin(
-                TableUserEmoji,
-                TableUserEmoji.id == TableUser.selected_emoji_id,
-            )
             .where(TableUser.id == user_id)
         )
-        emoji_stmt = (
-            select(TableUserEmoji.emoji_str)
-            .where(TableUserEmoji.user_id == user_id)
-            .order_by(TableUserEmoji.datetime_of_purchase)
-        )
-
-        user_result = await self._session.execute(user_stmt)
-        user_row = user_result.first()
+        result = await self._session.execute(user_stmt)
+        user_row = result.first()
 
         if user_row is None:
             await need_to_start_message(self._bot, user_id)
             return
-
-        emojis = await self._session.scalars(emoji_stmt)
 
         await profile_message(
             self._bot,
             user_id,
             user_row.account_stars,
             user_row.rating,
-            tuple(emojis),
-            user_row.selected_emoji_str,
             user_row.number_of_wins,
             user_row.number_of_draws,
             user_row.number_of_defeats,
@@ -118,7 +108,18 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         user_id: int,
         /,
     ) -> None:
-        await selected_emoji_removed_message(self._bot, user_id)
+        if not await user_exists_in_postgres(self._session, user_id):
+            await need_to_start_message(self._bot, user_id)
+            return
+
+        emojis = await user_emojis_from_postgres(self._session, user_id)
+        selected_user_emoji_str = await selected_user_emoji_str_from_postgres(
+            self._session, user_id,
+        )
+
+        await emoji_menu_message(
+            self._bot, user_id, emojis, selected_user_emoji_str,
+        )
 
     async def menu_view(
         self,
@@ -136,6 +137,20 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
             return
 
         await menu_message(self._bot, user_id, is_user_in_game)
+
+    async def emoji_menu_view(self, user_id: int, /) -> None:
+        if not await user_exists_in_postgres(self._session, user_id):
+            await need_to_start_message(self._bot, user_id)
+            return
+
+        emojis = await user_emojis_from_postgres(self._session, user_id)
+        selected_user_emoji_str = await selected_user_emoji_str_from_postgres(
+            self._session, user_id,
+        )
+
+        await emoji_menu_message(
+            self._bot, user_id, emojis, selected_user_emoji_str,
+        )
 
 
 @dataclass(frozen=True, unsafe_hash=False)
@@ -176,8 +191,11 @@ class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class AiogramMessagesAsEmojiSelectionUserViews(EmojiSelectionUserViews):
+class AiogramMessagesFromPostgresAsEmojiSelectionUserViews(
+    EmojiSelectionUserViews,
+):
     _bot: Bot
+    _session: AsyncSession
 
     async def invalid_emoji_to_select_view(
         self,
@@ -198,7 +216,18 @@ class AiogramMessagesAsEmojiSelectionUserViews(EmojiSelectionUserViews):
         user_id: int,
         /,
     ) -> None:
-        await emoji_selected_message(self._bot, user_id)
+        if not await user_exists_in_postgres(self._session, user_id):
+            await need_to_start_message(self._bot, user_id)
+            return
+
+        emojis = await user_emojis_from_postgres(self._session, user_id)
+        selected_user_emoji_str = await selected_user_emoji_str_from_postgres(
+            self._session, user_id,
+        )
+
+        await emoji_list_message(
+            self._bot, user_id, emojis, selected_user_emoji_str,
+        )
 
     async def wait_emoji_to_select_view(
         self,

@@ -1,5 +1,5 @@
-from aiogram import Router
-from aiogram.filters import Command
+from aiogram import F, Router
+from aiogram.filters import Command, or_f
 from aiogram.fsm.state import any_state
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
@@ -14,7 +14,10 @@ from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 wait_emoji_to_buy_select_router = Router(name=__name__)
 
 
-@wait_emoji_to_buy_select_router.message(any_state, Command("select_emoji"))
+@wait_emoji_to_buy_select_router.message(
+    any_state,
+    or_f(Command("select_emoji"), F.text == "Выбрать эмоджи"),
+)
 @inject
 async def _(
     message: Message,

@@ -76,6 +76,7 @@ from ttt.application.user.stars_purchase.start_stars_purchase_payment_completion
 from ttt.application.user.stars_purchase.wait_stars_to_start_stars_purchase import (  # noqa: E501
     WaitStarsToStartStarsPurchase,
 )
+from ttt.application.user.view_emoji_menu import ViewEmojiMenu
 from ttt.application.user.view_menu import ViewMenu
 from ttt.application.user.view_user import ViewUser
 from ttt.infrastructure.buffer import Buffer
@@ -90,9 +91,9 @@ from ttt.presentation.adapters.stars_purchase_payment_gateway import (
 from ttt.presentation.adapters.user_fsm import AiogramTrustingUserFsm
 from ttt.presentation.adapters.user_views import (
     AiogramMessagesAsEmojiPurchaseUserViews,
-    AiogramMessagesAsEmojiSelectionUserViews,
     AiogramMessagesAsStarsPurchaseUserViews,
     AiogramMessagesFromPostgresAsCommonUserViews,
+    AiogramMessagesFromPostgresAsEmojiSelectionUserViews,
 )
 from ttt.presentation.aiogram.common.bots import ttt_bot
 from ttt.presentation.aiogram.common.routes.all import common_routers
@@ -158,9 +159,9 @@ class AiogramProvider(Provider):
         scope=Scope.APP,
     )
     provide_emoji_selection_user_views = provide(
-        AiogramMessagesAsEmojiSelectionUserViews,
+        AiogramMessagesFromPostgresAsEmojiSelectionUserViews,
         provides=EmojiSelectionUserViews,
-        scope=Scope.APP,
+        scope=Scope.REQUEST,
     )
     provide_emoji_purchase_user_views = provide(
         AiogramMessagesAsEmojiPurchaseUserViews,
@@ -309,3 +310,4 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
     provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
     provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)
     provide_back_to_game = provide(BackToGame, scope=Scope.REQUEST)
+    provide_view_emoji_menu = provide(ViewEmojiMenu, scope=Scope.REQUEST)

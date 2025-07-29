@@ -70,6 +70,13 @@ class StructlogCommonUserLog(CommonUserLog):
             user_id=user_id,
         )
 
+    async def emoji_menu_viewed(self, user_id: int) -> None:
+        await self._logger.ainfo(
+            "emoji_menu_viewed",
+            chat_id=user_id,
+            user_id=user_id,
+        )
+
 
 @dataclass(frozen=True, unsafe_hash=False)
 class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):

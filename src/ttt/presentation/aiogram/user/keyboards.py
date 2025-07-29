@@ -25,6 +25,16 @@ def main_menu_keyboard(is_user_in_game: bool) -> ReplyKeyboardMarkup:  # noqa: F
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
 
+def emoji_menu_keyboard() -> ReplyKeyboardMarkup:
+    keyboard = [
+        [KeyboardButton(text="Выбрать эмоджи")],
+        [KeyboardButton(text="Убрать эмоджи")],
+        [KeyboardButton(text="Меню")],
+    ]
+
+    return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+
+
 def stars_prices_keyboard() -> InlineKeyboardMarkup:
     buttons = [
         [

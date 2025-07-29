@@ -28,6 +28,9 @@ from ttt.presentation.aiogram.user.routes.stars_purchase.start_stars_purchase im
 from ttt.presentation.aiogram.user.routes.stars_purchase.wait_stars_to_start_stars_purchase import (  # noqa: E501
     wait_stars_to_start_stars_purchase_router,
 )
+from ttt.presentation.aiogram.user.routes.view_emoji_menu import (
+    view_emoji_menu_router,
+)
 from ttt.presentation.aiogram.user.routes.view_menu import view_menu_router
 from ttt.presentation.aiogram.user.routes.view_user import (
     view_user_router,
@@ -47,4 +50,5 @@ user_routers = (
     handle_pre_checkout_query_router,
     wait_stars_to_start_stars_purchase_router,
     view_menu_router,
+    view_emoji_menu_router,
 )

@@ -12,9 +12,11 @@ from aiogram.utils.formatting import (
 from ttt.entities.core.stars import Stars
 from ttt.presentation.aiogram.common.texts import short_float_text
 from ttt.presentation.aiogram.user.keyboards import (
+    emoji_menu_keyboard,
     main_menu_keyboard,
     stars_prices_keyboard,
 )
+from ttt.presentation.aiogram.user.texts import emoji_list_text
 
 
 async def profile_message(  # noqa: PLR0913, PLR0917
@@ -22,8 +24,6 @@ async def profile_message(  # noqa: PLR0913, PLR0917
     chat_id: int,
     stars: int,
     rating: float,
-    emojis: Sequence[str],
-    selected_emoji: str | None,
     number_of_wins: int,
     number_of_draws: int,
     number_of_defeats: int,
@@ -41,22 +41,9 @@ async def profile_message(  # noqa: PLR0913, PLR0917
     else:
         winning_percentage_text = None
 
-    if emojis:
-        emoji_value_texts = (
-            Text(Bold("<", selected_emoji, ">"))
-            if emoji == selected_emoji
-            else Text(emoji)
-            for emoji in emojis
-        )
-        emoji_text_values = as_list(*emoji_value_texts, sep="")
-        emoji_texts = [Text("🎭 Эмоджи: ", emoji_text_values)]
-    else:
-        emoji_texts = []
-
     content = as_list(
         f"🌟 Звёзд: {stars}",
         f"🏅 Рейтинг: {short_float_text(rating)}",
-        *emoji_texts,
         f"🏆 Побед: {number_of_wins}",
         f"💀 Поражений: {number_of_defeats}",
         f"🕊️ Ничьих: {number_of_draws}",
@@ -68,6 +55,39 @@ async def profile_message(  # noqa: PLR0913, PLR0917
         "⚔️ Сейчас в игре" if is_in_game else "💤 Сейчас не в игре",
     )
     await bot.send_message(chat_id, **content.as_kwargs())
+
+
+async def emoji_menu_message(
+    bot: Bot,
+    chat_id: int,
+    emojis: Sequence[str],
+    selected_emoji: str | None,
+) -> None:
+    emoji_list_text_ = emoji_list_text(emojis, selected_emoji)
+
+    if emoji_list_text_ is not None:
+        keyboard = emoji_menu_keyboard()
+        await bot.send_message(
+            chat_id, **emoji_list_text_.as_kwargs(), reply_markup=keyboard,
+        )
+    else:
+        emoji_text = Text("🎭 У вас нет купленных эмоджи")
+        await bot.send_message(chat_id, **emoji_text.as_kwargs())
+
+
+async def emoji_list_message(
+    bot: Bot,
+    chat_id: int,
+    emojis: Sequence[str],
+    selected_emoji: str | None,
+) -> None:
+    emoji_list_text_ = emoji_list_text(emojis, selected_emoji)
+
+    if emoji_list_text_ is not None:
+        await bot.send_message(chat_id, **emoji_list_text_.as_kwargs())
+    else:
+        emoji_text = Text("🎭 У вас нет купленных эмоджи")
+        await bot.send_message(chat_id, **emoji_text.as_kwargs())
 
 
 async def wait_emoji_message(bot: Bot, chat_id: int) -> None:
@@ -102,10 +122,6 @@ async def emoji_was_purchased_message(bot: Bot, chat_id: int) -> None:
 
 async def emoji_not_purchased_to_select_message(bot: Bot, chat_id: int) -> None:
     await bot.send_message(chat_id, "❌ Эмоджи ещё не куплен!")
-
-
-async def emoji_selected_message(bot: Bot, chat_id: int) -> None:
-    await bot.send_message(chat_id, "🎭 Эмоджи выбран")
 
 
 async def selected_emoji_removed_message(bot: Bot, chat_id: int) -> None:

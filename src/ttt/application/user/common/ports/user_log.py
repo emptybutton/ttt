@@ -30,3 +30,6 @@ class CommonUserLog(ABC):
 
     @abstractmethod
     async def menu_viewed(self, user_id: int) -> None: ...
+
+    @abstractmethod
+    async def emoji_menu_viewed(self, user_id: int) -> None: ...
