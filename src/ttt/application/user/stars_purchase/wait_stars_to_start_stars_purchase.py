@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from ttt.application.user.common.ports.user_fsm import UserFsm
 from ttt.application.user.stars_purchase.ports.user_log import (
     StarsPurchaseUserLog,
 )
@@ -11,7 +10,6 @@ from ttt.application.user.stars_purchase.ports.user_views import (
 
 @dataclass(frozen=True, unsafe_hash=False)
 class WaitStarsToStartStarsPurchase:
-    fsm: UserFsm
     views: StarsPurchaseUserViews
     log: StarsPurchaseUserLog
 

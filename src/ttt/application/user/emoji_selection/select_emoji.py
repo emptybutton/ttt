@@ -2,12 +2,12 @@ from dataclasses import dataclass
 
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.transaction import Transaction
-from ttt.application.user.common.ports.user_fsm import (
-    UserFsm,
-    WaitingEmojiToSelectState,
-)
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
+from ttt.application.user.emoji_selection.ports.user_fsm import (
+    EmojiSelectionUserFsm,
+    WaitingEmojiToSelectState,
+)
 from ttt.application.user.emoji_selection.ports.user_log import (
     EmojiSelectionUserLog,
 )
@@ -21,7 +21,7 @@ from ttt.entities.tools.tracking import Tracking
 
 @dataclass(frozen=True, unsafe_hash=False)
 class SelectEmoji:
-    fsm: UserFsm
+    fsm: EmojiSelectionUserFsm
     transaction: Transaction
     users: Users
     user_views: CommonUserViews

@@ -37,15 +37,18 @@ from ttt.application.game.game.wait_ai_type_to_start_game_with_ai import (
 )
 from ttt.application.game.game.wait_game import WaitGame
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
-from ttt.application.user.common.ports.user_fsm import UserFsm
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
+from ttt.application.user.emoji_purchase.ports.user_fsm import (
+    EmojiPurchaseUserFsm,
+)
 from ttt.application.user.emoji_purchase.ports.user_views import (
     EmojiPurchaseUserViews,
 )
 from ttt.application.user.emoji_purchase.wait_emoji_to_buy import (
     WaitEmojiToBuy,
 )
+from ttt.application.user.emoji_selection.ports.user_fsm import EmojiSelectionUserFsm
 from ttt.application.user.emoji_selection.ports.user_views import (
     EmojiSelectionUserViews,
 )
@@ -88,7 +91,10 @@ from ttt.presentation.adapters.game_views import (
 from ttt.presentation.adapters.stars_purchase_payment_gateway import (
     AiogramInAndBufferOutStarsPurchasePaymentGateway,
 )
-from ttt.presentation.adapters.user_fsm import AiogramTrustingUserFsm
+from ttt.presentation.adapters.user_fsm import (
+    AiogramEmojiPurchaseUserFsm,
+    AiogramEmojiSelectionUserFsm,
+)
 from ttt.presentation.adapters.user_views import (
     AiogramMessagesAsEmojiPurchaseUserViews,
     AiogramMessagesAsStarsPurchaseUserViews,
@@ -235,9 +241,15 @@ class AiogramRequestDataProvider(Provider):
     ) -> FSMContext:
         return cast(FSMContext, middleware_data["state"])
 
-    provide_user_fsm = provide(
-        AiogramTrustingUserFsm,
-        provides=UserFsm,
+    provide_emoji_purchase_user_fsm = provide(
+        AiogramEmojiPurchaseUserFsm,
+        provides=EmojiPurchaseUserFsm,
+        scope=Scope.REQUEST,
+    )
+
+    provide_emoji_selection_user_fsm = provide(
+        AiogramEmojiSelectionUserFsm,
+        provides=EmojiSelectionUserFsm,
         scope=Scope.REQUEST,
     )
 

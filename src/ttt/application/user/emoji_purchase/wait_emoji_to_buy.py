@@ -1,8 +1,8 @@
 from asyncio import gather
 from dataclasses import dataclass
 
-from ttt.application.user.common.ports.user_fsm import (
-    UserFsm,
+from ttt.application.user.emoji_purchase.ports.user_fsm import (
+    EmojiPurchaseUserFsm,
     WaitingEmojiToBuyState,
 )
 from ttt.application.user.emoji_purchase.ports.user_log import (
@@ -15,7 +15,7 @@ from ttt.application.user.emoji_purchase.ports.user_views import (
 
 @dataclass(frozen=True, unsafe_hash=False)
 class WaitEmojiToBuy:
-    fsm: UserFsm
+    fsm: EmojiPurchaseUserFsm
     user_views: EmojiPurchaseUserViews
     log: EmojiPurchaseUserLog
 

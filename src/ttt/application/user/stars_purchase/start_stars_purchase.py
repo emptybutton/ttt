@@ -5,7 +5,6 @@ from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
-from ttt.application.user.common.ports.user_fsm import UserFsm
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.application.user.stars_purchase.ports.stars_purchase_payment_gateway import (  # noqa: E501
@@ -27,7 +26,6 @@ from ttt.entities.tools.tracking import Tracking
 
 @dataclass(frozen=True, unsafe_hash=False)
 class StartStarsPurchase:
-    fsm: UserFsm
     transaction: Transaction
     users: Users
     uuids: UUIDs
@@ -47,7 +45,6 @@ class StartStarsPurchase:
 
             if user is None:
                 await self.common_views.user_is_not_registered_view(user_id)
-                await self.fsm.set(None)
                 return
 
             tracking = Tracking()
@@ -62,7 +59,6 @@ class StartStarsPurchase:
                     user,
                     stars,
                 )
-                await self.fsm.set(None)
                 await (
                     self.stars_purchase_views
                     .invalid_stars_for_stars_purchase_view(user_id)
@@ -72,7 +68,6 @@ class StartStarsPurchase:
             await self.log.user_started_stars_puchase(user)
 
             await self.map_(tracking)
-            await self.fsm.set(None)
             await gather(*[
                 self.payment_gateway.send_invoice(it)
                 for it in tracking.new

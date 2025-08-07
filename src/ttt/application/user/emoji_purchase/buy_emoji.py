@@ -5,12 +5,12 @@ from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
-from ttt.application.user.common.ports.user_fsm import (
-    UserFsm,
-    WaitingEmojiToBuyState,
-)
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
+from ttt.application.user.emoji_purchase.ports.user_fsm import (
+    EmojiPurchaseUserFsm,
+    WaitingEmojiToBuyState,
+)
 from ttt.application.user.emoji_purchase.ports.user_log import (
     EmojiPurchaseUserLog,
 )
@@ -27,7 +27,7 @@ from ttt.entities.tools.tracking import Tracking
 
 @dataclass(frozen=True, unsafe_hash=False)
 class BuyEmoji:
-    fsm: UserFsm
+    fsm: EmojiPurchaseUserFsm
     uuids: UUIDs
     clock: Clock
     transaction: Transaction
