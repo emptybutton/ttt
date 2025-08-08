@@ -99,13 +99,13 @@ services:
 
 volumes:
   backend-data:
-    name: "ttt-dev-postgres-backend-data"
+    name: "ttt-dev-backend-data"
   postgres-data:
-    name: "ttt-dev-postgres-postgres-data"
+    name: "ttt-dev-postgres-data"
   redis-data:
-    name: "ttt-dev-postgres-redis-data"
+    name: "ttt-dev-redis-data"
   nats-data:
-    name: "ttt-dev-postgres-nats-data"
+    name: "ttt-dev-nats-data"
 
 secrets:
   secrets:

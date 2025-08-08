@@ -4,7 +4,8 @@ from typing import cast
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.storage.base import BaseStorage
+from aiogram.fsm.storage.base import BaseStorage, DefaultKeyBuilder
+from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import (
     CallbackQuery,
@@ -12,6 +13,7 @@ from aiogram.types import (
     PreCheckoutQuery,
     TelegramObject,
 )
+from aiogram_dialog import setup_dialogs
 from dishka import (
     Provider,
     Scope,
@@ -48,7 +50,9 @@ from ttt.application.user.emoji_purchase.ports.user_views import (
 from ttt.application.user.emoji_purchase.wait_emoji_to_buy import (
     WaitEmojiToBuy,
 )
-from ttt.application.user.emoji_selection.ports.user_fsm import EmojiSelectionUserFsm
+from ttt.application.user.emoji_selection.ports.user_fsm import (
+    EmojiSelectionUserFsm,
+)
 from ttt.application.user.emoji_selection.ports.user_views import (
     EmojiSelectionUserViews,
 )
@@ -79,8 +83,6 @@ from ttt.application.user.stars_purchase.start_stars_purchase_payment_completion
 from ttt.application.user.stars_purchase.wait_stars_to_start_stars_purchase import (  # noqa: E501
     WaitStarsToStartStarsPurchase,
 )
-from ttt.application.user.view_emoji_menu import ViewEmojiMenu
-from ttt.application.user.view_menu import ViewMenu
 from ttt.application.user.view_user import ViewUser
 from ttt.infrastructure.buffer import Buffer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
@@ -102,6 +104,7 @@ from ttt.presentation.adapters.user_views import (
     AiogramMessagesFromPostgresAsEmojiSelectionUserViews,
 )
 from ttt.presentation.aiogram.common.bots import ttt_bot
+from ttt.presentation.aiogram.common.dialogs import dialog
 from ttt.presentation.aiogram.common.routes.all import common_routers
 from ttt.presentation.aiogram.game.routes.all import game_routers
 from ttt.presentation.aiogram.user.routes.all import user_routers
@@ -121,16 +124,20 @@ class AiogramProvider(Provider):
 
     @provide(scope=Scope.APP)
     def provide_strage(self, redis: Redis) -> BaseStorage:
-        return RedisStorage(redis)
+        return RedisStorage(redis, DefaultKeyBuilder(with_destiny=True))
 
     @provide(scope=Scope.APP)
     def provide_dp(self, storage: BaseStorage) -> Dispatcher:
         dp = Dispatcher(name="main", storage=storage)
+
         dp.include_routers(
             *common_routers,
             *user_routers,
             *game_routers,
         )
+
+        dp.include_routers(dialog)
+        setup_dialogs(dp)
 
         return dp
 
@@ -303,7 +310,6 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
         StartStarsPurchasePaymentCompletion,
         scope=Scope.REQUEST,
     )
-    provide_view_menu = provide(ViewMenu, scope=Scope.REQUEST)
 
     provide_view_game_modes_to_get_started = provide(
         ViewGameModesToGetStarted,
@@ -322,4 +328,3 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
     provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
     provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)
     provide_back_to_game = provide(BackToGame, scope=Scope.REQUEST)
-    provide_view_emoji_menu = provide(ViewEmojiMenu, scope=Scope.REQUEST)

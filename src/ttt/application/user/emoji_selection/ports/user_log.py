@@ -14,13 +14,6 @@ class EmojiSelectionUserLog(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def user_intends_to_select_emoji(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
     async def emoji_not_purchased_to_select(
         self,
         user: User,

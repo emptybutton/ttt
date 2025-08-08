@@ -11,7 +11,6 @@ from ttt.entities.tools.tracking import Tracking
 @dataclass(frozen=True, unsafe_hash=False)
 class RegisterUser:
     transaction: Transaction
-    views: CommonUserViews
     map_: Map
     log: CommonUserLog
 
@@ -24,7 +23,5 @@ class RegisterUser:
                 await self.map_(tracking)
             except NotUniqueUserIdError:
                 await self.log.user_double_registration(user)
-                await self.views.user_already_registered_view(user)
             else:
                 await self.log.user_registered(user)
-                await self.views.user_registered_view(user)
