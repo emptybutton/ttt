@@ -10,7 +10,7 @@ from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.user.register_user import RegisterUser
 from ttt.entities.tools.assertion import not_none
-from ttt.presentation.aiogram.common.fsm import CommonState
+from ttt.presentation.aiogram.common.dialogs import DialogState
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
 
@@ -32,4 +32,4 @@ async def _(
         return
 
     await register_user(message.from_user.id)
-    await dialog_manager.start(CommonState.main, mode=StartMode.RESET_STACK)
+    await dialog_manager.start(DialogState.main, mode=StartMode.RESET_STACK)

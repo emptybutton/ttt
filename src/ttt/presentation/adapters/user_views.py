@@ -22,7 +22,7 @@ from ttt.infrastructure.sqlalchemy.stmts import (
     user_emojis_from_postgres,
     user_exists_in_postgres,
 )
-from ttt.infrastructure.sqlalchemy.tables.user import TableUser
+from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
@@ -83,6 +83,16 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
             user_row.number_of_draws,
             user_row.number_of_defeats,
             user_row.is_in_game,
+        )
+
+    async def view_of_user_emojis_with_id(
+        self,
+        user_id: int,
+        /,
+    ) -> None:
+        emojis = await user_emojis_from_postgres(self._session, user_id)
+        selected_user_emoji_str = await selected_user_emoji_str_from_postgres(
+            self._session, user_id,
         )
 
     async def user_registered_view(

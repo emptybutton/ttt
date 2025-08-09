@@ -12,6 +12,13 @@ class CommonUserViews(ABC):
     ) -> None: ...
 
     @abstractmethod
+    async def view_of_user_emojis_with_id(
+        self,
+        user_id: int,
+        /,
+    ) -> None: ...
+
+    @abstractmethod
     async def user_is_not_registered_view(
         self,
         user_id: int,

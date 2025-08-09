@@ -1,16 +1,22 @@
 from asyncio import Future
+import random
 from typing import Any
 
-from dishka.integrations.aiogram_dialog import inject
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery
 from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog.api.internal import Widget
 from aiogram_dialog.widgets.kbd import Button, ListGroup, Select, SwitchTo
 from aiogram_dialog.widgets.text import Case, Const, Format, Multi
+from dishka import FromDishka
+from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
+from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
+from ttt.application.user.remove_emoji import RemoveEmoji
 
-class CommonState(StatesGroup):
+
+class DialogState(StatesGroup):
     main = State()
     emojis = State()
     game_mode_to_start_game = State()
@@ -42,11 +48,11 @@ main_window = Window(
     SwitchTo(
         Const("Эмоджи"),
         id="emojis",
-        state=CommonState.emojis,
+        state=DialogState.emojis,
         when="has_user_emojis",
     ),
     Button(Const("Магазин"), id="shop"),
-    state=CommonState.main,
+    state=DialogState.main,
     getter=main_getter,
 )
 
@@ -55,29 +61,41 @@ start_game_window = Window(
     Const("⚔️ Выберите режим игры"),
     Button(Const("👥 Против человека"), id="game_against_user"),
     Button(Const("🤖 Против ИИ"), id="game_against_ai"),
-    SwitchTo(Const("Назад"), id="back", state=CommonState.main),
-    state=CommonState.game_mode_to_start_game,
+    SwitchTo(Const("Назад"), id="back", state=DialogState.main),
+    state=DialogState.game_mode_to_start_game,
 )
 
 
 async def emoji_getter(**_: Any) -> dict[str, Any]:
+    emojis = [
+        {"id": "🐢", "view": "🐢"},
+        {"id": "🍉", "view": "<🍉>"},
+        {"id": "🐞", "view": "🐞"},
+    ]
+    random.shuffle(emojis)
+
     return {
-        "emojis": [
-            {"id": "🐢", "view": "🐢"},
-            {"id": "🍉", "view": "<🍉>"},
-            {"id": "🐞", "view": "🐞"},
-        ],
+        "emojis": emojis,
     }
 
 
 @inject
 async def on_emoji_selected(
     callback: CallbackQuery,
-    widget: Any,
-    manager: DialogManager,
-    emoji: str,
-):
-    print("Emoji selected:", item_id)
+    widget: Widget,
+    dialog_manager: DialogManager,
+    emoji_str: str,
+    select_emoji: FromDishka[SelectEmoji],
+) -> None:
+    await select_emoji(callback.from_user.id, emoji_str)
+
+
+@inject
+async def on_selected_emoji_removed(
+    callback: CallbackQuery,
+    remove_emoji: FromDishka[RemoveEmoji],
+) -> None:
+    await remove_emoji(callback.from_user.id)
 
 
 emoji_window = Window(
@@ -89,8 +107,13 @@ emoji_window = Window(
         items="emojis",
         on_click=on_emoji_selected,
     ),
-    SwitchTo(Const("Назад"), id="back", state=CommonState.main),
-    state=CommonState.emojis,
+    Button(
+        Const("Убрать"),
+        id="remove_selected_emoji",
+        on_click=on_selected_emoji_removed,
+    ),
+    SwitchTo(Const("Назад"), id="back", state=DialogState.main),
+    state=DialogState.emojis,
     getter=emoji_getter,
 )
 

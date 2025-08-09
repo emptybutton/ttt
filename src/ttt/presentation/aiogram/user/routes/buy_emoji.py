@@ -1,27 +1,23 @@
-from aiogram import F, Router
-from aiogram.filters import Command, or_f
+from aiogram import Router
+from aiogram.filters import Command, CommandObject
 from aiogram.fsm.state import any_state
 from aiogram.types import Message
 from dishka.integrations.aiogram import FromDishka, inject
 
-from ttt.application.user.emoji_selection.wait_emoji_to_select import (
-    WaitEmojiToSelect,
-)
+from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
 
-wait_emoji_to_buy_select_router = Router(name=__name__)
+buy_emoji_router = Router(name=__name__)
 
 
-@wait_emoji_to_buy_select_router.message(
-    any_state,
-    or_f(Command("select_emoji"), F.text == "Выбрать эмоджи"),
-)
+@buy_emoji_router.message(any_state, Command("buy_emoji"))
 @inject
 async def _(
     message: Message,
-    wait_emoji_to_select: FromDishka[WaitEmojiToSelect],
+    command: CommandObject,
+    buy_emoji: FromDishka[BuyEmoji],
 ) -> None:
     if message.from_user is None:
         await anons_are_rohibited_message(
@@ -30,4 +26,6 @@ async def _(
         )
         return
 
-    await wait_emoji_to_select(message.from_user.id)
+    user_id = message.from_user.id
+    emoji_str = command.args
+    await buy_emoji(user_id, emoji_str)

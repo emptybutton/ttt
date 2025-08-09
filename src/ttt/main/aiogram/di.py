@@ -5,7 +5,6 @@ from typing import cast
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.base import BaseStorage, DefaultKeyBuilder
-from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import (
     CallbackQuery,
@@ -41,25 +40,13 @@ from ttt.application.game.game.wait_game import WaitGame
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
-from ttt.application.user.emoji_purchase.ports.user_fsm import (
-    EmojiPurchaseUserFsm,
-)
 from ttt.application.user.emoji_purchase.ports.user_views import (
     EmojiPurchaseUserViews,
-)
-from ttt.application.user.emoji_purchase.wait_emoji_to_buy import (
-    WaitEmojiToBuy,
-)
-from ttt.application.user.emoji_selection.ports.user_fsm import (
-    EmojiSelectionUserFsm,
 )
 from ttt.application.user.emoji_selection.ports.user_views import (
     EmojiSelectionUserViews,
 )
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
-from ttt.application.user.emoji_selection.wait_emoji_to_select import (
-    WaitEmojiToSelect,
-)
 from ttt.application.user.register_user import RegisterUser
 from ttt.application.user.remove_emoji import RemoveEmoji
 from ttt.application.user.stars_purchase.complete_stars_purchase_payment import (  # noqa: E501
@@ -92,10 +79,6 @@ from ttt.presentation.adapters.game_views import (
 )
 from ttt.presentation.adapters.stars_purchase_payment_gateway import (
     AiogramInAndBufferOutStarsPurchasePaymentGateway,
-)
-from ttt.presentation.adapters.user_fsm import (
-    AiogramEmojiPurchaseUserFsm,
-    AiogramEmojiSelectionUserFsm,
 )
 from ttt.presentation.adapters.user_views import (
     AiogramMessagesAsEmojiPurchaseUserViews,
@@ -248,18 +231,6 @@ class AiogramRequestDataProvider(Provider):
     ) -> FSMContext:
         return cast(FSMContext, middleware_data["state"])
 
-    provide_emoji_purchase_user_fsm = provide(
-        AiogramEmojiPurchaseUserFsm,
-        provides=EmojiPurchaseUserFsm,
-        scope=Scope.REQUEST,
-    )
-
-    provide_emoji_selection_user_fsm = provide(
-        AiogramEmojiSelectionUserFsm,
-        provides=EmojiSelectionUserFsm,
-        scope=Scope.REQUEST,
-    )
-
     @provide(scope=Scope.REQUEST)
     def provide_stars_purchase_payment_gateway(
         self,
@@ -278,12 +249,7 @@ class AiogramRequestDataProvider(Provider):
 
 class ApplicationWithAiogramRequestDataProvider(Provider):
     provide_buy_emoji = provide(BuyEmoji, scope=Scope.REQUEST)
-    provide_wait_emoji_to_buy = provide(WaitEmojiToBuy, scope=Scope.REQUEST)
     provide_select_emoji = provide(SelectEmoji, scope=Scope.REQUEST)
-    provide_wait_emoji_to_select = provide(
-        WaitEmojiToSelect,
-        scope=Scope.REQUEST,
-    )
     probide_wait_stars_to_start_stars_purchase = provide(
         WaitStarsToStartStarsPurchase,
         scope=Scope.REQUEST,

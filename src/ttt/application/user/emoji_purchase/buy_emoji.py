@@ -7,10 +7,6 @@ from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
-from ttt.application.user.emoji_purchase.ports.user_fsm import (
-    EmojiPurchaseUserFsm,
-    WaitingEmojiToBuyState,
-)
 from ttt.application.user.emoji_purchase.ports.user_log import (
     EmojiPurchaseUserLog,
 )
@@ -27,7 +23,6 @@ from ttt.entities.tools.tracking import Tracking
 
 @dataclass(frozen=True, unsafe_hash=False)
 class BuyEmoji:
-    fsm: EmojiPurchaseUserFsm
     uuids: UUIDs
     clock: Clock
     transaction: Transaction
@@ -42,8 +37,6 @@ class BuyEmoji:
         user_id: int,
         emoji_str: str | None,
     ) -> None:
-        await self.fsm.state(WaitingEmojiToBuyState)
-
         if emoji_str is None:
             await self.emoji_purchase_views.invalid_emoji_to_buy_view(user_id)
             return
@@ -64,7 +57,6 @@ class BuyEmoji:
 
             if user is None:
                 await self.common_views.user_is_not_registered_view(user_id)
-                await self.fsm.set(None)
                 return
 
             tracking = Tracking()
@@ -77,12 +69,10 @@ class BuyEmoji:
                 )
             except EmojiAlreadyPurchasedError:
                 await self.log.emoji_already_purchased_to_buy(user, emoji)
-                await self.fsm.set(None)
                 await self.emoji_purchase_views.emoji_already_purchased_view(
                     user_id,
                 )
             except NotEnoughStarsError as error:
-                await self.fsm.set(None)
                 await (
                     self.emoji_purchase_views
                     .not_enough_stars_to_buy_emoji_view(
@@ -94,7 +84,6 @@ class BuyEmoji:
                 await self.log.user_bought_emoji(user, emoji)
 
                 await self.map_(tracking)
-                await self.fsm.set(None)
                 await self.emoji_purchase_views.emoji_was_purchased_view(
                     user_id,
                 )
