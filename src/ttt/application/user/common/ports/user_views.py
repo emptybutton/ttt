@@ -38,16 +38,3 @@ class CommonUserViews(ABC):
         user: User,
         /,
     ) -> None: ...
-
-    @abstractmethod
-    async def selected_emoji_removed_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def menu_view(self, user_id: int, /) -> None: ...
-
-    @abstractmethod
-    async def emoji_menu_view(self, user_id: int, /) -> None: ...

@@ -5,20 +5,22 @@ from aiogram.types import CallbackQuery, User
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.api.internal import Widget
 from aiogram_dialog.widgets.kbd import Button, ScrollingGroup, Select, SwitchTo
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
+from ttt.application.user.view_user import ViewUser
 from ttt.application.user.view_user_emojis import ViewUserEmojis
-from ttt.presentation.adapters.user_views import EmojiListView
+from ttt.presentation.adapters.user_views import EmojiListView, UserProfileView
 from ttt.presentation.result_buffer import ResultBuffer
 
 
 class DialogState(StatesGroup):
     main = State()
     emojis = State()
+    profile = State()
     game_mode_to_start_game = State()
     ai_type_to_start_game = State()
 
@@ -29,9 +31,10 @@ async def main_getter(**_: Any) -> dict[str, Any]:
 
 main_window = Window(
     Const("🧭 Меню"),
-    Button(
+    SwitchTo(
         Const("Начать игру"),
         id="start_game",
+        state=DialogState.game_mode_to_start_game,
         when=~F["is_user_in_game"],
     ),
     Button(
@@ -44,7 +47,11 @@ main_window = Window(
         id="cancel_game",
         when=F["is_user_in_game"],
     ),
-    Button(Const("Профиль"), id="profile"),
+    SwitchTo(
+        Const("Профиль"),
+        id="profile",
+        state=DialogState.profile,
+    ),
     SwitchTo(
         Const("Эмоджи"),
         id="emojis",
@@ -123,7 +130,39 @@ emoji_window = Window(
     getter=emoji_getter,
 )
 
+
+@inject
+async def profile_getter(
+    *,
+    event_from_user: User,
+    view_user: FromDishka[ViewUser],
+    result_buffer: FromDishka[ResultBuffer],
+    **_,
+) -> dict[str, Any]:
+    await view_user(event_from_user.id)
+    view = result_buffer(UserProfileView)
+
+    return {"view": view}
+
+
+profile_window = Window(
+    Multi(
+        Const("🎭 Профиль"),
+        Const(" "),
+        Format("🌟 Звёзд: {view.account_stars}"),
+        Format("🏅 Рейтинг: {view.rating_text}"),
+        Format("🏆 Побед: {view.number_of_wins}"),
+        Format("💀 Поражений: {view.number_of_defeats}"),
+        Format("🕊️ Ничьих: {view.number_of_draws}"),
+    ),
+    SwitchTo(Const("Назад"), id="back", state=DialogState.main),
+    state=DialogState.profile,
+    getter=profile_getter,
+)
+
+
 dialog = Dialog(
     main_window,
     emoji_window,
+    profile_window,
 )

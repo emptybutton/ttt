@@ -26,6 +26,7 @@ from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
+from ttt.presentation.aiogram.common.texts import short_float_text
 from ttt.presentation.aiogram.user.messages import (
     emoji_already_purchased_message,
     emoji_list_message,
@@ -62,6 +63,19 @@ class EmojiListView:
     is_any_emoji_selected: bool
 
 
+@dataclass(frozen=True)
+class UserProfileView:
+    number_of_wins: int
+    number_of_draws: int
+    number_of_defeats: int
+    account_stars: int
+    rating: float
+
+    @property
+    def rating_text(self) -> str:
+        return short_float_text(self.rating)
+
+
 @dataclass(frozen=True, unsafe_hash=False)
 class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
     _bot: Bot
@@ -90,15 +104,14 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
             await need_to_start_message(self._bot, user_id)
             return
 
-        await profile_message(
-            self._bot,
-            user_id,
-            user_row.account_stars,
-            user_row.rating,
+        view = UserProfileView(
             user_row.number_of_wins,
             user_row.number_of_draws,
             user_row.number_of_defeats,
+            user_row.account_stars,
+            user_row.rating,
         )
+        self._result_buffer.result = view
 
     async def view_of_user_emojis_with_id(
         self,

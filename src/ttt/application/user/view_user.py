@@ -14,4 +14,3 @@ class ViewUser:
     async def __call__(self, user_id: int) -> None:
         async with self.transaction:
             await self.views.view_of_user_with_id(user_id)
-            await self.log.user_viewed(user_id)
