@@ -1,19 +1,19 @@
-from asyncio import Future
-import random
 from typing import Any
 
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, User
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.api.internal import Widget
-from aiogram_dialog.widgets.kbd import Button, ListGroup, Select, SwitchTo
-from aiogram_dialog.widgets.text import Case, Const, Format, Multi
+from aiogram_dialog.widgets.kbd import Button, ScrollingGroup, Select, SwitchTo
+from aiogram_dialog.widgets.text import Const, Format
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
-from ttt.application.user.remove_emoji import RemoveEmoji
+from ttt.application.user.view_user_emojis import ViewUserEmojis
+from ttt.presentation.adapters.user_views import EmojiListView
+from ttt.presentation.result_buffer import ResultBuffer
 
 
 class DialogState(StatesGroup):
@@ -66,51 +66,57 @@ start_game_window = Window(
 )
 
 
-async def emoji_getter(**_: Any) -> dict[str, Any]:
-    emojis = [
-        {"id": "🐢", "view": "🐢"},
-        {"id": "🍉", "view": "<🍉>"},
-        {"id": "🐞", "view": "🐞"},
-    ]
-    random.shuffle(emojis)
+@inject
+async def emoji_getter(
+    *,
+    event_from_user: User,
+    view_user_emojis: FromDishka[ViewUserEmojis],
+    result_buffer: FromDishka[ResultBuffer],
+    **_,
+) -> dict[str, Any]:
+    await view_user_emojis(event_from_user.id)
+    list_view = result_buffer(EmojiListView)
 
     return {
-        "emojis": emojis,
+        "emojis": list_view.views,
+        "is_any_emoji_selected": list_view.is_any_emoji_selected,
+        "need_to_paginate": len(list_view.views) > 7,  # noqa: PLR2004
     }
 
 
 @inject
 async def on_emoji_selected(
     callback: CallbackQuery,
-    widget: Widget,
-    dialog_manager: DialogManager,
+    _: Widget,
+    __: DialogManager,
     emoji_str: str,
     select_emoji: FromDishka[SelectEmoji],
 ) -> None:
     await select_emoji(callback.from_user.id, emoji_str)
 
 
-@inject
-async def on_selected_emoji_removed(
-    callback: CallbackQuery,
-    remove_emoji: FromDishka[RemoveEmoji],
-) -> None:
-    await remove_emoji(callback.from_user.id)
-
-
 emoji_window = Window(
     Const("🎭 Эмоджи"),
     Select(
-        Format("{item[view]}"),
-        id="emojis",
-        item_id_getter=lambda it: it["id"],
+        Format("{item}"),
+        id="not_paginated_emojis",
+        item_id_getter=lambda it: it.emoji_str,
         items="emojis",
         on_click=on_emoji_selected,
+        when=~F["need_to_paginate"],
     ),
-    Button(
-        Const("Убрать"),
-        id="remove_selected_emoji",
-        on_click=on_selected_emoji_removed,
+    ScrollingGroup(
+        Select(
+            Format("{item}"),
+            id="paginated_emojis_page",
+            item_id_getter=lambda it: it.emoji_str,
+            items="emojis",
+            on_click=on_emoji_selected,
+        ),
+        width=4,
+        height=4,
+        id="paginated_emojis",
+        when=F["need_to_paginate"],
     ),
     SwitchTo(Const("Назад"), id="back", state=DialogState.main),
     state=DialogState.emojis,

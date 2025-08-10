@@ -22,7 +22,7 @@ from ttt.infrastructure.sqlalchemy.stmts import (
     user_emojis_from_postgres,
     user_exists_in_postgres,
 )
-from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
+from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
@@ -42,12 +42,31 @@ from ttt.presentation.aiogram.user.messages import (
     wait_stars_to_start_stars_purchase_message,
     welcome_message,
 )
+from ttt.presentation.result_buffer import ResultBuffer
+
+
+@dataclass(frozen=True)
+class EmojiView:
+    emoji_str: str
+    is_emoji_selected: bool
+
+    def __str__(self) -> str:
+        return (
+            f"<{self.emoji_str}>" if self.is_emoji_selected else self.emoji_str
+        )
+
+
+@dataclass(frozen=True)
+class EmojiListView:
+    views: tuple[EmojiView, ...]
+    is_any_emoji_selected: bool
 
 
 @dataclass(frozen=True, unsafe_hash=False)
 class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
     _bot: Bot
     _session: AsyncSession
+    _result_buffer: ResultBuffer
 
     async def view_of_user_with_id(
         self,
@@ -61,9 +80,6 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
                 TableUser.number_of_defeats,
                 TableUser.account_stars,
                 TableUser.rating,
-                TableUser.game_location_game_id.is_not(None).label(
-                    "is_in_game",
-                ),
             )
             .where(TableUser.id == user_id)
         )
@@ -82,7 +98,6 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
             user_row.number_of_wins,
             user_row.number_of_draws,
             user_row.number_of_defeats,
-            user_row.is_in_game,
         )
 
     async def view_of_user_emojis_with_id(
@@ -93,6 +108,15 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         emojis = await user_emojis_from_postgres(self._session, user_id)
         selected_user_emoji_str = await selected_user_emoji_str_from_postgres(
             self._session, user_id,
+        )
+        emoji_views = tuple(
+            EmojiView(emoji, is_emoji_selected=emoji == selected_user_emoji_str)
+            for emoji in emojis
+        )
+
+        self._result_buffer.result = EmojiListView(
+            emoji_views,
+            is_any_emoji_selected=selected_user_emoji_str is not None,
         )
 
     async def user_registered_view(

@@ -309,14 +309,16 @@ class User:
 
         for self_emoji in self.emojis:
             if self_emoji.emoji == emoji:
-                self.selected_emoji_id = self_emoji.id
-                tracking.register_mutated(self)
-                return
+                self_emoji_to_select = self_emoji
+                break
+        else:
+            raise EmojiNotPurchasedError
 
-        raise EmojiNotPurchasedError
+        if self.selected_emoji_id != self_emoji_to_select.id:
+            self.selected_emoji_id = self_emoji_to_select.id
+        else:
+            self.selected_emoji_id = None
 
-    def remove_selected_emoji(self, tracking: Tracking) -> None:
-        self.selected_emoji_id = None
         tracking.register_mutated(self)
 
     def start_stars_purchase(

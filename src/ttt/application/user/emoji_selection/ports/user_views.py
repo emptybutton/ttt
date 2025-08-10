@@ -22,10 +22,3 @@ class EmojiSelectionUserViews(ABC):
         user_id: int,
         /,
     ) -> None: ...
-
-    @abstractmethod
-    async def wait_emoji_to_select_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...

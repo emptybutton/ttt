@@ -11,4 +11,4 @@ class ViewUserEmojis:
 
     async def __call__(self, user_id: int) -> None:
         async with self.transaction:
-            await self.views.view_of_user_emojis_with_id(user_id)
+            return await self.views.view_of_user_emojis_with_id(user_id)

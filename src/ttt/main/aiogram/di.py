@@ -48,7 +48,6 @@ from ttt.application.user.emoji_selection.ports.user_views import (
 )
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
 from ttt.application.user.register_user import RegisterUser
-from ttt.application.user.remove_emoji import RemoveEmoji
 from ttt.application.user.stars_purchase.complete_stars_purchase_payment import (  # noqa: E501
     CompleteStarsPurchasePayment,
 )
@@ -71,6 +70,7 @@ from ttt.application.user.stars_purchase.wait_stars_to_start_stars_purchase impo
     WaitStarsToStartStarsPurchase,
 )
 from ttt.application.user.view_user import ViewUser
+from ttt.application.user.view_user_emojis import ViewUserEmojis
 from ttt.infrastructure.buffer import Buffer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
@@ -91,6 +91,7 @@ from ttt.presentation.aiogram.common.dialogs import dialog
 from ttt.presentation.aiogram.common.routes.all import common_routers
 from ttt.presentation.aiogram.game.routes.all import game_routers
 from ttt.presentation.aiogram.user.routes.all import user_routers
+from ttt.presentation.result_buffer import ResultBuffer
 from ttt.presentation.unkillable_tasks import UnkillableTasks
 
 
@@ -164,6 +165,10 @@ class AiogramProvider(Provider):
         provides=EmojiPurchaseUserViews,
         scope=Scope.APP,
     )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_result_buffer(self) -> ResultBuffer:
+        return ResultBuffer()
 
     @provide(scope=Scope.APP)
     def provide_stars_purchase_payment_gateway(
@@ -262,12 +267,15 @@ class ApplicationWithAiogramRequestDataProvider(Provider):
         StartStarsPurchasePayment,
         scope=Scope.REQUEST,
     )
+    provide_view_user_emojis = provide(
+        ViewUserEmojis,
+        scope=Scope.REQUEST,
+    )
 
 
 class ApplicationWithoutAiogramRequestDataProvider(Provider):
     provide_view_user = provide(ViewUser, scope=Scope.REQUEST)
     provide_register_user = provide(RegisterUser, scope=Scope.REQUEST)
-    provide_remove_emoji = provide(RemoveEmoji, scope=Scope.REQUEST)
     probide_complete_stars_purchase_payment = provide(
         CompleteStarsPurchasePayment,
         scope=Scope.REQUEST,

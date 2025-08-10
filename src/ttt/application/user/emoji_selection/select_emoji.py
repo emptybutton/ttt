@@ -27,14 +27,8 @@ class SelectEmoji:
     async def __call__(
         self,
         user_id: int,
-        emoji_str: str | None,
+        emoji_str: str,
     ) -> None:
-        if emoji_str is None:
-            await self.emoji_selection_views.invalid_emoji_to_select_view(
-                user_id,
-            )
-            return
-
         try:
             emoji = Emoji(emoji_str)
         except InvalidEmojiError:
@@ -64,4 +58,3 @@ class SelectEmoji:
                 await self.log.user_selected_emoji(user, emoji)
 
                 await self.map_(tracking)
-                # await self.emoji_selection_views.emoji_selected_view(user_id)
