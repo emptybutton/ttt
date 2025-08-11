@@ -1,3 +1,7 @@
+from ttt.entities.core.game.cell_number import CellNumber
+from ttt.entities.core.game.game import Game, cell_emoji
+
+
 def short_float_text(float_: float) -> str:
     return str(int(float_)) if float_ == int(float_) else f"{float_:.2f}"
 

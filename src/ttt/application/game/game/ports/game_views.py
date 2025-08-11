@@ -70,31 +70,3 @@ class GameViews(ABC):
         user_ids: Sequence[int],
         /,
     ) -> None: ...
-
-    @abstractmethod
-    async def waiting_for_game_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def double_waiting_for_game_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def waiting_for_ai_type_to_start_game_with_ai_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def game_modes_to_get_started_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...

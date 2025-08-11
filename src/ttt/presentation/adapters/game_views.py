@@ -3,15 +3,26 @@ from dataclasses import dataclass
 
 from aiogram import Bot
 from aiogram.fsm.storage.base import BaseStorage
+from aiogram_dialog import DialogManager, StartMode
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.game.game.ports.game_views import GameViews
-from ttt.entities.core.game.game import Game
+from ttt.entities.core.game.cell_number import CellNumber
+from ttt.entities.core.game.game import (
+    Game,
+    GameState,
+    cell_emoji,
+    is_player_move_expected,
+)
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.infrastructure.sqlalchemy.tables.game import TableGame
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser
+from ttt.presentation.aiogram.common.dialogs import (
+    DialogState,
+    active_game_window_data,
+)
 from ttt.presentation.aiogram.game.messages import (
     already_completed_game_message,
     already_filled_cell_message,
@@ -35,7 +46,7 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
     _session: AsyncSession
     _tasks: BackgroundTasks
     _bot: Bot
-    _storage: BaseStorage
+    _dialog_manager: DialogManager
 
     async def current_game_view_with_user_id(self, user_id: int, /) -> None:
         join_condition = (
@@ -46,14 +57,15 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
         table_game = await self._session.scalar(stmt)
 
         if table_game is None:
-            self._tasks.create_task(no_game_message(self._bot, user_id))
-        else:
-            self._tasks.create_task(game_message(
-                self._bot,
-                user_id,
-                table_game.entity(),
-                user_id,
-            ))
+            await no_game_message(self._bot, user_id)
+            return
+
+        game = table_game.entity()
+        data = active_game_window_data(game, user_id)
+
+        await self._dialog_manager.start(
+            DialogState.active_game, data, StartMode.RESET_STACK,
+        )
 
     async def game_view_with_locations(
         self,
@@ -80,12 +92,10 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
         /,
     ) -> None:
         for location in user_locations:
+            data = active_game_window_data(game, location.user_id)
             self._tasks.create_task(
-                started_game_message(
-                    self._bot,
-                    location.user_id,
-                    game,
-                    location.user_id,
+                self._dialog_manager.start(
+                    DialogState.active_game, data, StartMode.RESET_STACK,
                 ),
             )
 

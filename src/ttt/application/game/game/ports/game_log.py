@@ -29,13 +29,6 @@ class GameLog(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def user_intends_to_start_game_against_ai(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
     async def game_against_ai_started(
         self,
         game: Game,
@@ -135,19 +128,5 @@ class GameLog(ABC):
     async def bad_attempt_to_start_game_via_game_starting_queue(
         self,
         user_ids: Sequence[int],
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def current_game_viewed(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def user_intends_to_start_game(
-        self,
-        user_id: int,
         /,
     ) -> None: ...

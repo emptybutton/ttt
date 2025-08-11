@@ -5,7 +5,6 @@ from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.game.game.ports.game_starting_queue import (
     GameStartingQueue,
 )
-from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 
@@ -15,7 +14,6 @@ class WaitGame:
     users: Users
     game_starting_queue: GameStartingQueue
     user_views: CommonUserViews
-    game_views: GameViews
     transaction: Transaction
     log: GameLog
 
@@ -29,7 +27,5 @@ class WaitGame:
 
             if push.was_location_dedublicated:
                 await self.log.double_waiting_for_game_start(user_id)
-                await self.game_views.double_waiting_for_game_view(user_id)
             else:
                 await self.log.waiting_for_game_start(user_id)
-                await self.game_views.waiting_for_game_view(user_id)

@@ -14,4 +14,3 @@ class BackToGame:
     async def __call__(self, user_id: int) -> None:
         async with self.transaction:
             await self.game_views.current_game_view_with_user_id(user_id)
-            await self.log.current_game_viewed(user_id)
