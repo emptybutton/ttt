@@ -11,9 +11,14 @@ from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
+from ttt.application.user.view_main_menu import ViewMainMenu
 from ttt.application.user.view_user import ViewUser
 from ttt.application.user.view_user_emojis import ViewUserEmojis
-from ttt.presentation.adapters.user_views import EmojiListView, UserProfileView
+from ttt.presentation.adapters.user_views import (
+    EmojiListView,
+    UserMenuView,
+    UserProfileView,
+)
 from ttt.presentation.result_buffer import ResultBuffer
 
 
@@ -25,8 +30,18 @@ class DialogState(StatesGroup):
     ai_type_to_start_game = State()
 
 
-async def main_getter(**_: Any) -> dict[str, Any]:
-    return {"is_user_in_game": False, "has_user_emojis": True}
+@inject
+async def main_getter(
+    *,
+    event_from_user: User,
+    view_main_menu: FromDishka[ViewMainMenu],
+    result_buffer: FromDishka[ResultBuffer],
+    **_,
+) -> dict[str, Any]:
+    await view_main_menu(event_from_user.id)
+    view = result_buffer(UserMenuView)
+
+    return {"view": view}
 
 
 main_window = Window(
@@ -35,17 +50,17 @@ main_window = Window(
         Const("Начать игру"),
         id="start_game",
         state=DialogState.game_mode_to_start_game,
-        when=~F["is_user_in_game"],
+        when=~F["view"].is_user_in_game,
     ),
     Button(
         Const("Продолжить игру"),
         id="back_to_game",
-        when=F["is_user_in_game"],
+        when=F["view"].is_user_in_game,
     ),
     Button(
         Const("Отменить игру"),
         id="cancel_game",
-        when=F["is_user_in_game"],
+        when=F["view"].is_user_in_game,
     ),
     SwitchTo(
         Const("Профиль"),
@@ -56,7 +71,7 @@ main_window = Window(
         Const("Эмоджи"),
         id="emojis",
         state=DialogState.emojis,
-        when="has_user_emojis",
+        when=F["view"].has_user_emojis,
     ),
     Button(Const("Магазин"), id="shop"),
     state=DialogState.main,

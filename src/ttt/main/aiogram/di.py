@@ -69,6 +69,7 @@ from ttt.application.user.stars_purchase.start_stars_purchase_payment_completion
 from ttt.application.user.stars_purchase.wait_stars_to_start_stars_purchase import (  # noqa: E501
     WaitStarsToStartStarsPurchase,
 )
+from ttt.application.user.view_main_menu import ViewMainMenu
 from ttt.application.user.view_user import ViewUser
 from ttt.application.user.view_user_emojis import ViewUserEmojis
 from ttt.infrastructure.buffer import Buffer
@@ -269,6 +270,10 @@ class ApplicationWithAiogramRequestDataProvider(Provider):
     )
     provide_view_user_emojis = provide(
         ViewUserEmojis,
+        scope=Scope.REQUEST,
+    )
+    provide_view_main_menu = provide(
+        ViewMainMenu,
         scope=Scope.REQUEST,
     )
 

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from aiogram import Bot
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.user.common.ports.user_views import CommonUserViews
@@ -16,13 +16,14 @@ from ttt.application.user.stars_purchase.ports.user_views import (
     StarsPurchaseUserViews,
 )
 from ttt.entities.core.stars import Stars
-from ttt.entities.core.user.user import User
+from ttt.entities.core.user.location import UserGameLocation
+from ttt.entities.core.user.user import User, is_user_in_game
 from ttt.infrastructure.sqlalchemy.stmts import (
     selected_user_emoji_str_from_postgres,
     user_emojis_from_postgres,
     user_exists_in_postgres,
 )
-from ttt.infrastructure.sqlalchemy.tables.user import TableUser
+from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
@@ -76,6 +77,12 @@ class UserProfileView:
         return short_float_text(self.rating)
 
 
+@dataclass(frozen=True)
+class UserMenuView:
+    is_user_in_game: bool
+    has_user_emojis: bool
+
+
 @dataclass(frozen=True, unsafe_hash=False)
 class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
     _bot: Bot
@@ -111,6 +118,33 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
             user_row.account_stars,
             user_row.rating,
         )
+        self._result_buffer.result = view
+
+    async def user_menu_view(self, user_id: int, /) -> None:
+        has_user_emojis_stmt = (
+            exists(1).where(TableUserEmoji.user_id == user_id)
+            .label("has_user_emojis")
+        )
+        stmt = (
+            select(TableUser.game_location_game_id, has_user_emojis_stmt)
+            .where(TableUser.id == user_id)
+        )
+        result = await self._session.execute(stmt)
+        row = result.first()
+
+        if row is None:
+            game_location_game_id = None
+            has_user_emojis = False
+        else:
+            game_location_game_id = row.game_location_game_id
+            has_user_emojis = row.has_user_emojis
+
+        if game_location_game_id is None:
+            game_location = None
+        else:
+            game_location = UserGameLocation(user_id, game_location_game_id)
+
+        view = UserMenuView(is_user_in_game(game_location), has_user_emojis)
         self._result_buffer.result = view
 
     async def view_of_user_emojis_with_id(

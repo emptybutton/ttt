@@ -38,3 +38,6 @@ class CommonUserViews(ABC):
         user: User,
         /,
     ) -> None: ...
+
+    @abstractmethod
+    async def user_menu_view(self, user_id: int, /) -> None: ...

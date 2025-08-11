@@ -439,3 +439,7 @@ def register_user(user_id: int, tracking: Tracking) -> User:
     tracking.register_new(user)
 
     return user
+
+
+def is_user_in_game(game_location: UserGameLocation | None) -> bool:
+    return game_location is not None
