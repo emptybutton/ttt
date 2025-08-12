@@ -2,40 +2,34 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from aiogram import Bot
-from aiogram.fsm.storage.base import BaseStorage
-from aiogram_dialog import DialogManager, StartMode
+from aiogram_dialog import BgManagerFactory, DialogManager, StartMode
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.game.game.ports.game_views import GameViews
-from ttt.entities.core.game.cell_number import CellNumber
 from ttt.entities.core.game.game import (
     Game,
-    GameState,
-    cell_emoji,
-    is_player_move_expected,
 )
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.infrastructure.sqlalchemy.tables.game import TableGame
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 from ttt.presentation.aiogram.common.dialogs import (
+    ActiveGameView,
     DialogState,
-    active_game_window_data,
+    PlayerResultInGameView,
 )
 from ttt.presentation.aiogram.game.messages import (
     already_completed_game_message,
     already_filled_cell_message,
     completed_game_messages,
     double_waiting_for_game_message,
-    game_message,
     game_modes_to_get_started_message,
     maked_move_message,
     message_to_start_game_with_ai,
     no_cell_message,
     no_game_message,
     not_current_user_message,
-    started_game_message,
     user_already_in_game_message,
     waiting_for_game_message,
 )
@@ -46,7 +40,7 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
     _session: AsyncSession
     _tasks: BackgroundTasks
     _bot: Bot
-    _dialog_manager: DialogManager
+    _bg_dialog_manager_factory: BgManagerFactory
 
     async def current_game_view_with_user_id(self, user_id: int, /) -> None:
         join_condition = (
@@ -61,9 +55,12 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
             return
 
         game = table_game.entity()
-        data = active_game_window_data(game, user_id)
+        data = {"view": ActiveGameView.of(game, user_id)}
 
-        await self._dialog_manager.start(
+        dialog_manager = (
+            self._bg_dialog_manager_factory.bg(self._bot, user_id, user_id)
+        )
+        await dialog_manager.start(
             DialogState.active_game, data, StartMode.RESET_STACK,
         )
 
@@ -92,11 +89,12 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
         /,
     ) -> None:
         for location in user_locations:
-            data = active_game_window_data(game, location.user_id)
-            self._tasks.create_task(
-                self._dialog_manager.start(
-                    DialogState.active_game, data, StartMode.RESET_STACK,
-                ),
+            data = {"view": ActiveGameView.of(game, location.user_id)}
+            dialog_manager = self._bg_dialog_manager_factory.bg(
+                self._bot, location.user_id, location.user_id,
+            )
+            await dialog_manager.start(
+                DialogState.active_game, data, StartMode.RESET_STACK,
             )
 
     async def no_game_view(
@@ -205,17 +203,20 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
                 ),
             )
 
-    def _completed_game_message_background_broadcast(
+    async def _completed_game_view(
         self,
-        user_locations: Sequence[UserGameLocation],
+        location: UserGameLocation,
         game: Game,
     ) -> None:
-        for location in user_locations:
-            self._tasks.create_task(
-                completed_game_messages(
-                    self._bot,
-                    location.user_id,
-                    game,
-                    location.user_id,
-                ),
-            )
+        window_view = PlayerResultInGameView.of(game, location.user_id)
+        window_data = window_view.window_data()
+
+        dialog_manager = self._bg_dialog_manager_factory.bg(
+            self._bot, location.user_id, location.user_id,
+        )
+        await dialog_manager.start(
+            DialogState.active_game, data, StartMode.RESET_STACK,
+        )
+
+        completed_game_message
+

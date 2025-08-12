@@ -1,5 +1,3 @@
-from ttt.entities.core.game.cell_number import CellNumber
-from ttt.entities.core.game.game import Game, cell_emoji
 
 
 def short_float_text(float_: float) -> str:

@@ -24,6 +24,12 @@ from ttt.infrastructure.sqlalchemy.stmts import (
     user_exists_in_postgres,
 )
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
+from ttt.presentation.aiogram.common.dialogs import (
+    EmojiListView,
+    EmojiView,
+    MainMenuCommonView,
+    UserProfileView,
+)
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
@@ -37,7 +43,6 @@ from ttt.presentation.aiogram.user.messages import (
     invalid_emoji_message,
     menu_message,
     not_enough_stars_to_buy_emoji_message,
-    profile_message,
     stars_added_message,
     stars_will_be_added_message,
     wait_emoji_message,
@@ -45,42 +50,6 @@ from ttt.presentation.aiogram.user.messages import (
     welcome_message,
 )
 from ttt.presentation.result_buffer import ResultBuffer
-
-
-@dataclass(frozen=True)
-class EmojiView:
-    emoji_str: str
-    is_emoji_selected: bool
-
-    def __str__(self) -> str:
-        return (
-            f"<{self.emoji_str}>" if self.is_emoji_selected else self.emoji_str
-        )
-
-
-@dataclass(frozen=True)
-class EmojiListView:
-    views: tuple[EmojiView, ...]
-    is_any_emoji_selected: bool
-
-
-@dataclass(frozen=True)
-class UserProfileView:
-    number_of_wins: int
-    number_of_draws: int
-    number_of_defeats: int
-    account_stars: int
-    rating: float
-
-    @property
-    def rating_text(self) -> str:
-        return short_float_text(self.rating)
-
-
-@dataclass(frozen=True)
-class UserMenuView:
-    is_user_in_game: bool
-    has_user_emojis: bool
 
 
 @dataclass(frozen=True, unsafe_hash=False)
@@ -144,7 +113,9 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         else:
             game_location = UserGameLocation(user_id, game_location_game_id)
 
-        view = UserMenuView(is_user_in_game(game_location), has_user_emojis)
+        view = MainMenuCommonView(
+            is_user_in_game(game_location), has_user_emojis,
+        )
         self._result_buffer.result = view
 
     async def view_of_user_emojis_with_id(

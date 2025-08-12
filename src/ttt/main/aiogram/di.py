@@ -12,7 +12,8 @@ from aiogram.types import (
     PreCheckoutQuery,
     TelegramObject,
 )
-from aiogram_dialog import setup_dialogs
+from aiogram_dialog import BgManagerFactory, setup_dialogs
+from aiogram_dialog.manager.manager_middleware import BG_FACTORY_KEY
 from dishka import (
     Provider,
     Scope,
@@ -30,12 +31,6 @@ from ttt.application.game.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.start_game import StartGame
 from ttt.application.game.game.start_game_with_ai import StartGameWithAi
-from ttt.application.game.game.view_game_modes_to_get_started import (
-    ViewGameModesToGetStarted,
-)
-from ttt.application.game.game.wait_ai_type_to_start_game_with_ai import (
-    WaitAiTypeToStartGameWithAi,
-)
 from ttt.application.game.game.wait_game import WaitGame
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.user_views import CommonUserViews
@@ -238,6 +233,13 @@ class AiogramRequestDataProvider(Provider):
         return cast(FSMContext, middleware_data["state"])
 
     @provide(scope=Scope.REQUEST)
+    def provide_dialog_bg_factory(
+        self,
+        middleware_data: AiogramMiddlewareData,
+    ) -> BgManagerFactory:
+        return middleware_data[BG_FACTORY_KEY]
+
+    @provide(scope=Scope.REQUEST)
     def provide_stars_purchase_payment_gateway(
         self,
         pre_checkout_query: PreCheckoutQuery | None,
@@ -290,14 +292,6 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
         scope=Scope.REQUEST,
     )
 
-    provide_view_game_modes_to_get_started = provide(
-        ViewGameModesToGetStarted,
-        scope=Scope.REQUEST,
-    )
-    provide_wait_ai_type_to_start_game_with_ai = provide(
-        WaitAiTypeToStartGameWithAi,
-        scope=Scope.REQUEST,
-    )
     provide_start_game_with_ai = provide(
         StartGameWithAi,
         scope=Scope.REQUEST,
