@@ -13,7 +13,7 @@ from aiogram.types import (
     TelegramObject,
 )
 from aiogram_dialog import BgManagerFactory, setup_dialogs
-from aiogram_dialog.manager.manager_middleware import BG_FACTORY_KEY
+from aiogram_dialog.manager.bg_manager import BgManagerFactoryImpl
 from dishka import (
     Provider,
     Scope,
@@ -25,12 +25,12 @@ from redis.asyncio import Redis
 from structlog.types import FilteringBoundLogger
 
 from ttt.application.common.ports.emojis import Emojis
-from ttt.application.game.game.back_to_game import BackToGame
 from ttt.application.game.game.cancel_game import CancelGame
 from ttt.application.game.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.start_game import StartGame
 from ttt.application.game.game.start_game_with_ai import StartGameWithAi
+from ttt.application.game.game.view_game import ViewGame
 from ttt.application.game.game.wait_game import WaitGame
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.user_views import CommonUserViews
@@ -120,6 +120,10 @@ class AiogramProvider(Provider):
         setup_dialogs(dp)
 
         return dp
+
+    @provide(scope=Scope.APP)
+    def provide_bg_manager_factory(self, dp: Dispatcher) -> BgManagerFactory:
+        return BgManagerFactoryImpl(dp)
 
     @provide(scope=Scope.APP)
     async def provide_bot(self, secrets: Secrets) -> AsyncIterator[Bot]:
@@ -233,13 +237,6 @@ class AiogramRequestDataProvider(Provider):
         return cast(FSMContext, middleware_data["state"])
 
     @provide(scope=Scope.REQUEST)
-    def provide_dialog_bg_factory(
-        self,
-        middleware_data: AiogramMiddlewareData,
-    ) -> BgManagerFactory:
-        return middleware_data[BG_FACTORY_KEY]
-
-    @provide(scope=Scope.REQUEST)
     def provide_stars_purchase_payment_gateway(
         self,
         pre_checkout_query: PreCheckoutQuery | None,
@@ -300,4 +297,4 @@ class ApplicationWithoutAiogramRequestDataProvider(Provider):
     provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
     provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
     provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)
-    provide_back_to_game = provide(BackToGame, scope=Scope.REQUEST)
+    provide_view_game = provide(ViewGame, scope=Scope.REQUEST)

@@ -27,5 +27,5 @@ async def _(
         return
 
     user_id = message.from_user.id
-    emoji_str = command.args
+    emoji_str = not_none(command.args)
     await select_emoji(user_id, emoji_str)

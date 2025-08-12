@@ -6,7 +6,7 @@ from ttt.application.game.game.ports.game_views import GameViews
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class BackToGame:
+class ViewGame:
     transaction: Transaction
     game_views: GameViews
     log: GameLog

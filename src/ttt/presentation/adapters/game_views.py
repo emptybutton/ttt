@@ -1,8 +1,9 @@
+from asyncio import gather
 from collections.abc import Sequence
 from dataclasses import dataclass
 
 from aiogram import Bot
-from aiogram_dialog import BgManagerFactory, DialogManager, StartMode
+from aiogram_dialog import BgManagerFactory
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,22 +18,19 @@ from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 from ttt.presentation.aiogram.common.dialogs import (
     ActiveGameView,
     DialogState,
-    PlayerResultInGameView,
 )
 from ttt.presentation.aiogram.game.messages import (
     already_completed_game_message,
     already_filled_cell_message,
     completed_game_messages,
     double_waiting_for_game_message,
-    game_modes_to_get_started_message,
-    maked_move_message,
-    message_to_start_game_with_ai,
     no_cell_message,
     no_game_message,
     not_current_user_message,
     user_already_in_game_message,
     waiting_for_game_message,
 )
+from ttt.presentation.result_buffer import ResultBuffer
 
 
 @dataclass(frozen=True, unsafe_hash=False)
@@ -41,6 +39,7 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
     _tasks: BackgroundTasks
     _bot: Bot
     _bg_dialog_manager_factory: BgManagerFactory
+    _result_buffer: ResultBuffer
 
     async def current_game_view_with_user_id(self, user_id: int, /) -> None:
         join_condition = (
@@ -55,14 +54,7 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
             return
 
         game = table_game.entity()
-        data = {"view": ActiveGameView.of(game, user_id)}
-
-        dialog_manager = (
-            self._bg_dialog_manager_factory.bg(self._bot, user_id, user_id)
-        )
-        await dialog_manager.start(
-            DialogState.active_game, data, StartMode.RESET_STACK,
-        )
+        self._result_buffer.result = ActiveGameView.of(game, user_id)
 
     async def game_view_with_locations(
         self,
@@ -72,15 +64,14 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
     ) -> None:
         match game.result:
             case None:
-                self._to_next_move_message_background_broadcast(
+                await self._to_next_move_message_background_broadcast(
                     user_locations,
-                    game,
                 )
             case _:
-                self._completed_game_message_background_broadcast(
-                    user_locations,
-                    game,
-                )
+                await gather(*(
+                    self._completed_game_view(location, game)
+                    for location in user_locations
+                ))
 
     async def started_game_view_with_locations(
         self,
@@ -89,13 +80,10 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
         /,
     ) -> None:
         for location in user_locations:
-            data = {"view": ActiveGameView.of(game, location.user_id)}
             dialog_manager = self._bg_dialog_manager_factory.bg(
                 self._bot, location.user_id, location.user_id,
             )
-            await dialog_manager.start(
-                DialogState.active_game, data, StartMode.RESET_STACK,
-            )
+            await dialog_manager.switch_to(DialogState.active_game)
 
     async def no_game_view(
         self,
@@ -163,14 +151,6 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
             waiting_for_game_message(self._bot, user_id),
         )
 
-    async def waiting_for_ai_type_to_start_game_with_ai_view(
-        self,
-        user_id: int,
-    ) -> None:
-        self._tasks.create_task(
-            message_to_start_game_with_ai(self._bot, user_id),
-        )
-
     async def double_waiting_for_game_view(
         self,
         user_id: int,
@@ -179,44 +159,26 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
             double_waiting_for_game_message(self._bot, user_id),
         )
 
-    async def game_modes_to_get_started_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        self._tasks.create_task(
-            game_modes_to_get_started_message(self._bot, user_id),
-        )
-
-    def _to_next_move_message_background_broadcast(
+    async def _to_next_move_message_background_broadcast(
         self,
         user_locations: Sequence[UserGameLocation],
-        game: Game,
     ) -> None:
         for location in user_locations:
-            self._tasks.create_task(
-                maked_move_message(
-                    self._bot,
-                    location.user_id,
-                    game,
-                    location.user_id,
-                ),
+            dialog_manager = self._bg_dialog_manager_factory.bg(
+                self._bot, location.user_id, location.user_id,
             )
+            await dialog_manager.switch_to(DialogState.active_game)
 
     async def _completed_game_view(
         self,
         location: UserGameLocation,
         game: Game,
     ) -> None:
-        window_view = PlayerResultInGameView.of(game, location.user_id)
-        window_data = window_view.window_data()
-
         dialog_manager = self._bg_dialog_manager_factory.bg(
             self._bot, location.user_id, location.user_id,
         )
-        await dialog_manager.start(
-            DialogState.active_game, data, StartMode.RESET_STACK,
+
+        await completed_game_messages(
+            self._bot, location.user_id, game, location.user_id,
         )
-
-        completed_game_message
-
+        await dialog_manager.switch_to(DialogState.main)

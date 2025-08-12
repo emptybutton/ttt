@@ -25,15 +25,14 @@ from ttt.infrastructure.sqlalchemy.stmts import (
 )
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
 from ttt.presentation.aiogram.common.dialogs import (
-    EmojiListView,
+    EmojiMenuView,
     EmojiView,
-    MainMenuCommonView,
+    MainMenuView,
     UserProfileView,
 )
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
-from ttt.presentation.aiogram.common.texts import short_float_text
 from ttt.presentation.aiogram.user.messages import (
     emoji_already_purchased_message,
     emoji_list_message,
@@ -113,7 +112,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         else:
             game_location = UserGameLocation(user_id, game_location_game_id)
 
-        view = MainMenuCommonView(
+        view = MainMenuView(
             is_user_in_game(game_location), has_user_emojis,
         )
         self._result_buffer.result = view
@@ -132,7 +131,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
             for emoji in emojis
         )
 
-        self._result_buffer.result = EmojiListView(
+        self._result_buffer.result = EmojiMenuView(
             emoji_views,
             is_any_emoji_selected=selected_user_emoji_str is not None,
         )
