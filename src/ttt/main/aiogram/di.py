@@ -17,7 +17,6 @@ from aiogram_dialog.manager.bg_manager import BgManagerFactoryImpl
 from dishka import (
     Provider,
     Scope,
-    from_context,
     provide,
 )
 from dishka.integrations.aiogram import AiogramMiddlewareData
@@ -91,35 +90,19 @@ from ttt.presentation.result_buffer import ResultBuffer
 from ttt.presentation.unkillable_tasks import UnkillableTasks
 
 
-@dataclass(frozen=True, unsafe_hash=False)
+@dataclass
 class NoMessageInEventError(Exception):
-    event: TelegramObject
+    event: TelegramObject | None
 
 
-class AiogramProvider(Provider):
-    provide_paid_stars_purchase_payment_buffer = from_context(
-        provides=Buffer[PaidStarsPurchasePayment],
-        scope=Scope.APP,
-    )
+class PresentationProvider(Provider):
+    @provide(scope=Scope.REQUEST)
+    def provide_event(self, event: TelegramObject) -> TelegramObject | None:
+        return event
 
     @provide(scope=Scope.APP)
     def provide_strage(self, redis: Redis) -> BaseStorage:
         return RedisStorage(redis, DefaultKeyBuilder(with_destiny=True))
-
-    @provide(scope=Scope.APP)
-    def provide_dp(self, storage: BaseStorage) -> Dispatcher:
-        dp = Dispatcher(name="main", storage=storage)
-
-        dp.include_routers(
-            *common_routers,
-            *user_routers,
-            *game_routers,
-        )
-
-        dp.include_routers(dialog)
-        setup_dialogs(dp)
-
-        return dp
 
     @provide(scope=Scope.APP)
     def provide_bg_manager_factory(self, dp: Dispatcher) -> BgManagerFactory:
@@ -170,20 +153,6 @@ class AiogramProvider(Provider):
     def provide_result_buffer(self) -> ResultBuffer:
         return ResultBuffer()
 
-    @provide(scope=Scope.APP)
-    def provide_stars_purchase_payment_gateway(
-        self,
-        secrets: Secrets,
-        bot: Bot,
-        buffer: Buffer[PaidStarsPurchasePayment],
-    ) -> StarsPurchasePaymentGateway:
-        return AiogramInAndBufferOutStarsPurchasePaymentGateway(
-            None,
-            buffer,
-            bot,
-            secrets.payments_token,
-        )
-
     @provide(scope=Scope.REQUEST)
     async def unkillable_tasks(
         self,
@@ -201,15 +170,29 @@ class AiogramProvider(Provider):
 
         return tasks
 
+    @provide(scope=Scope.APP)
+    def provide_paid_stars_purchase_payment_buffer(
+        self,
+    ) -> Buffer[PaidStarsPurchasePayment]:
+        return Buffer()
 
-class AiogramRequestDataProvider(Provider):
-    provide_paid_stars_purchase_payment_buffer = from_context(
-        provides=Buffer[PaidStarsPurchasePayment],
-        scope=Scope.APP,
-    )
+    @provide(scope=Scope.APP)
+    def provide_dp(self, storage: BaseStorage) -> Dispatcher:
+        dp = Dispatcher(name="main", storage=storage)
+
+        dp.include_routers(
+            *common_routers,
+            *user_routers,
+            *game_routers,
+        )
+
+        dp.include_routers(dialog)
+        setup_dialogs(dp)
+
+        return dp
 
     @provide(scope=Scope.REQUEST)
-    def provide_message(self, event: TelegramObject) -> Message:
+    def provide_message(self, event: TelegramObject | None) -> Message:
         match event:
             case Message():
                 return event
@@ -221,7 +204,7 @@ class AiogramRequestDataProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def provide_pre_checkout_query(
         self,
-        event: TelegramObject,
+        event: TelegramObject | None,
     ) -> PreCheckoutQuery | None:
         match event:
             case PreCheckoutQuery():
@@ -252,7 +235,7 @@ class AiogramRequestDataProvider(Provider):
         )
 
 
-class ApplicationWithAiogramRequestDataProvider(Provider):
+class ApplicationProvider(Provider):
     provide_buy_emoji = provide(BuyEmoji, scope=Scope.REQUEST)
     provide_select_emoji = provide(SelectEmoji, scope=Scope.REQUEST)
     probide_wait_stars_to_start_stars_purchase = provide(
@@ -276,8 +259,6 @@ class ApplicationWithAiogramRequestDataProvider(Provider):
         scope=Scope.REQUEST,
     )
 
-
-class ApplicationWithoutAiogramRequestDataProvider(Provider):
     provide_view_user = provide(ViewUser, scope=Scope.REQUEST)
     provide_register_user = provide(RegisterUser, scope=Scope.REQUEST)
     probide_complete_stars_purchase_payment = provide(

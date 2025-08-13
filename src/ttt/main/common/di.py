@@ -70,7 +70,7 @@ from ttt.infrastructure.structlog.logger import LoggerFactory
 
 
 class InfrastructureProvider(Provider):
-    provide_paid_stars_purchase_payment_buffer = from_context(
+    provide_logger_factory = from_context(
         provides=LoggerFactory,
         scope=Scope.APP,
     )
