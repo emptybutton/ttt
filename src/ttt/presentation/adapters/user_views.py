@@ -79,7 +79,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
             await need_to_start_message(self._bot, user_id)
             return
 
-        view = UserProfileView(
+        view = UserProfileView.of(
             user_row.number_of_wins,
             user_row.number_of_draws,
             user_row.number_of_defeats,

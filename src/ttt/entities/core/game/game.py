@@ -377,6 +377,32 @@ class Game:
 
         return AiMove(was_random=False, filled_cell_number=cell.number())
 
+    def cell_emoji(self, cell_position: Vector) -> Emoji | None:
+        match self.board[cell_position].filler_id():
+            case self.player1.id:
+                return self.player1_emoji
+            case self.player2.id:
+                return self.player2_emoji
+            case _:
+                return None
+
+    def is_player_move_expected(self, player_id: int | UUID) -> bool:
+        match player_id, self.state:
+            case (self.player1.id, GameState.wait_player1) | (
+                self.player2.id,
+                GameState.wait_player2,
+            ):
+                return True
+
+            case (self.player2.id, GameState.wait_player1) | (
+                self.player1.id,
+                GameState.wait_player2,
+            ):
+                return False
+
+            case _:
+                raise ValueError(self.state, player_id)
+
     def _make_random_ai_move(
         self,
         current_player: Ai,
@@ -630,31 +656,3 @@ def start_game_with_ai(  # noqa: PLR0913, PLR0917
     user.be_in_game(game_id, tracking)
 
     return StartedGameWithAi(game, next_move_ai_id)
-
-
-def is_player_move_expected(player_id: int | UUID, game: Game) -> bool:
-    match player_id, game.state:
-        case (game.player1.id, GameState.wait_player1) | (
-            game.player2.id,
-            GameState.wait_player2,
-        ):
-            return True
-
-        case (game.player2.id, GameState.wait_player1) | (
-            game.player1.id,
-            GameState.wait_player2,
-        ):
-            return False
-
-        case _:
-            raise ValueError(game.state, player_id)
-
-
-def cell_emoji(game: Game, cell_position: Vector) -> Emoji | None:
-    match game.board[cell_position].filler_id():
-        case game.player1.id:
-            return game.player1_emoji
-        case game.player2.id:
-            return game.player2_emoji
-        case _:
-            return None

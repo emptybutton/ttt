@@ -119,18 +119,6 @@ async def completed_game_messages(  # noqa: PLR0914
     )
 
 
-async def user_already_in_game_message(bot: Bot, chat_id: int) -> None:
-    await bot.send_message(chat_id, "⚔️ Вы уже в игре")
-
-
-async def waiting_for_game_message(bot: Bot, chat_id: int) -> None:
-    await bot.send_message(chat_id, "👥 Поиск игры начат")
-
-
-async def double_waiting_for_game_message(bot: Bot, chat_id: int) -> None:
-    await bot.send_message(chat_id, "👥 Поиск игры уже начат")
-
-
 async def no_game_message(bot: Bot, chat_id: int) -> None:
     text = Text(
         "❌ Игры нет. Чтобы начать введите ",
@@ -139,19 +127,3 @@ async def no_game_message(bot: Bot, chat_id: int) -> None:
         Bold("/game_with_ai"),
     )
     await bot.send_message(chat_id, **text.as_kwargs())
-
-
-async def already_completed_game_message(bot: Bot, chat_id: int) -> None:
-    await bot.send_message(chat_id, "❌ Игра уже завершилась")
-
-
-async def not_current_user_message(bot: Bot, chat_id: int) -> None:
-    await bot.send_message(chat_id, "❌ Сейчас не ваш ход")
-
-
-async def no_cell_message(bot: Bot, chat_id: int) -> None:
-    await bot.send_message(chat_id, "❌ Такой ячейки нет")
-
-
-async def already_filled_cell_message(bot: Bot, chat_id: int) -> None:
-    await bot.send_message(chat_id, "❌ Ячейка уже проставлена")

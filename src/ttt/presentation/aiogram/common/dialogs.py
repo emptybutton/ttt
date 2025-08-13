@@ -1,10 +1,11 @@
 from dataclasses import asdict, dataclass
-from typing import Any
+from typing import Any, Literal
 
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, User
 from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.api.internal import Widget
+from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.kbd import (
     Button,
     Group,
@@ -13,10 +14,11 @@ from aiogram_dialog.widgets.kbd import (
     Select,
     SwitchTo,
 )
-from aiogram_dialog.widgets.text import Case, Const, Format, Multi
+from aiogram_dialog.widgets.media import StaticMedia
+from aiogram_dialog.widgets.text import Case, Const, Format, Multi, Text
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
-from magic_filter import F
+from magic_filter import F, MagicFilter
 
 from ttt.application.game.game.cancel_game import CancelGame
 from ttt.application.game.game.make_move_in_game import MakeMoveInGame
@@ -29,12 +31,18 @@ from ttt.application.user.view_user import ViewUser
 from ttt.application.user.view_user_emojis import ViewUserEmojis
 from ttt.entities.core.game.ai import AiType
 from ttt.entities.core.game.cell_number import CellNumber
-from ttt.entities.core.game.game import (
-    Game,
-    cell_emoji,
-    is_player_move_expected,
+from ttt.entities.core.game.game import Game
+from ttt.entities.core.game.game_result import (
+    CancelledGameResult,
+    DecidedGameResult,
+    DrawGameResult,
 )
+from ttt.entities.core.user.draw import UserDraw
+from ttt.entities.core.user.loss import UserLoss
+from ttt.entities.core.user.win import UserWin
+from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.texts import (
+    copy_signed_text,
     short_float_text,
 )
 from ttt.presentation.result_buffer import ResultBuffer
@@ -50,6 +58,24 @@ class DialogState(StatesGroup):
     completed_game = State()
 
 
+class Hint(Text):
+    def __init__(self, text: Text, hint_key: str = "hint") -> None:
+        super().__init__(when=F["start_data"][hint_key])
+
+        self.text = text
+        self.hint_key = hint_key
+
+    async def _render_text(
+            self, data: dict[str, Any], manager: DialogManager,
+    ) -> str:
+        text = await self.text.render_text(data, manager)
+
+        if isinstance(manager.start_data, dict):
+            del manager.start_data[self.hint_key]
+
+        return text
+
+
 @dataclass(frozen=True)
 class EncodableToWindowData:
     def window_data(self) -> dict[str, Any]:
@@ -63,6 +89,9 @@ class EncodableToWindowData:
 class MainMenuView(EncodableToWindowData):
     is_user_in_game: bool
     has_user_emojis: bool
+
+    def _data_key(self) -> str:
+        return "common"
 
 
 @inject
@@ -82,33 +111,139 @@ async def main_getter(
 @inject
 async def on_cancel_game_clicked(
     callback: CallbackQuery,
-    _: Widget,
+    _: Button,
     __: DialogManager,
-    ___: Any,  # noqa: ANN401
     cancel_game: FromDishka[CancelGame],
 ) -> None:
     await cancel_game(callback.from_user.id)
 
 
+@dataclass(frozen=True)
+class PlayerResultInGameView(EncodableToWindowData):
+    type_: Literal["win", "loss", "draw", "cancelled_game"]
+    rating_vector_text: str | None
+    new_stars: int | None
+
+    def _data_key(self) -> str:
+        return "player_result_in_game"
+
+    @classmethod
+    def of(cls, game: Game, user_id: int) -> "PlayerResultInGameView":
+        match game.result:
+            case DecidedGameResult(
+                win=UserWin(user_id=winner_id) as win,
+            ) if winner_id == user_id:
+                type_ = "win"
+                rating_vector = win.rating_vector
+                new_stars = win.new_stars
+
+            case DecidedGameResult(
+                loss=UserLoss(user_id=loser_id) as loss,
+            ) if loser_id == user_id:
+                type_ = "loss"
+                rating_vector = loss.rating_vector
+                new_stars = None
+
+            case DrawGameResult(draw1, draw2):
+                if isinstance(draw1, UserDraw) and draw1.user_id == user_id:
+                    draw = draw1
+                elif isinstance(draw2, UserDraw) and draw2.user_id == user_id:
+                    draw = draw2
+                else:
+                    raise ValueError
+
+                type_ = "draw"
+                rating_vector = draw.rating_vector
+                new_stars = None
+
+            case CancelledGameResult():
+                type_ = "cancelled_game"
+                rating_vector = None
+                new_stars = None
+
+            case _:
+                raise ValueError
+
+        if rating_vector is None:
+            rating_vector_text = None
+        else:
+            rating_vector_text = copy_signed_text(
+                short_float_text(rating_vector), rating_vector,
+            )
+
+        return PlayerResultInGameView(
+            type_=type_,
+            rating_vector_text=rating_vector_text,
+            new_stars=new_stars,
+        )
+
+
+@inject
+async def on_back_to_game_clicked(
+    callback: CallbackQuery,
+    _: Button,
+    manager: DialogManager,
+    view_game: FromDishka[ViewGame],
+    result_buffer: FromDishka[ResultBuffer],
+) -> None:
+    await view_game(callback.from_user.id)
+    view = result_buffer(ActiveGameView)
+    data = view.window_data()
+
+    await manager.start(DialogState.active_game, data)
+
+
+player_result_in_game_f = F["start_data"]["player_result_in_game"]
+
+rating_f = player_result_in_game_f["rating_vector_text"].is_not(None)
+stars_f = player_result_in_game_f["new_stars"].is_not(None)
+
 main_window = Window(
-    Const("🧭 Меню", when="is_header_empty"),
+    Const("🧭 Меню", when=~player_result_in_game_f & ~F["start_data"]["hint"]),
+
+    Hint(
+        Multi(
+            Case(
+                selector=player_result_in_game_f["type_"],
+                texts={
+                    "win": Const("🎆 Вы победили!"),
+                    "loss": Const("💀 Вы проиграли!"),
+                    "draw": Const("🕊 Ничья!"),
+                    "cancelled_game": Const("👻 Игра отменена!"),
+                },
+                when=player_result_in_game_f,
+            ),
+            Const(" ", when=(rating_f | stars_f)),
+            Format(
+                "{start_data[player_result_in_game][rating_vector_text]} 🏅",
+                when=rating_f,
+            ),
+            Format(
+                "+{start_data[player_result_in_game][new_stars]} 🌟",
+                when=stars_f,
+            ),
+        ),
+        hint_key="player_result_in_game",
+    ),
+
+    Hint(Format("{start_data[hint]}")),
 
     SwitchTo(
         Const("Начать игру"),
         id="start_game",
         state=DialogState.game_mode_to_start_game,
-        when=~F["main"]["is_user_in_game"],
+        when=~F["common"]["is_user_in_game"],
     ),
-    SwitchTo(
+    Button(
         Const("Продолжить игру"),
         id="back_to_game",
-        state=DialogState.active_game,
-        when=F["main"]["is_user_in_game"],
+        on_click=on_back_to_game_clicked,
+        when=F["common"]["is_user_in_game"],
     ),
     Button(
         Const("Отменить игру"),
         id="cancel_game",
-        when=F["main"]["is_user_in_game"],
+        when=F["common"]["is_user_in_game"],
         on_click=on_cancel_game_clicked,
     ),
     SwitchTo(
@@ -120,7 +255,7 @@ main_window = Window(
         Const("Эмоджи"),
         id="emojis",
         state=DialogState.emojis,
-        when=F["main"]["has_user_emojis"],
+        when=F["common"]["has_user_emojis"],
     ),
     Button(Const("Магазин"), id="shop"),
     state=DialogState.main,
@@ -129,35 +264,40 @@ main_window = Window(
 
 
 @inject
-async def on_game_against_user_selected(
+async def on_game_against_user_clicked(
     callback: CallbackQuery,
-    _: Widget,
+    _: Button,
     __: DialogManager,
-    ___: Any,  # noqa: ANN401
     wait_game: FromDishka[WaitGame],
 ) -> None:
     await wait_game(callback.from_user.id)
 
 
 game_start_window = Window(
-    Const("⚔️ Выберите режим игры"),
-    Button(
-        Const("👥 Против человека"),
-        id="game_against_user",
-        on_click=on_game_against_user_selected,
+    Const("⚔️ Выберите режим игры", when=~F["start_data"]["hint"]),
+    Hint(Format("{start_data[hint]}")),
+    Row(
+        Button(
+            Const("👥 Против человека"),
+            id="game_against_user",
+            on_click=on_game_against_user_clicked,
+        ),
+        SwitchTo(
+            Const("🤖 Против ИИ"),
+            id="game_against_ai",
+            state=DialogState.ai_type_to_start_game,
+        ),
     ),
-    Button(Const("🤖 Против ИИ"), id="game_against_ai"),
     SwitchTo(Const("Назад"), id="back", state=DialogState.main),
     state=DialogState.game_mode_to_start_game,
 )
 
 
 @inject
-async def on_game_against_gemini_2_0_flash_selected(
+async def on_game_against_gemini_2_0_flash_clicked(
     callback: CallbackQuery,
-    _: Widget,
+    _: Button,
     __: DialogManager,
-    ___: Any,  # noqa: ANN401
     start_game_with_ai: FromDishka[StartGameWithAi],
 ) -> None:
     await start_game_with_ai(callback.from_user.id, AiType.gemini_2_0_flash)
@@ -165,10 +305,12 @@ async def on_game_against_gemini_2_0_flash_selected(
 
 ai_type_to_start_game_window = Window(
     Const("🤖 Выберите тип ИИ"),
-    Button(
-        Const("gemini 2.0 flash"),
-        id="game_against_gemini_2_0_flash",
-        on_click=on_game_against_gemini_2_0_flash_selected,
+    Row(
+        Button(
+            Const("gemini 2.0 flash"),
+            id="game_against_gemini_2_0_flash",
+            on_click=on_game_against_gemini_2_0_flash_clicked,
+        ),
     ),
     SwitchTo(
         Const("Назад"), id="back", state=DialogState.game_mode_to_start_game,
@@ -180,18 +322,17 @@ ai_type_to_start_game_window = Window(
 @inject
 async def on_cell_clicked(
     callback: CallbackQuery,
-    _: Widget,
-    __: DialogManager,
-    id_: str,
+    button: Button,
+    _: DialogManager,
     make_move_in_game: FromDishka[MakeMoveInGame],
 ) -> None:
-    cell_number_int = int(id_[-1])
+    cell_number_int = int(not_none(button.widget_id)[-1])
     await make_move_in_game(callback.from_user.id, cell_number_int)
 
 
 def cell_button(cell_number_int: int) -> Button:
     return Button(
-        Format(f"{{view.cell_views[{cell_number_int}]}}"),
+        Format(f"{{main[cell_view_by_cell_number_int][{cell_number_int}]}}"),
         id=f"game_cell_{cell_number_int}",
         on_click=on_cell_clicked,
     )
@@ -211,14 +352,14 @@ class ActiveGameView(EncodableToWindowData):
 
         for cell_number_int in range(1, 10):
             cell_number = CellNumber(cell_number_int)
-            cell_emoji_ = cell_emoji(game, cell_number.board_position())
+            cell_emoji_ = game.cell_emoji(cell_number.board_position())
 
             cell_view = " " if cell_emoji_ is None else cell_emoji_.str_
             cell_view_by_cell_number_int[cell_number_int] = cell_view
 
         return ActiveGameView(
-            is_current_players_move_expected=(
-                is_player_move_expected(user_id, game)
+            is_current_players_move_expected=game.is_player_move_expected(
+                user_id,
             ),
             cell_view_by_cell_number_int=cell_view_by_cell_number_int,
             is_user_player1=game.player1.id == user_id,
@@ -226,34 +367,34 @@ class ActiveGameView(EncodableToWindowData):
             player2_emoji=game.player2_emoji.str_,
         )
 
-
 @inject
-async def active_game_getter(
+async def emoji_getter(
     *,
+    dialog_manager: DialogManager,
     event_from_user: User,
-    view_game: FromDishka[ViewGame],
-    result_buffer: FromDishka[ResultBuffer],
     **_: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
-    await view_game(event_from_user.id)
-    view = result_buffer(ActiveGameView)
-
-    return view.window_data()
-
+    assert False, dialog_manager.start_data
 
 active_game_window = Window(
-    Case(selector=F["main"]["is_user_player1"], texts={
+    Case(selector=F["start_data"]["main"]["is_user_player1"], texts={
         True: Format(
-            "Вы — {main[player1_emoji]}, Враг — {main[player1_emoji]}",
+            "Вы — {start_data[main][player1_emoji]}"
+            ", Враг — {start_data[main][player2_emoji]}",
         ),
         False: Format(
-            "Враг — {main[player1_emoji]}, Вы — {main[player1_emoji]}",
+            "Враг — {start_data[main][player1_emoji]}"
+            ", Вы — {start_data[main][player2_emoji]}",
         ),
     }),
-    Case(selector=F["main"]["is_current_players_move_expected"], texts={
-        True: Const("Ходите"),
-        False: Const("Ждите хода врага"),
-    }),
+    Case(
+        selector=F["start_data"]["main"]["is_current_players_move_expected"],
+        texts={
+            True: Const("Ходите"),
+            False: Const("Ждите хода врага"),
+        },
+    ),
+    Hint(Multi(Const(" "), Format("{start_data[hint]}"))),
     Group(
         Row(cell_button(1), cell_button(2), cell_button(3)),
         Row(cell_button(4), cell_button(5), cell_button(6)),
@@ -261,7 +402,7 @@ active_game_window = Window(
     ),
     SwitchTo(Const("Назад"), id="back", state=DialogState.main),
     state=DialogState.active_game,
-    getter=active_game_getter,
+    getter=x,
 )
 
 
@@ -345,11 +486,24 @@ class UserProfileView(EncodableToWindowData):
     number_of_draws: int
     number_of_defeats: int
     account_stars: int
-    rating: float
+    rating_text: str
 
-    @property
-    def rating_text(self) -> str:
-        return short_float_text(self.rating)
+    @classmethod
+    def of(
+        cls,
+        number_of_wins: int,
+        number_of_draws: int,
+        number_of_defeats: int,
+        account_stars: int,
+        rating: float,
+    ) -> "UserProfileView":
+        return UserProfileView(
+            number_of_wins=number_of_wins,
+            number_of_draws=number_of_draws,
+            number_of_defeats=number_of_defeats,
+            account_stars=account_stars,
+            rating_text=short_float_text(rating),
+        )
 
 
 @inject
