@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from aiogram import Bot
-from aiogram_dialog import BgManagerFactory
+from aiogram_dialog import BgManagerFactory, StartMode
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,6 +38,7 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
         await dialog_manager.start(
             DialogState.game_mode_to_start_game,
             {"hint": "⚔️ Поиск игры начат"},
+            StartMode.RESET_STACK,
         )
 
     async def current_game_view_with_user_id(self, user_id: int, /) -> None:
@@ -85,6 +86,7 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
             await dialog_manager.start(
                 DialogState.active_game,
                 ActiveGameView.of(game, location.user_id).window_data(),
+                StartMode.RESET_STACK,
             )
 
     async def no_game_view(self, user_id: int, /) -> None:
@@ -93,7 +95,7 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
         dialog_manager = self._bg_dialog_manager_factory.bg(
             self._bot, user_id, user_id,
         )
-        await dialog_manager.start(DialogState.main, data)
+        await dialog_manager.start(DialogState.main, data, StartMode.RESET_STACK)
 
     async def game_already_complteted_view(
         self,
@@ -105,7 +107,7 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
             self._bot, user_id, user_id,
         )
         data = {"hint": "❌ Игра уже закончилась"}
-        await dialog_manager.start(DialogState.active_game, data)
+        await dialog_manager.start(DialogState.active_game, data, StartMode.RESET_STACK)
 
     async def not_current_user_view(
         self,
@@ -120,7 +122,7 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
         dialog_manager = self._bg_dialog_manager_factory.bg(
             self._bot, user_id, user_id,
         )
-        await dialog_manager.start(DialogState.active_game, data)
+        await dialog_manager.start(DialogState.active_game, data, StartMode.RESET_STACK)
 
     async def no_cell_view(
         self,
@@ -149,7 +151,7 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
         dialog_manager = self._bg_dialog_manager_factory.bg(
             self._bot, user_id, user_id,
         )
-        await dialog_manager.start(DialogState.active_game, data)
+        await dialog_manager.start(DialogState.active_game, data, StartMode.RESET_STACK)
 
     async def _active_game_view(
         self, location: UserGameLocation, game: Game,
@@ -159,7 +161,7 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
         dialog_manager = self._bg_dialog_manager_factory.bg(
             self._bot, location.user_id, location.user_id,
         )
-        await dialog_manager.start(DialogState.active_game, data)
+        await dialog_manager.start(DialogState.active_game, data, StartMode.RESET_STACK)
 
     async def _completed_game_view(
         self,
@@ -173,4 +175,4 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
         view = PlayerResultInGameView.of(game, location.user_id)
         data = view.window_data()
 
-        await dialog_manager.start(DialogState.main, data)
+        await dialog_manager.start(DialogState.main, data, StartMode.RESET_STACK)

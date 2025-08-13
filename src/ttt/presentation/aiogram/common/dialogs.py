@@ -3,7 +3,7 @@ from typing import Any, Literal
 
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, User
-from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.api.internal import Widget
 from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.kbd import (
@@ -190,7 +190,7 @@ async def on_back_to_game_clicked(
     view = result_buffer(ActiveGameView)
     data = view.window_data()
 
-    await manager.start(DialogState.active_game, data)
+    await manager.start(DialogState.active_game, data, StartMode.RESET_STACK)
 
 
 player_result_in_game_f = F["start_data"]["player_result_in_game"]
@@ -332,7 +332,9 @@ async def on_cell_clicked(
 
 def cell_button(cell_number_int: int) -> Button:
     return Button(
-        Format(f"{{main[cell_view_by_cell_number_int][{cell_number_int}]}}"),
+        Format(
+            f"{{start_data[main][cell_view_by_cell_number_int][_{cell_number_int}]}}",
+        ),
         id=f"game_cell_{cell_number_int}",
         on_click=on_cell_clicked,
     )
@@ -341,21 +343,21 @@ def cell_button(cell_number_int: int) -> Button:
 @dataclass(frozen=True)
 class ActiveGameView(EncodableToWindowData):
     is_current_players_move_expected: bool
-    cell_view_by_cell_number_int: dict[int, str]
+    cell_view_by_cell_number_int: dict[str, str]
     is_user_player1: bool
     player1_emoji: str
     player2_emoji: str
 
     @classmethod
     def of(cls, game: Game, user_id: int) -> "ActiveGameView":
-        cell_view_by_cell_number_int = dict[int, str]()
+        cell_view_by_cell_number_int = dict[str, str]()
 
         for cell_number_int in range(1, 10):
             cell_number = CellNumber(cell_number_int)
             cell_emoji_ = game.cell_emoji(cell_number.board_position())
 
             cell_view = " " if cell_emoji_ is None else cell_emoji_.str_
-            cell_view_by_cell_number_int[cell_number_int] = cell_view
+            cell_view_by_cell_number_int[f"_{cell_number_int}"] = cell_view
 
         return ActiveGameView(
             is_current_players_move_expected=game.is_player_move_expected(
@@ -367,14 +369,6 @@ class ActiveGameView(EncodableToWindowData):
             player2_emoji=game.player2_emoji.str_,
         )
 
-@inject
-async def emoji_getter(
-    *,
-    dialog_manager: DialogManager,
-    event_from_user: User,
-    **_: Any,  # noqa: ANN401
-) -> dict[str, Any]:
-    assert False, dialog_manager.start_data
 
 active_game_window = Window(
     Case(selector=F["start_data"]["main"]["is_user_player1"], texts={
@@ -402,7 +396,6 @@ active_game_window = Window(
     ),
     SwitchTo(Const("Назад"), id="back", state=DialogState.main),
     state=DialogState.active_game,
-    getter=x,
 )
 
 

@@ -71,7 +71,7 @@ class StructlogGameLog(GameLog):
         /,
     ) -> None:
         await self._logger.ainfo(
-            "user_intends_to_start_game_against_ai",
+            "game_cancelled",
             user_id=user_id,
             game_id=game.id.hex,
         )
