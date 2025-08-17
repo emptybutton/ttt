@@ -18,7 +18,7 @@ from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 from ttt.presentation.aiogram.common.dialogs import (
     ActiveGameView,
     DialogState,
-    PlayerResultInGameView,
+    CompletedGameView,
 )
 from ttt.presentation.result_buffer import ResultBuffer
 
@@ -172,7 +172,7 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
             self._bot, location.user_id, location.user_id,
         )
 
-        view = PlayerResultInGameView.of(game, location.user_id)
+        view = CompletedGameView.of(game, location.user_id)
         data = view.window_data()
 
         await dialog_manager.start(DialogState.main, data, StartMode.RESET_STACK)

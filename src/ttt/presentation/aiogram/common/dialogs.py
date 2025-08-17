@@ -100,8 +100,17 @@ async def main_getter(
     event_from_user: User,
     view_main_menu: FromDishka[ViewMainMenu],
     result_buffer: FromDishka[ResultBuffer],
+    dialog_manager: DialogManager,
     **_: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
+    completed_game_view_exists = (
+        isinstance(dialog_manager.start_data, dict)
+        and "completed_game" in dialog_manager.start_data
+    )
+
+    if completed_game_view_exists:
+        return {}
+
     await view_main_menu(event_from_user.id)
     view = result_buffer(MainMenuView)
 
@@ -119,16 +128,17 @@ async def on_cancel_game_clicked(
 
 
 @dataclass(frozen=True)
-class PlayerResultInGameView(EncodableToWindowData):
+class CompletedGameView(EncodableToWindowData):
     type_: Literal["win", "loss", "draw", "cancelled_game"]
     rating_vector_text: str | None
     new_stars: int | None
+    has_user_emojis: bool
 
     def _data_key(self) -> str:
-        return "player_result_in_game"
+        return "completed_game"
 
     @classmethod
-    def of(cls, game: Game, user_id: int) -> "PlayerResultInGameView":
+    def of(cls, game: Game, user_id: int) -> "CompletedGameView":
         match game.result:
             case DecidedGameResult(
                 win=UserWin(user_id=winner_id) as win,
@@ -171,10 +181,13 @@ class PlayerResultInGameView(EncodableToWindowData):
                 short_float_text(rating_vector), rating_vector,
             )
 
-        return PlayerResultInGameView(
+        user = not_none(game.user(user_id))
+
+        return CompletedGameView(
             type_=type_,
             rating_vector_text=rating_vector_text,
             new_stars=new_stars,
+            has_user_emojis=bool(user.emojis),
         )
 
 
@@ -193,37 +206,39 @@ async def on_back_to_game_clicked(
     await manager.start(DialogState.active_game, data, StartMode.RESET_STACK)
 
 
-player_result_in_game_f = F["start_data"]["player_result_in_game"]
+completed_game_f = F["start_data"]["completed_game"]
 
-rating_f = player_result_in_game_f["rating_vector_text"].is_not(None)
-stars_f = player_result_in_game_f["new_stars"].is_not(None)
+rating_f = completed_game_f["rating_vector_text"].is_not(None)
+stars_f = completed_game_f["new_stars"].is_not(None)
+has_user_emojis_f = (
+    F["common"]["has_user_emojis"] | completed_game_f["has_user_emojis"]
+)
+is_user_not_in_game_f = completed_game_f | ~F["common"]["is_user_in_game"]
+
 
 main_window = Window(
-    Const("🧭 Меню", when=~player_result_in_game_f & ~F["start_data"]["hint"]),
+    Const("🧭 Меню", when=~completed_game_f & ~F["start_data"]["hint"]),
 
     Hint(
         Multi(
             Case(
-                selector=player_result_in_game_f["type_"],
+                selector=completed_game_f["type_"],
                 texts={
                     "win": Const("🎆 Вы победили!"),
                     "loss": Const("💀 Вы проиграли!"),
                     "draw": Const("🕊 Ничья!"),
                     "cancelled_game": Const("👻 Игра отменена!"),
                 },
-                when=player_result_in_game_f,
+                when=completed_game_f,
             ),
             Const(" ", when=(rating_f | stars_f)),
             Format(
-                "{start_data[player_result_in_game][rating_vector_text]} 🏅",
+                "{start_data[completed_game][rating_vector_text]} 🏅",
                 when=rating_f,
             ),
-            Format(
-                "+{start_data[player_result_in_game][new_stars]} 🌟",
-                when=stars_f,
-            ),
+            Format("+{start_data[completed_game][new_stars]} 🌟", when=stars_f),
         ),
-        hint_key="player_result_in_game",
+        hint_key="completed_game",
     ),
 
     Hint(Format("{start_data[hint]}")),
@@ -232,18 +247,18 @@ main_window = Window(
         Const("Начать игру"),
         id="start_game",
         state=DialogState.game_mode_to_start_game,
-        when=~F["common"]["is_user_in_game"],
+        when=is_user_not_in_game_f,
     ),
     Button(
         Const("Продолжить игру"),
         id="back_to_game",
         on_click=on_back_to_game_clicked,
-        when=F["common"]["is_user_in_game"],
+        when=~is_user_not_in_game_f,
     ),
     Button(
         Const("Отменить игру"),
         id="cancel_game",
-        when=F["common"]["is_user_in_game"],
+        when=~is_user_not_in_game_f,
         on_click=on_cancel_game_clicked,
     ),
     SwitchTo(
@@ -255,7 +270,7 @@ main_window = Window(
         Const("Эмоджи"),
         id="emojis",
         state=DialogState.emojis,
-        when=F["common"]["has_user_emojis"],
+        when=has_user_emojis_f,
     ),
     Button(Const("Магазин"), id="shop"),
     state=DialogState.main,
