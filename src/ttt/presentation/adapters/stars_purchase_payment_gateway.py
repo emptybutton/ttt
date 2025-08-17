@@ -4,6 +4,7 @@ from uuid import UUID
 
 from aiogram import Bot
 from aiogram.types import PreCheckoutQuery
+from aiogram_dialog import BgManagerFactory, ShowMode, StartMode
 
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.stars_purchase.ports.stars_purchase_payment_gateway import (  # noqa: E501
@@ -12,6 +13,7 @@ from ttt.application.user.stars_purchase.ports.stars_purchase_payment_gateway im
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.buffer import Buffer
+from ttt.presentation.aiogram.common.dialogs import DialogState
 from ttt.presentation.aiogram.user.invoices import stars_invoce
 
 
@@ -23,12 +25,23 @@ class AiogramInAndBufferOutStarsPurchasePaymentGateway(
     _buffer: Buffer[PaidStarsPurchasePayment]
     _bot: Bot
     _payments_token: str = field(repr=False)
+    _bg_dialog_manager_factory: BgManagerFactory
 
     async def send_invoice(
         self,
         purchase: StarsPurchase,
     ) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, purchase.user_id, purchase.user_id,
+        )
+
         await stars_invoce(self._bot, purchase, self._payments_token)
+        await manager.start(
+            DialogState.stars_shop,
+            {"hint": "🌟 Покупайте"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
 
     async def start_payment(self, payment_id: UUID) -> None:
         await not_none(self._pre_checkout_query).answer(ok=True)

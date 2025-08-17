@@ -5,13 +5,6 @@ from ttt.entities.core.stars import Stars
 
 class EmojiPurchaseUserViews(ABC):
     @abstractmethod
-    async def wait_emoji_to_buy_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
     async def not_enough_stars_to_buy_emoji_view(
         self,
         user_id: int,

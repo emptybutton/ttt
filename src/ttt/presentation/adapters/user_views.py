@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from aiogram import Bot
+from aiogram_dialog import BgManagerFactory, ShowMode, StartMode
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,6 +26,7 @@ from ttt.infrastructure.sqlalchemy.stmts import (
 )
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
 from ttt.presentation.aiogram.common.dialogs import (
+    DialogState,
     EmojiMenuView,
     EmojiView,
     MainMenuView,
@@ -207,16 +209,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
 @dataclass(frozen=True, unsafe_hash=False)
 class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
     _bot: Bot
-
-    async def wait_stars_to_start_stars_purchase_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        await wait_stars_to_start_stars_purchase_message(
-            self._bot,
-            user_id,
-        )
+    _bg_dialog_manager_factory: BgManagerFactory
 
     async def invalid_stars_for_stars_purchase_view(
         self,
@@ -230,7 +223,15 @@ class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
         user_id: int,
         /,
     ) -> None:
-        await stars_will_be_added_message(self._bot, user_id)
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user_id, user_id,
+        )
+        await manager.start(
+            DialogState.stars_shop,
+            {"hint": "🌟 Звёзды скоро начислятся!"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
 
     async def completed_stars_purchase_view(
         self,
@@ -238,7 +239,15 @@ class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
         purchase_id: UUID,
         /,
     ) -> None:
-        await stars_added_message(self._bot, user.id)
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user.id, user.id,
+        )
+        await manager.start(
+            DialogState.stars_shop,
+            {"hint": "🌟 Звезды начислились!"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
 
 
 @dataclass(frozen=True, unsafe_hash=False)

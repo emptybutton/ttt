@@ -6,13 +6,6 @@ from ttt.entities.core.user.user import User
 
 class StarsPurchaseUserViews(ABC):
     @abstractmethod
-    async def wait_stars_to_start_stars_purchase_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
     async def invalid_stars_for_stars_purchase_view(
         self,
         user_id: int,

@@ -60,9 +60,6 @@ from ttt.application.user.stars_purchase.start_stars_purchase_payment import (
 from ttt.application.user.stars_purchase.start_stars_purchase_payment_completion import (  # noqa: E501
     StartStarsPurchasePaymentCompletion,
 )
-from ttt.application.user.stars_purchase.wait_stars_to_start_stars_purchase import (  # noqa: E501
-    WaitStarsToStartStarsPurchase,
-)
 from ttt.application.user.view_main_menu import ViewMainMenu
 from ttt.application.user.view_user import ViewUser
 from ttt.application.user.view_user_emojis import ViewUserEmojis
@@ -226,22 +223,20 @@ class PresentationProvider(Provider):
         secrets: Secrets,
         bot: Bot,
         buffer: Buffer[PaidStarsPurchasePayment],
+        bg_manager_factory: BgManagerFactory,
     ) -> StarsPurchasePaymentGateway:
         return AiogramInAndBufferOutStarsPurchasePaymentGateway(
             pre_checkout_query,
             buffer,
             bot,
             secrets.payments_token,
+            bg_manager_factory,
         )
 
 
 class ApplicationProvider(Provider):
     provide_buy_emoji = provide(BuyEmoji, scope=Scope.REQUEST)
     provide_select_emoji = provide(SelectEmoji, scope=Scope.REQUEST)
-    probide_wait_stars_to_start_stars_purchase = provide(
-        WaitStarsToStartStarsPurchase,
-        scope=Scope.REQUEST,
-    )
     provide_start_stars_purchase = provide(
         StartStarsPurchase,
         scope=Scope.REQUEST,
