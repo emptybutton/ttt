@@ -6,7 +6,3 @@ def short_float_text(float_: float) -> str:
 
 def copy_signed_text(text: str, original_signed: float) -> str:
     return f"+{text}" if original_signed >= 0 else f"{text}"
-
-
-def signed_number_text(number: float) -> str:
-    return f"+{number}" if number >= 0 else f"{number}"

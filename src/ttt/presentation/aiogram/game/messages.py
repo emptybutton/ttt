@@ -1,5 +1,4 @@
 from aiogram.client.bot import Bot
-from aiogram.utils.formatting import Bold, Text
 
 from ttt.entities.core.game.game import (
     Game,
@@ -32,13 +31,3 @@ async def completed_game_sticker(
             raise ValueError
 
     await bot.send_message(chat_id, result_emoji)
-
-
-async def no_game_message(bot: Bot, chat_id: int) -> None:
-    text = Text(
-        "❌ Игры нет. Чтобы начать введите ",
-        Bold("/game"),
-        " или ",
-        Bold("/game_with_ai"),
-    )
-    await bot.send_message(chat_id, **text.as_kwargs())

@@ -22,7 +22,6 @@ from ttt.entities.core.user.user import User, is_user_in_game
 from ttt.infrastructure.sqlalchemy.stmts import (
     selected_user_emoji_str_from_postgres,
     user_emojis_from_postgres,
-    user_exists_in_postgres,
 )
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
 from ttt.presentation.aiogram.common.dialogs import (
@@ -33,15 +32,6 @@ from ttt.presentation.aiogram.common.dialogs import (
 )
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
-)
-from ttt.presentation.aiogram.user.messages import (
-    emoji_list_message,
-    emoji_menu_message,
-    emoji_not_purchased_to_select_message,
-    invalid_emoji_message,
-    menu_message,
-    wait_emoji_message,
-    welcome_message,
 )
 from ttt.presentation.result_buffer import ResultBuffer
 
@@ -126,72 +116,11 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
             EmojiMenuView.of(emojis, selected_user_emoji_str)
         )
 
-    async def user_registered_view(
-        self,
-        user: User,
-    ) -> None:
-        await welcome_message(self._bot, user.id, user.is_in_game())
-
     async def user_is_not_registered_view(
         self,
         user_id: int,
     ) -> None:
         await need_to_start_message(self._bot, user_id)
-
-    async def user_already_registered_view(
-        self,
-        user: User,
-    ) -> None:
-        await welcome_message(self._bot, user.id, user.is_in_game())
-
-    async def selected_emoji_removed_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        if not await user_exists_in_postgres(self._session, user_id):
-            await need_to_start_message(self._bot, user_id)
-            return
-
-        emojis = await user_emojis_from_postgres(self._session, user_id)
-        selected_user_emoji_str = await selected_user_emoji_str_from_postgres(
-            self._session, user_id,
-        )
-
-        await emoji_menu_message(
-            self._bot, user_id, emojis, selected_user_emoji_str,
-        )
-
-    async def menu_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        stmt = (
-            select(TableUser.game_location_game_id.is_not(None))
-            .where(TableUser.id == user_id)
-        )
-        is_user_in_game = await self._session.scalar(stmt)
-
-        if is_user_in_game is None:
-            await need_to_start_message(self._bot, user_id)
-            return
-
-        await menu_message(self._bot, user_id, is_user_in_game)
-
-    async def emoji_menu_view(self, user_id: int, /) -> None:
-        if not await user_exists_in_postgres(self._session, user_id):
-            await need_to_start_message(self._bot, user_id)
-            return
-
-        emojis = await user_emojis_from_postgres(self._session, user_id)
-        selected_user_emoji_str = await selected_user_emoji_str_from_postgres(
-            self._session, user_id,
-        )
-
-        await emoji_menu_message(
-            self._bot, user_id, emojis, selected_user_emoji_str,
-        )
 
 
 @dataclass(frozen=True, unsafe_hash=False)
@@ -250,39 +179,14 @@ class AiogramMessagesFromPostgresAsEmojiSelectionUserViews(
         user_id: int,
         /,
     ) -> None:
-        await invalid_emoji_message(self._bot, user_id)
+        raise NotImplementedError
 
     async def emoji_not_purchased_to_select_view(
         self,
         user_id: int,
         /,
     ) -> None:
-        await emoji_not_purchased_to_select_message(self._bot, user_id)
-
-    async def emoji_selected_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        if not await user_exists_in_postgres(self._session, user_id):
-            await need_to_start_message(self._bot, user_id)
-            return
-
-        emojis = await user_emojis_from_postgres(self._session, user_id)
-        selected_user_emoji_str = await selected_user_emoji_str_from_postgres(
-            self._session, user_id,
-        )
-
-        await emoji_list_message(
-            self._bot, user_id, emojis, selected_user_emoji_str,
-        )
-
-    async def wait_emoji_to_select_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        await wait_emoji_message(self._bot, user_id)
+        raise NotImplementedError
 
 
 @dataclass(frozen=True, unsafe_hash=False)

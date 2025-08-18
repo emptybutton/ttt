@@ -9,9 +9,7 @@ from aiogram_dialog import (
 from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.user.register_user import RegisterUser
-from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram.common.dialogs import DialogState
-from ttt.presentation.aiogram.common.messages import anons_are_rohibited_message
 
 
 start_router = Router(name=__name__)
@@ -25,10 +23,6 @@ async def _(
     dialog_manager: DialogManager,
 ) -> None:
     if message.from_user is None:
-        await anons_are_rohibited_message(
-            not_none(message.bot),
-            message.chat.id,
-        )
         return
 
     await register_user(message.from_user.id)

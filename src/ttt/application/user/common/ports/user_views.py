@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 
-from ttt.entities.core.user.user import User
-
 
 class CommonUserViews(ABC):
     @abstractmethod
@@ -22,20 +20,6 @@ class CommonUserViews(ABC):
     async def user_is_not_registered_view(
         self,
         user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def user_already_registered_view(
-        self,
-        user: User,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def user_registered_view(
-        self,
-        user: User,
         /,
     ) -> None: ...
 
