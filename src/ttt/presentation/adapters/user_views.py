@@ -28,7 +28,6 @@ from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
 from ttt.presentation.aiogram.common.dialogs import (
     DialogState,
     EmojiMenuView,
-    EmojiView,
     MainMenuView,
     UserProfileView,
 )
@@ -128,14 +127,9 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         selected_user_emoji_str = await selected_user_emoji_str_from_postgres(
             self._session, user_id,
         )
-        emoji_views = tuple(
-            EmojiView(emoji, is_emoji_selected=emoji == selected_user_emoji_str)
-            for emoji in emojis
-        )
 
-        self._result_buffer.result = EmojiMenuView(
-            emoji_views,
-            is_any_emoji_selected=selected_user_emoji_str is not None,
+        self._result_buffer.result = (
+            EmojiMenuView.of(emojis, selected_user_emoji_str)
         )
 
     async def user_registered_view(
@@ -300,13 +294,7 @@ class AiogramMessagesFromPostgresAsEmojiSelectionUserViews(
 @dataclass(frozen=True, unsafe_hash=False)
 class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
     _bot: Bot
-
-    async def wait_emoji_to_buy_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        await wait_emoji_message(self._bot, user_id)
+    _bg_dialog_manager_factory: BgManagerFactory
 
     async def not_enough_stars_to_buy_emoji_view(
         self,
@@ -314,29 +302,48 @@ class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
         stars_to_become_enough: Stars,
         /,
     ) -> None:
-        await not_enough_stars_to_buy_emoji_message(
-            self._bot,
-            user_id,
-            stars_to_become_enough,
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user_id, user_id,
+        )
+        await manager.start(
+            DialogState.emoji_shop,
+            {"hint": f"😞 Нужно ещё {stars_to_become_enough} 🌟 для покупки"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
         )
 
-    async def emoji_already_purchased_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        await emoji_already_purchased_message(self._bot, user_id)
+    async def emoji_already_purchased_view(self, user_id: int, /) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user_id, user_id,
+        )
+        await manager.start(
+            DialogState.emoji_shop,
+            {"hint": "🎭 Эмоджи уже куплен"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
 
-    async def emoji_was_purchased_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        await emoji_was_purchased_message(self._bot, user_id)
+    async def emoji_was_purchased_view(self, user_id: int, /) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user_id, user_id,
+        )
+        await manager.start(
+            DialogState.emoji_shop,
+            {"hint": "🌟 Куплено!"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
 
-    async def invalid_emoji_to_buy_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        await invalid_emoji_message(self._bot, user_id)
+    async def invalid_emoji_to_buy_view(self, user_id: int, /) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user_id, user_id,
+        )
+        message_text = (
+            "❌ Эмоджи должен состоять из одного символа"
+        )
+        await manager.start(
+            DialogState.emoji_shop,
+            {"hint": message_text},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )

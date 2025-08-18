@@ -1,11 +1,15 @@
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from typing import Any, Literal
 
+from aiogram.enums import ContentType
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, User
+from aiogram.types import CallbackQuery, Sticker, User
+from aiogram.types.message import Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.api.internal import Widget
 from aiogram_dialog.widgets.common import WhenCondition
+from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import (
     Button,
     Group,
@@ -25,6 +29,7 @@ from ttt.application.game.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.game.start_game_with_ai import StartGameWithAi
 from ttt.application.game.game.view_game import ViewGame
 from ttt.application.game.game.wait_game import WaitGame
+from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
 from ttt.application.user.stars_purchase.start_stars_purchase import (
     StartStarsPurchase,
@@ -48,6 +53,7 @@ from ttt.presentation.aiogram.common.texts import (
     copy_signed_text,
     short_float_text,
 )
+from ttt.presentation.aiogram.user.parsing import parsed_emoji_str
 from ttt.presentation.result_buffer import ResultBuffer
 
 
@@ -427,11 +433,15 @@ active_game_window = Window(
 @dataclass(frozen=True)
 class EmojiView:
     emoji_str: str
-    is_emoji_selected: bool
+    emoji_str_with_selectoion: str
 
-    def __str__(self) -> str:
-        return (
-            f"<{self.emoji_str}>" if self.is_emoji_selected else self.emoji_str
+    @classmethod
+    def of(cls, emoji_str: str, is_emoji_selected: bool) -> "EmojiView":  # noqa: FBT001
+        return EmojiView(
+            emoji_str=emoji_str,
+            emoji_str_with_selectoion=(
+                f"<{emoji_str}>" if is_emoji_selected else emoji_str
+            ),
         )
 
 
@@ -439,9 +449,22 @@ class EmojiView:
 class EmojiMenuView(EncodableToWindowData):
     emoji_views: tuple[EmojiView, ...]
     is_any_emoji_selected: bool
+    need_to_paginate: bool
 
-    def need_to_paginate(self) -> bool:
-        return len(self.emoji_views) > 7  # noqa: PLR2004
+    @classmethod
+    def of(
+        cls, emojis: Iterable[str], selected_emoji: str | None,
+    ) -> "EmojiMenuView":
+        emoji_views = tuple(
+            EmojiView.of(emoji, is_emoji_selected=emoji == selected_emoji)
+            for emoji in emojis
+        )
+
+        return EmojiMenuView(
+            emoji_views,
+            is_any_emoji_selected=selected_emoji is not None,
+            need_to_paginate=len(emoji_views) > 7,  # noqa: PLR2004
+        )
 
 
 @inject
@@ -472,18 +495,18 @@ async def on_emoji_selected(
 emoji_window = Window(
     Const("🎭 Эмоджи"),
     Select(
-        Format("{item}"),
+        Format("{item[emoji_str_with_selectoion]}"),
         id="not_paginated_emojis",
-        item_id_getter=lambda it: it.emoji_str,
+        item_id_getter=lambda it: it["emoji_str"],
         items=F["main"]["emoji_views"],
         on_click=on_emoji_selected,
         when=~F["main"]["need_to_paginate"],
     ),
     ScrollingGroup(
         Select(
-            Format("{item}"),
+            Format("{item[emoji_str_with_selectoion]}"),
             id="paginated_emojis_page",
-            item_id_getter=lambda it: it.emoji_str,
+            item_id_getter=lambda it: it["emoji_str"],
             items=F["main"]["emoji_views"],
             on_click=on_emoji_selected,
         ),
@@ -647,6 +670,28 @@ stars_shop_window = Window(
 )
 
 
+@inject
+async def handler(
+    message: Message,
+    _: MessageInput,
+    __: DialogManager,
+    buy_emoji: FromDishka[BuyEmoji],
+) -> None:
+    emoji_str = parsed_emoji_str(message)
+
+    await buy_emoji(not_none(message.from_user).id, emoji_str)
+
+
+emoji_shop_window = Window(
+    Const("🎭 Введите эмоджи:", when=~F["start_data"]["hint"]),
+    Hint(Format("{start_data[hint]}")),
+    SwitchTo(Const("Назад"), id="back", state=DialogState.shop),
+    MessageInput(handler, content_types=[ContentType.ANY]),
+    state=DialogState.emoji_shop,
+    getter=stars_shop_getter,
+)
+
+
 dialog = Dialog(
     main_window,
     game_start_window,
@@ -656,4 +701,5 @@ dialog = Dialog(
     emoji_window,
     shop_window,
     stars_shop_window,
+    emoji_shop_window,
 )
