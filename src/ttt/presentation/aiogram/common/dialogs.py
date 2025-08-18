@@ -4,11 +4,10 @@ from typing import Any, Literal
 
 from aiogram.enums import ContentType
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, Sticker, User
+from aiogram.types import CallbackQuery, User
 from aiogram.types.message import Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.api.internal import Widget
-from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import (
     Button,
@@ -18,11 +17,10 @@ from aiogram_dialog.widgets.kbd import (
     Select,
     SwitchTo,
 )
-from aiogram_dialog.widgets.media import StaticMedia
 from aiogram_dialog.widgets.text import Case, Const, Format, Multi, Text
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
-from magic_filter import F, MagicFilter
+from magic_filter import F
 
 from ttt.application.game.game.cancel_game import CancelGame
 from ttt.application.game.game.make_move_in_game import MakeMoveInGame

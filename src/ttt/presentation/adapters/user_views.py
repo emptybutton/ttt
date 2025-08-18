@@ -35,18 +35,12 @@ from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
 from ttt.presentation.aiogram.user.messages import (
-    emoji_already_purchased_message,
     emoji_list_message,
     emoji_menu_message,
     emoji_not_purchased_to_select_message,
-    emoji_was_purchased_message,
     invalid_emoji_message,
     menu_message,
-    not_enough_stars_to_buy_emoji_message,
-    stars_added_message,
-    stars_will_be_added_message,
     wait_emoji_message,
-    wait_stars_to_start_stars_purchase_message,
     welcome_message,
 )
 from ttt.presentation.result_buffer import ResultBuffer
