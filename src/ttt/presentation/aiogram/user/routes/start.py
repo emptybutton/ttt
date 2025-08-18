@@ -9,7 +9,7 @@ from aiogram_dialog import (
 from dishka.integrations.aiogram import FromDishka, inject
 
 from ttt.application.user.register_user import RegisterUser
-from ttt.presentation.aiogram.common.dialogs import DialogState
+from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 
 
 start_router = Router(name=__name__)
@@ -26,4 +26,4 @@ async def _(
         return
 
     await register_user(message.from_user.id)
-    await dialog_manager.start(DialogState.main, mode=StartMode.RESET_STACK)
+    await dialog_manager.start(MainDialogState.main, mode=StartMode.RESET_STACK)

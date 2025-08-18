@@ -79,9 +79,9 @@ from ttt.presentation.adapters.user_views import (
     AiogramMessagesFromPostgresAsEmojiSelectionUserViews,
 )
 from ttt.presentation.aiogram.common.bots import ttt_bot
-from ttt.presentation.aiogram.common.dialogs import dialog
 from ttt.presentation.aiogram.common.routes.all import common_routers
 from ttt.presentation.aiogram.user.routes.all import user_routers
+from ttt.presentation.aiogram_dialog.main_dialog import main_dialog
 from ttt.presentation.result_buffer import ResultBuffer
 from ttt.presentation.unkillable_tasks import UnkillableTasks
 
@@ -181,7 +181,7 @@ class PresentationProvider(Provider):
             *user_routers,
         )
 
-        dp.include_routers(dialog)
+        dp.include_routers(main_dialog)
         setup_dialogs(dp)
 
         return dp

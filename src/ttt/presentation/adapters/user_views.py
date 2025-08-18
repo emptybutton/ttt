@@ -24,14 +24,16 @@ from ttt.infrastructure.sqlalchemy.stmts import (
     user_emojis_from_postgres,
 )
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
-from ttt.presentation.aiogram.common.dialogs import (
-    DialogState,
-    EmojiMenuView,
-    MainMenuView,
-    UserProfileView,
-)
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
+)
+from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
+from ttt.presentation.aiogram_dialog.main_dialog.emojis_window import (
+    EmojiMenuView,
+)
+from ttt.presentation.aiogram_dialog.main_dialog.main_window import MainMenuView
+from ttt.presentation.aiogram_dialog.main_dialog.profile_window import (
+    UserProfileView,
 )
 from ttt.presentation.result_buffer import ResultBuffer
 
@@ -144,7 +146,7 @@ class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
             self._bot, user_id, user_id,
         )
         await manager.start(
-            DialogState.stars_shop,
+            MainDialogState.stars_shop,
             {"hint": "🌟 Звёзды скоро начислятся!"},
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,
@@ -160,7 +162,7 @@ class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
             self._bot, user.id, user.id,
         )
         await manager.start(
-            DialogState.stars_shop,
+            MainDialogState.stars_shop,
             {"hint": "🌟 Звезды начислились!"},
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,
@@ -204,7 +206,7 @@ class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
             self._bot, user_id, user_id,
         )
         await manager.start(
-            DialogState.emoji_shop,
+            MainDialogState.emoji_shop,
             {"hint": f"😞 Нужно ещё {stars_to_become_enough} 🌟 для покупки"},
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,
@@ -215,7 +217,7 @@ class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
             self._bot, user_id, user_id,
         )
         await manager.start(
-            DialogState.emoji_shop,
+            MainDialogState.emoji_shop,
             {"hint": "🎭 Эмоджи уже куплен"},
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,
@@ -226,7 +228,7 @@ class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
             self._bot, user_id, user_id,
         )
         await manager.start(
-            DialogState.emoji_shop,
+            MainDialogState.emoji_shop,
             {"hint": "🌟 Куплено!"},
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,
@@ -240,7 +242,7 @@ class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
             "❌ Эмоджи должен состоять из одного символа"
         )
         await manager.start(
-            DialogState.emoji_shop,
+            MainDialogState.emoji_shop,
             {"hint": message_text},
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,

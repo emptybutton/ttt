@@ -15,10 +15,3 @@ class EmojiSelectionUserViews(ABC):
         user_id: int,
         /,
     ) -> None: ...
-
-    @abstractmethod
-    async def emoji_selected_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...

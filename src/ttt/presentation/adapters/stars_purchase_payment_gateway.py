@@ -13,8 +13,8 @@ from ttt.application.user.stars_purchase.ports.stars_purchase_payment_gateway im
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.buffer import Buffer
-from ttt.presentation.aiogram.common.dialogs import DialogState
 from ttt.presentation.aiogram.user.invoices import stars_invoce
+from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 
 
 @dataclass
@@ -37,7 +37,7 @@ class AiogramInAndBufferOutStarsPurchasePaymentGateway(
 
         await stars_invoce(self._bot, purchase, self._payments_token)
         await manager.start(
-            DialogState.stars_shop,
+            MainDialogState.stars_shop,
             {"hint": "🌟 Покупайте"},
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,

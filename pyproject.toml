@@ -49,8 +49,8 @@ build-backend = "hatchling.build"
 packages = ["src/ttt"]
 
 [project.scripts]
-ttt = "ttt.main.aiogram_prod.__main__:main"
-ttt-dev = "ttt.main.aiogram_dev.__main__:main"
+ttt = "ttt.main.tg_bot_prod.__main__:main"
+ttt-dev = "ttt.main.tg_bot_dev.__main__:main"
 
 [tool.uv]
 add-bounds = "exact"
