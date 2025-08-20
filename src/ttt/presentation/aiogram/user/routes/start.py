@@ -22,7 +22,6 @@ async def _(
     register_user: FromDishka[RegisterUser],
     dialog_manager: DialogManager,
 ) -> None:
-    assert False
     if message.from_user is None:
         return
 
