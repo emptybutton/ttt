@@ -1,6 +1,6 @@
 [project]
 name = "ttt"
-version = "0.1.1"
+version = "0.3.0"
 description = "Tic-Tac-Toe Telegram Bot"
 authors = [
     {name = "Alexander Smolin", email = "88573504+emptybutton@users.noreply.github.com"}
@@ -20,6 +20,7 @@ dependencies = [
     "pydantic==2.10.6",
     "pydantic-settings[yaml]==2.9.1",
     "aiogram==3.20.0.post0",
+    "aiogram-dialog==2.4.0",
     "nats-py[nkeys]==2.10.0",
     "openai==1.97.0",
     "structlog==25.4.0",
@@ -48,8 +49,8 @@ build-backend = "hatchling.build"
 packages = ["src/ttt"]
 
 [project.scripts]
-ttt = "ttt.main.aiogram_slim.__main__:main"
-ttt-dev = "ttt.main.aiogram_dev.__main__:main"
+ttt = "ttt.main.tg_bot_prod.__main__:main"
+ttt-dev = "ttt.main.tg_bot_dev.__main__:main"
 
 [tool.uv]
 add-bounds = "exact"
@@ -106,9 +107,11 @@ ignore = [
     "TC006",
     "EM101",
     "N807",
+    "FURB118",
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"src/ttt/infrastructure/sqlalchemy/tables/__init__.py" = ["F401"]
 "src/ttt/infrastructure/adapters/*" = ["ARG002"]
 "src/ttt/presentation/adapters/*" = ["ARG002"]
 "src/ttt/presentation/*" = ["RUF001"]

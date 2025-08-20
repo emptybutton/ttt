@@ -2,17 +2,15 @@ from dataclasses import dataclass
 
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.user.common.ports.user_log import CommonUserLog
-from ttt.application.user.common.ports.user_views import UserViews
-from ttt.entities.core.user.location import UserLocation
+from ttt.application.user.common.ports.user_views import CommonUserViews
 
 
 @dataclass(frozen=True, unsafe_hash=False)
 class ViewUser:
-    user_views: UserViews
+    views: CommonUserViews
     transaction: Transaction
     log: CommonUserLog
 
-    async def __call__(self, location: UserLocation) -> None:
+    async def __call__(self, user_id: int) -> None:
         async with self.transaction:
-            await self.user_views.render_view_of_user_with_id(location)
-            await self.log.user_viewed(location)
+            await self.views.view_of_user_with_id(user_id)

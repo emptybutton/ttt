@@ -15,7 +15,6 @@ from ttt.application.user.stars_purchase.ports.user_log import (
     StarsPurchaseUserLog,
 )
 from ttt.entities.core.stars import Stars
-from ttt.entities.core.user.location import UserLocation
 from ttt.entities.core.user.user import User
 from ttt.entities.text.emoji import Emoji
 
@@ -26,45 +25,56 @@ class StructlogCommonUserLog(CommonUserLog):
 
     async def user_registered(
         self,
-        location: UserLocation,
         user: User,
         /,
     ) -> None:
         await self._logger.ainfo(
             "user_registered",
-            chat_id=location.chat_id,
-            user_id=location.user_id,
+            chat_id=user.id,
+            user_id=user.id,
         )
 
     async def user_double_registration(
         self,
-        location: UserLocation,
         user: User,
         /,
     ) -> None:
         await self._logger.ainfo(
             "user_double_registration",
-            chat_id=location.chat_id,
-            user_id=location.user_id,
+            chat_id=user.id,
+            user_id=user.id,
         )
 
-    async def user_viewed(self, location: UserLocation, /) -> None:
+    async def user_viewed(self, user_id: int, /) -> None:
         await self._logger.ainfo(
             "user_viewed",
-            chat_id=location.chat_id,
-            user_id=location.user_id,
+            chat_id=user_id,
+            user_id=user_id,
         )
 
     async def user_removed_emoji(
         self,
-        location: UserLocation,
         user: User,
         /,
     ) -> None:
         await self._logger.ainfo(
             "user_removed_emoji",
-            chat_id=location.chat_id,
-            user_id=location.user_id,
+            chat_id=user.id,
+            user_id=user.id,
+        )
+
+    async def menu_viewed(self, user_id: int) -> None:
+        await self._logger.ainfo(
+            "menu_viewed",
+            chat_id=user_id,
+            user_id=user_id,
+        )
+
+    async def emoji_menu_viewed(self, user_id: int) -> None:
+        await self._logger.ainfo(
+            "emoji_menu_viewed",
+            chat_id=user_id,
+            user_id=user_id,
         )
 
 
@@ -74,39 +84,37 @@ class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):
 
     async def user_bought_emoji(
         self,
-        location: UserLocation,
         user: User,
         emoji: Emoji,
         /,
     ) -> None:
         await self._logger.ainfo(
             "user_bought_emoji",
-            chat_id=location.chat_id,
-            user_id=location.user_id,
+            chat_id=user.id,
+            user_id=user.id,
             emoji=emoji.str_,
         )
 
     async def user_intends_to_buy_emoji(
         self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None:
         await self._logger.ainfo(
             "user_intends_to_buy_emoji",
-            chat_id=location.chat_id,
-            user_id=location.user_id,
+            chat_id=user_id,
+            user_id=user_id,
         )
 
     async def emoji_already_purchased_to_buy(
         self,
         user: User,
-        location: UserLocation,
         emoji: Emoji,
     ) -> None:
         await self._logger.ainfo(
             "emoji_already_purchased_to_buy",
-            chat_id=location.chat_id,
-            user_id=location.user_id,
+            chat_id=user.id,
+            user_id=user.id,
             emoji=emoji.str_,
         )
 
@@ -117,39 +125,37 @@ class StructlogEmojiSelectionUserLog(EmojiSelectionUserLog):
 
     async def user_selected_emoji(
         self,
-        location: UserLocation,
         user: User,
         emoji: Emoji,
         /,
     ) -> None:
         await self._logger.ainfo(
             "user_selected_emoji",
-            chat_id=location.chat_id,
-            user_id=location.user_id,
+            chat_id=user.id,
+            user_id=user.id,
             emoji=emoji.str_,
         )
 
     async def user_intends_to_select_emoji(
         self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None:
         await self._logger.ainfo(
             "user_intends_to_select_emoji",
-            chat_id=location.chat_id,
-            user_id=location.user_id,
+            chat_id=user_id,
+            user_id=user_id,
         )
 
     async def emoji_not_purchased_to_select(
         self,
-        location: UserLocation,
         user: User,
         emoji: Emoji,
     ) -> None:
         await self._logger.ainfo(
             "emoji_not_purchased_to_select",
-            chat_id=location.chat_id,
-            user_id=location.user_id,
+            chat_id=user.id,
+            user_id=user.id,
         )
 
 
@@ -159,25 +165,24 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
 
     async def user_intends_to_buy_stars(
         self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None:
         await self._logger.ainfo(
             "user_intends_to_buy_stars",
-            chat_id=location.chat_id,
-            user_id=location.user_id,
+            chat_id=user_id,
+            user_id=user_id,
         )
 
     async def user_started_stars_puchase(
         self,
-        location: UserLocation,
         user: User,
         /,
     ) -> None:
         await self._logger.ainfo(
             "user_started_stars_puchase",
-            chat_id=location.chat_id,
-            user_id=location.user_id,
+            chat_id=user.id,
+            user_id=user.id,
         )
 
     async def user_started_stars_puchase_payment(
@@ -190,29 +195,29 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
             user_id=user.id,
         )
 
-    async def stars_purshase_payment_completion_started(
+    async def stars_purchase_payment_completion_started(
         self,
         payment: PaidStarsPurchasePayment,
         /,
     ) -> None:
         await self._logger.ainfo(
-            "stars_purshase_payment_completion_started",
-            user_id=payment.location.user_id,
-            chat_id=payment.location.chat_id,
-            purshase_id=payment.purshase_id.hex,
+            "stars_purchase_payment_completion_started",
+            user_id=payment.user_id,
+            chat_id=payment.user_id,
+            purchase_id=payment.purchase_id.hex,
         )
 
-    async def stars_purshase_payment_completed(
+    async def stars_purchase_payment_completed(
         self,
         user: User,
         payment: PaidStarsPurchasePayment,
         /,
     ) -> None:
         await self._logger.ainfo(
-            "stars_purshase_payment_completed",
-            user_id=payment.location.user_id,
-            chat_id=payment.location.chat_id,
-            purshase_id=payment.purshase_id.hex,
+            "stars_purchase_payment_completed",
+            user_id=payment.user_id,
+            chat_id=payment.user_id,
+            purchase_id=payment.purchase_id.hex,
         )
 
     async def double_stars_purchase_payment_completion(
@@ -222,21 +227,20 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
     ) -> None:
         await self._logger.awarning(
             "double_stars_purchase_payment_completion",
-            user_id=paid_payment.location.user_id,
-            chat_id=paid_payment.location.chat_id,
-            purshase_id=paid_payment.purshase_id.hex,
+            user_id=paid_payment.user_id,
+            chat_id=paid_payment.user_id,
+            purchase_id=paid_payment.purchase_id.hex,
         )
 
     async def invalid_stars_for_stars_purchase(
         self,
-        location: UserLocation,
         user: User,
         stars: Stars,
     ) -> None:
         await self._logger.aerror(
             "invalid_stars_for_stars_purchase",
-            user_id=location.user_id,
-            chat_id=location.chat_id,
+            user_id=user.id,
+            chat_id=user.id,
             stars=stars,
         )
 

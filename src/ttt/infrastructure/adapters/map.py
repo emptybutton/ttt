@@ -9,7 +9,7 @@ from ttt.application.common.ports.map import (
     MappableTracking,
     NotUniqueUserIdError,
 )
-from ttt.infrastructure.sqlalchemy.tables import table_entity
+from ttt.infrastructure.sqlalchemy.tables.atomic import table_atomic
 
 
 @dataclass(frozen=True, unsafe_hash=True)
@@ -21,13 +21,13 @@ class MapToPostgres(Map):
         tracking: MappableTracking,
     ) -> None:
         for entity in tracking.new:
-            self._session.add(table_entity(entity))
+            self._session.add(table_atomic(entity))
 
         for entity in tracking.mutated:
-            await self._session.merge(table_entity(entity))
+            await self._session.merge(table_atomic(entity))
 
         for entity in tracking.unused:
-            await self._session.delete(table_entity(entity))
+            await self._session.delete(table_atomic(entity))
 
         try:
             await self._session.flush()
@@ -39,7 +39,8 @@ class MapToPostgres(Map):
             case UniqueViolation() as unique_error:
                 constraint_name = unique_error.diag.constraint_name
 
-                if constraint_name == "players_pkey":
+                if constraint_name == "users_pkey":
                     raise NotUniqueUserIdError from error
-            case _:
-                raise error from error
+            case _: ...
+
+        raise error from error
