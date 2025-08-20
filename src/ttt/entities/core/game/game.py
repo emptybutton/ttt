@@ -15,8 +15,19 @@ from ttt.entities.core.game.cell_number import (
     CellNumber,
     InvalidCellNumberError,
 )
+from ttt.entities.core.game.game_result import (
+    CancelledGameResult,
+    DecidedGameResult,
+    DrawGameResult,
+    GameResult,
+)
+from ttt.entities.core.game.move import AiMove, UserMove
 from ttt.entities.core.game.player import Player
-from ttt.entities.core.game.win import Win
+from ttt.entities.core.game.player_result import (
+    PlayerDraw,
+    PlayerLoss,
+    PlayerWin,
+)
 from ttt.entities.core.user.user import (
     User,
     UserAlreadyInGameError,
@@ -33,35 +44,6 @@ class GameState(Enum):
     wait_player1 = auto()
     wait_player2 = auto()
     completed = auto()
-
-
-@dataclass(frozen=True)
-class GameCompletionResult:
-    id: UUID
-    game_id: UUID
-    win: Win | None
-
-
-@dataclass(frozen=True)
-class GameCancellationResult:
-    id: UUID
-    game_id: UUID
-    canceler_id: int
-
-
-type GameResult = GameCompletionResult | GameCancellationResult
-
-
-@dataclass(frozen=True)
-class UserMove:
-    next_move_ai_id: UUID | None
-    filled_cell_number: CellNumber
-
-
-@dataclass(frozen=True)
-class AiMove:
-    was_random: bool
-    filled_cell_number: CellNumber
 
 
 class OneUserError(Exception): ...
@@ -156,42 +138,47 @@ class Game:
     def is_against_user(self) -> bool:
         return not self.is_against_ai()
 
+    def user(self, user_id: int) -> User | None:
+        for user in self._users():
+            if user.id == user_id:
+                return user
+
+        return None
+
     def is_completed(self) -> bool:
         return self.result is not None
 
     def cancel(
         self,
         user_id: int,
-        game_result_id: UUID,
+        user1_last_game_id: UUID,
+        user2_last_game_id: UUID,
         tracking: Tracking,
     ) -> None:
         """
         :raises ttt.entities.core.game.game.AlreadyCompletedGameError:
         :raises ttt.entities.core.game.game.NotPlayerError:
+        :raises ttt.entities.core.user.user.UserAlreadyLeftGameError:
         """
 
         none(self.result, else_=AlreadyCompletedGameError)
-        canceler = not_none(self._user(user_id), else_=NotPlayerError)
+        canceler = not_none(self.user(user_id), else_=NotPlayerError)
 
         if isinstance(self.player1, User):
-            self.player1.leave_game(tracking)
+            self.player1.leave_game(user1_last_game_id, self.id, tracking)
         if isinstance(self.player2, User):
-            self.player2.leave_game(tracking)
+            self.player2.leave_game(user2_last_game_id, self.id, tracking)
 
-        self.result = GameCancellationResult(
-            game_result_id,
-            self.id,
-            canceler.id,
-        )
-        tracking.register_new(self.result)
+        self.result = CancelledGameResult(canceler.id)
         self.state = GameState.completed
         tracking.register_mutated(self)
 
-    def make_move(
+    def make_user_move(  # noqa: C901, PLR0913, PLR0917
         self,
         user_id: int,
         cell_number_int: int,
-        game_result_id: UUID,
+        current_user_last_game_id: UUID,
+        not_current_user_last_game_id: UUID,
         player_win_random: Random,
         tracking: Tracking,
     ) -> UserMove:
@@ -235,30 +222,57 @@ class Game:
         tracking.register_mutated(self)
 
         if self._is_player_winner(current_player, cell.board_position):
-            if self.is_against_ai():
-                win = current_player.win_against_ai(tracking)
-            else:
-                win = current_player.win_against_user(
-                    player_win_random,
-                    tracking,
-                )
+            win: PlayerWin
+            loss: PlayerLoss
 
-            if isinstance(not_current_player, User):
-                not_current_player.lose(tracking)
+            match not_current_player:
+                case User():
+                    win = current_player.win_against_user(
+                        not_current_player.rating,
+                        player_win_random,
+                        current_user_last_game_id,
+                        self.id,
+                        tracking,
+                    )
+                    loss = not_current_player.lose_to_user(
+                        current_player.rating,
+                        not_current_user_last_game_id,
+                        self.id,
+                        tracking,
+                    )
+                case Ai():
+                    win = current_player.win_against_ai(
+                        current_user_last_game_id, self.id, tracking,
+                    )
+                    loss = not_current_player.lose()
 
-            self._complete(win, game_result_id, tracking)
+            self._complete_as_decided(win, loss, tracking)
 
         elif not self._can_continue():
-            current_player.be_draw(tracking)
+            draw1: PlayerDraw
+            draw2: PlayerDraw
 
-            if isinstance(not_current_player, User):
-                not_current_player.be_draw(tracking)
+            match not_current_player:
+                case User():
+                    draw1 = current_player.be_draw_against_user(
+                        not_current_player.rating,
+                        current_user_last_game_id,
+                        self.id,
+                        tracking,
+                    )
+                    draw2 = not_current_player.be_draw_against_user(
+                        not_current_player.rating,
+                        not_current_user_last_game_id,
+                        self.id,
+                        tracking,
+                    )
+                case Ai():
+                    draw1 = current_player.be_draw_against_ai(
+                        current_user_last_game_id, self.id, tracking,
+                    )
+                    draw2 = not_current_player.be_draw()
 
-            self._complete(
-                win=None,
-                game_result_id=game_result_id,
-                tracking=tracking,
-            )
+            self._complete_as_draw(draw1, draw2, tracking)
 
         else:
             self._wait_next_move(tracking)
@@ -277,7 +291,7 @@ class Game:
         self,
         ai_id: UUID,
         cell_number_int: int | None,
-        game_result_id: UUID,
+        not_current_user_last_game_id: UUID,
         free_cell_random: Random,
         tracking: Tracking,
     ) -> AiMove:
@@ -301,8 +315,8 @@ class Game:
             return self._make_random_ai_move(
                 current_player,
                 not_current_player,
+                not_current_user_last_game_id,
                 free_cell_random,
-                game_result_id,
                 tracking,
             )
 
@@ -312,8 +326,8 @@ class Game:
             return self._make_random_ai_move(
                 current_player,
                 not_current_player,
+                not_current_user_last_game_id,
                 free_cell_random,
-                game_result_id,
                 tracking,
             )
         else:
@@ -325,8 +339,8 @@ class Game:
             return self._make_random_ai_move(
                 current_player,
                 not_current_player,
+                not_current_user_last_game_id,
                 free_cell_random,
-                game_result_id,
                 tracking,
             )
 
@@ -336,8 +350,8 @@ class Game:
             return self._make_random_ai_move(
                 current_player,
                 not_current_player,
+                not_current_user_last_game_id,
                 free_cell_random,
-                game_result_id,
                 tracking,
             )
 
@@ -346,30 +360,55 @@ class Game:
 
         if self._is_player_winner(current_player, cell_position):
             win = current_player.win()
-            not_current_player.lose(tracking)
-
-            self._complete(win, game_result_id, tracking)
+            loss = not_current_player.lose_to_ai(
+                not_current_user_last_game_id, self.id, tracking,
+            )
+            self._complete_as_decided(win, loss, tracking)
 
         elif not self._can_continue():
-            not_current_player.be_draw(tracking)
-
-            self._complete(
-                win=None,
-                game_result_id=game_result_id,
-                tracking=tracking,
+            draw1 = current_player.be_draw()
+            draw2 = not_current_player.be_draw_against_ai(
+                not_current_user_last_game_id, self.id, tracking,
             )
+            self._complete_as_draw(draw1, draw2, tracking)
 
         else:
             self._wait_next_move(tracking)
 
         return AiMove(was_random=False, filled_cell_number=cell.number())
 
+    def cell_emoji(self, cell_position: Vector) -> Emoji | None:
+        match self.board[cell_position].filler_id():
+            case self.player1.id:
+                return self.player1_emoji
+            case self.player2.id:
+                return self.player2_emoji
+            case _:
+                return None
+
+    def is_player_move_expected(self, player_id: int | UUID) -> bool:
+        match player_id, self.state:
+            case (self.player1.id, GameState.wait_player1) | (
+                self.player2.id,
+                GameState.wait_player2,
+            ):
+                return True
+
+            case (self.player2.id, GameState.wait_player1) | (
+                self.player1.id,
+                GameState.wait_player2,
+            ):
+                return False
+
+            case _:
+                raise ValueError(self.state, player_id)
+
     def _make_random_ai_move(
         self,
         current_player: Ai,
         not_current_player: User,
+        not_current_user_last_game_id: UUID,
         free_cell_random: Random,
-        game_result_id: UUID,
         tracking: Tracking,
     ) -> AiMove:
         cell = choice(self._free_cells(), random=free_cell_random)
@@ -379,18 +418,17 @@ class Game:
 
         if self._is_player_winner(current_player, cell.board_position):
             win = current_player.win()
-            not_current_player.lose(tracking)
-
-            self._complete(win, game_result_id, tracking)
+            loss = not_current_player.lose_to_ai(
+                not_current_user_last_game_id, self.id, tracking,
+            )
+            self._complete_as_decided(win, loss, tracking)
 
         elif not self._can_continue():
-            not_current_player.be_draw(tracking)
-
-            self._complete(
-                win=None,
-                game_result_id=game_result_id,
-                tracking=tracking,
+            draw1 = current_player.be_draw()
+            draw2 = not_current_player.be_draw_against_ai(
+                not_current_user_last_game_id, self.id, tracking,
             )
+            self._complete_as_draw(draw1, draw2, tracking)
 
         else:
             self._wait_next_move(tracking)
@@ -442,13 +480,6 @@ class Game:
             case GameState.completed:
                 return None
 
-    def _user(self, user_id: int) -> User | None:
-        for user in self._users():
-            if user.id == user_id:
-                return user
-
-        return None
-
     def _players(self) -> tuple[Player, ...]:
         return self.player1, self.player2
 
@@ -477,19 +508,28 @@ class Game:
 
         tracking.register_mutated(self)
 
-    def _complete(
+    def _complete_as_decided(
         self,
-        win: Win | None,
-        game_result_id: UUID,
+        win: PlayerWin,
+        loss: PlayerLoss,
         tracking: Tracking,
     ) -> None:
-        self.result = GameCompletionResult(game_result_id, self.id, win)
-        tracking.register_new(self.result)
+        self.result = DecidedGameResult(win, loss)
+        self.state = GameState.completed
+        tracking.register_mutated(self)
+
+    def _complete_as_draw(
+        self,
+        draw1: PlayerDraw,
+        draw2: PlayerDraw,
+        tracking: Tracking,
+    ) -> None:
+        self.result = DrawGameResult(draw1, draw2)
         self.state = GameState.completed
         tracking.register_mutated(self)
 
 
-type GameAtomic = Game | GameResult | Cell | Ai
+GameAtomic = Game | Cell | Ai
 
 
 @dataclass(frozen=True)
@@ -502,10 +542,8 @@ def start_game(  # noqa: PLR0913, PLR0917
     game_id: UUID,
     player1: User,
     player1_random_emoji: Emoji,
-    player1_chat_id: int,
     player2: User,
     player2_random_emoji: Emoji,
-    player2_chat_id: int,
     tracking: Tracking,
 ) -> Game:
     """
@@ -541,12 +579,12 @@ def start_game(  # noqa: PLR0913, PLR0917
     players_in_game = []
 
     try:
-        player1.be_in_game(game_id, player1_chat_id, tracking)
+        player1.be_in_game(game_id, tracking)
     except UserAlreadyInGameError:
         players_in_game.append(player1)
 
     try:
-        player2.be_in_game(game_id, player2_chat_id, tracking)
+        player2.be_in_game(game_id, tracking)
     except UserAlreadyInGameError:
         players_in_game.append(player2)
 
@@ -567,7 +605,6 @@ def start_game_with_ai(  # noqa: PLR0913, PLR0917
     game_id: UUID,
     user: User,
     user_random_emoji: Emoji,
-    user_chat_id: int,
     ai_id: UUID,
     ai_type: AiType,
     ai_random_emoji: Emoji,
@@ -616,6 +653,6 @@ def start_game_with_ai(  # noqa: PLR0913, PLR0917
     )
     tracking.register_new(game)
 
-    user.be_in_game(game_id, user_chat_id, tracking)
+    user.be_in_game(game_id, tracking)
 
     return StartedGameWithAi(game, next_move_ai_id)

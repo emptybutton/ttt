@@ -48,8 +48,7 @@ class ProdLoggerFactory(LoggerFactory):
                     structlog.processors.TimeStamper(fmt="iso", utc=True),
                     *([AddRequestId()] if self.adds_request_id else []),
                     SentryProcessor(event_level=logging.WARNING),
-                    structlog.processors.dict_tracebacks,
-                    structlog.processors.JSONRenderer(),
+                    structlog.processors.KeyValueRenderer(),
                 ],
             ),
         )

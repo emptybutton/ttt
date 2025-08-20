@@ -1,0 +1,274 @@
+from collections.abc import AsyncIterator
+from dataclasses import dataclass
+from typing import cast
+
+from aiogram import Bot, Dispatcher
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.storage.base import BaseStorage, DefaultKeyBuilder
+from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.types import (
+    CallbackQuery,
+    Message,
+    PreCheckoutQuery,
+    TelegramObject,
+)
+from aiogram_dialog import BgManagerFactory, setup_dialogs
+from aiogram_dialog.manager.bg_manager import BgManagerFactoryImpl
+from dishka import (
+    Provider,
+    Scope,
+    provide,
+)
+from dishka.integrations.aiogram import AiogramMiddlewareData
+from redis.asyncio import Redis
+from structlog.types import FilteringBoundLogger
+
+from ttt.application.common.ports.emojis import Emojis
+from ttt.application.game.game.cancel_game import CancelGame
+from ttt.application.game.game.make_move_in_game import MakeMoveInGame
+from ttt.application.game.game.ports.game_views import GameViews
+from ttt.application.game.game.start_game import StartGame
+from ttt.application.game.game.start_game_with_ai import StartGameWithAi
+from ttt.application.game.game.view_game import ViewGame
+from ttt.application.game.game.wait_game import WaitGame
+from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
+from ttt.application.user.common.ports.user_views import CommonUserViews
+from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
+from ttt.application.user.emoji_purchase.ports.user_views import (
+    EmojiPurchaseUserViews,
+)
+from ttt.application.user.emoji_selection.ports.user_views import (
+    EmojiSelectionUserViews,
+)
+from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
+from ttt.application.user.register_user import RegisterUser
+from ttt.application.user.stars_purchase.complete_stars_purchase_payment import (  # noqa: E501
+    CompleteStarsPurchasePayment,
+)
+from ttt.application.user.stars_purchase.ports.stars_purchase_payment_gateway import (  # noqa: E501
+    StarsPurchasePaymentGateway,
+)
+from ttt.application.user.stars_purchase.ports.user_views import (
+    StarsPurchaseUserViews,
+)
+from ttt.application.user.stars_purchase.start_stars_purchase import (
+    StartStarsPurchase,
+)
+from ttt.application.user.stars_purchase.start_stars_purchase_payment import (
+    StartStarsPurchasePayment,
+)
+from ttt.application.user.stars_purchase.start_stars_purchase_payment_completion import (  # noqa: E501
+    StartStarsPurchasePaymentCompletion,
+)
+from ttt.application.user.view_main_menu import ViewMainMenu
+from ttt.application.user.view_user import ViewUser
+from ttt.application.user.view_user_emojis import ViewUserEmojis
+from ttt.infrastructure.buffer import Buffer
+from ttt.infrastructure.pydantic_settings.secrets import Secrets
+from ttt.presentation.adapters.emojis import PictographsAsEmojis
+from ttt.presentation.adapters.game_views import (
+    BackroundAiogramMessagesFromPostgresAsGameViews,
+)
+from ttt.presentation.adapters.stars_purchase_payment_gateway import (
+    AiogramInAndBufferOutStarsPurchasePaymentGateway,
+)
+from ttt.presentation.adapters.user_views import (
+    AiogramMessagesAsEmojiPurchaseUserViews,
+    AiogramMessagesAsStarsPurchaseUserViews,
+    AiogramMessagesFromPostgresAsCommonUserViews,
+    AiogramMessagesFromPostgresAsEmojiSelectionUserViews,
+)
+from ttt.presentation.aiogram.common.bots import ttt_bot
+from ttt.presentation.aiogram.common.routes.all import common_routers
+from ttt.presentation.aiogram.user.routes.all import user_routers
+from ttt.presentation.aiogram_dialog.main_dialog import main_dialog
+from ttt.presentation.result_buffer import ResultBuffer
+from ttt.presentation.unkillable_tasks import UnkillableTasks
+
+
+@dataclass
+class NoMessageInEventError(Exception):
+    event: TelegramObject | None
+
+
+class PresentationProvider(Provider):
+    @provide(scope=Scope.REQUEST)
+    def provide_event(self, event: TelegramObject) -> TelegramObject | None:
+        return event
+
+    @provide(scope=Scope.APP)
+    def provide_strage(self, redis: Redis) -> BaseStorage:
+        return RedisStorage(redis, DefaultKeyBuilder(with_destiny=True))
+
+    @provide(scope=Scope.APP)
+    def provide_bg_manager_factory(self, dp: Dispatcher) -> BgManagerFactory:
+        return BgManagerFactoryImpl(dp)
+
+    @provide(scope=Scope.APP)
+    async def provide_bot(self, secrets: Secrets) -> AsyncIterator[Bot]:
+        bot = Bot(secrets.bot_token)
+
+        async with bot:
+            await ttt_bot(bot)
+            yield bot
+
+    provide_emoji = provide(
+        PictographsAsEmojis,
+        provides=Emojis,
+        scope=Scope.REQUEST,
+    )
+
+    provide_game_views = provide(
+        BackroundAiogramMessagesFromPostgresAsGameViews,
+        provides=GameViews,
+        scope=Scope.REQUEST,
+    )
+
+    provide_user_views = provide(
+        AiogramMessagesFromPostgresAsCommonUserViews,
+        provides=CommonUserViews,
+        scope=Scope.REQUEST,
+    )
+    provide_stars_purchase_user_views = provide(
+        AiogramMessagesAsStarsPurchaseUserViews,
+        provides=StarsPurchaseUserViews,
+        scope=Scope.APP,
+    )
+    provide_emoji_selection_user_views = provide(
+        AiogramMessagesFromPostgresAsEmojiSelectionUserViews,
+        provides=EmojiSelectionUserViews,
+        scope=Scope.REQUEST,
+    )
+    provide_emoji_purchase_user_views = provide(
+        AiogramMessagesAsEmojiPurchaseUserViews,
+        provides=EmojiPurchaseUserViews,
+        scope=Scope.APP,
+    )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_result_buffer(self) -> ResultBuffer:
+        return ResultBuffer()
+
+    @provide(scope=Scope.REQUEST)
+    async def unkillable_tasks(
+        self,
+        logger: FilteringBoundLogger,
+        start_game: StartGame,
+        start_stars_purchase_payment_completion: (
+            StartStarsPurchasePaymentCompletion
+        ),
+        complete_stars_purchase_payment: CompleteStarsPurchasePayment,
+    ) -> UnkillableTasks:
+        tasks = UnkillableTasks(logger)
+        tasks.add(start_game)
+        tasks.add(start_stars_purchase_payment_completion)
+        tasks.add(complete_stars_purchase_payment)
+
+        return tasks
+
+    @provide(scope=Scope.APP)
+    def provide_paid_stars_purchase_payment_buffer(
+        self,
+    ) -> Buffer[PaidStarsPurchasePayment]:
+        return Buffer()
+
+    @provide(scope=Scope.APP)
+    def provide_dp(self, storage: BaseStorage) -> Dispatcher:
+        dp = Dispatcher(name="main", storage=storage)
+
+        dp.include_routers(
+            *common_routers,
+            *user_routers,
+        )
+
+        dp.include_routers(main_dialog)
+        setup_dialogs(dp)
+
+        return dp
+
+    @provide(scope=Scope.REQUEST)
+    def provide_message(self, event: TelegramObject | None) -> Message:
+        match event:
+            case Message():
+                return event
+            case CallbackQuery(message=Message() as message):
+                return message
+            case _:
+                raise NoMessageInEventError(event)
+
+    @provide(scope=Scope.REQUEST)
+    def provide_pre_checkout_query(
+        self,
+        event: TelegramObject | None,
+    ) -> PreCheckoutQuery | None:
+        match event:
+            case PreCheckoutQuery():
+                return event
+            case _:
+                return None
+
+    @provide(scope=Scope.REQUEST)
+    def provide_fsm_context(
+        self,
+        middleware_data: AiogramMiddlewareData,
+    ) -> FSMContext:
+        return cast(FSMContext, middleware_data["state"])
+
+    @provide(scope=Scope.REQUEST)
+    def provide_stars_purchase_payment_gateway(
+        self,
+        pre_checkout_query: PreCheckoutQuery | None,
+        secrets: Secrets,
+        bot: Bot,
+        buffer: Buffer[PaidStarsPurchasePayment],
+        bg_manager_factory: BgManagerFactory,
+    ) -> StarsPurchasePaymentGateway:
+        return AiogramInAndBufferOutStarsPurchasePaymentGateway(
+            pre_checkout_query,
+            buffer,
+            bot,
+            secrets.payments_token,
+            bg_manager_factory,
+        )
+
+
+class ApplicationProvider(Provider):
+    provide_buy_emoji = provide(BuyEmoji, scope=Scope.REQUEST)
+    provide_select_emoji = provide(SelectEmoji, scope=Scope.REQUEST)
+    provide_start_stars_purchase = provide(
+        StartStarsPurchase,
+        scope=Scope.REQUEST,
+    )
+    provide_start_stars_purchase_payment = provide(
+        StartStarsPurchasePayment,
+        scope=Scope.REQUEST,
+    )
+    provide_view_user_emojis = provide(
+        ViewUserEmojis,
+        scope=Scope.REQUEST,
+    )
+    provide_view_main_menu = provide(
+        ViewMainMenu,
+        scope=Scope.REQUEST,
+    )
+
+    provide_view_user = provide(ViewUser, scope=Scope.REQUEST)
+    provide_register_user = provide(RegisterUser, scope=Scope.REQUEST)
+    probide_complete_stars_purchase_payment = provide(
+        CompleteStarsPurchasePayment,
+        scope=Scope.REQUEST,
+    )
+    probide_start_stars_purchase_payment_completion = provide(
+        StartStarsPurchasePaymentCompletion,
+        scope=Scope.REQUEST,
+    )
+
+    provide_start_game_with_ai = provide(
+        StartGameWithAi,
+        scope=Scope.REQUEST,
+    )
+    provide_start_game = provide(StartGame, scope=Scope.REQUEST)
+    provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
+    provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
+    provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)
+    provide_view_game = provide(ViewGame, scope=Scope.REQUEST)

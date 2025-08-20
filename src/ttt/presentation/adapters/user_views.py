@@ -2,42 +2,51 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from aiogram import Bot
-from sqlalchemy import select
+from aiogram_dialog import BgManagerFactory, ShowMode, StartMode
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ttt.application.user.common.ports.user_views import UserViews
+from ttt.application.user.common.ports.user_views import CommonUserViews
+from ttt.application.user.emoji_purchase.ports.user_views import (
+    EmojiPurchaseUserViews,
+)
+from ttt.application.user.emoji_selection.ports.user_views import (
+    EmojiSelectionUserViews,
+)
+from ttt.application.user.stars_purchase.ports.user_views import (
+    StarsPurchaseUserViews,
+)
 from ttt.entities.core.stars import Stars
-from ttt.entities.core.user.location import UserLocation
-from ttt.entities.core.user.user import User
-from ttt.infrastructure.sqlalchemy.tables import TableUser, TableUserEmoji
+from ttt.entities.core.user.location import UserGameLocation
+from ttt.entities.core.user.user import User, is_user_in_game
+from ttt.infrastructure.sqlalchemy.stmts import (
+    selected_user_emoji_str_from_postgres,
+    user_emojis_from_postgres,
+)
+from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
 from ttt.presentation.aiogram.common.messages import (
-    help_message,
     need_to_start_message,
 )
-from ttt.presentation.aiogram.user.messages import (
-    emoji_already_purchased_message,
-    emoji_not_purchased_to_select_message,
-    emoji_selected_message,
-    emoji_was_purchased_message,
-    invalid_emoji_message,
-    not_enough_stars_to_buy_emoji_message,
-    profile_message,
-    selected_emoji_removed_message,
-    stars_added_message,
-    stars_will_be_added_message,
-    wait_emoji_to_buy_message,
-    wait_stars_to_start_stars_purshase_message,
+from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
+from ttt.presentation.aiogram_dialog.main_dialog.emojis_window import (
+    EmojiMenuView,
 )
+from ttt.presentation.aiogram_dialog.main_dialog.main_window import MainMenuView
+from ttt.presentation.aiogram_dialog.main_dialog.profile_window import (
+    UserProfileView,
+)
+from ttt.presentation.result_buffer import ResultBuffer
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class AiogramMessagesFromPostgresAsUserViews(UserViews):
+class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
     _bot: Bot
     _session: AsyncSession
+    _result_buffer: ResultBuffer
 
-    async def render_view_of_user_with_id(
+    async def view_of_user_with_id(
         self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None:
         user_stmt = (
@@ -46,159 +55,195 @@ class AiogramMessagesFromPostgresAsUserViews(UserViews):
                 TableUser.number_of_draws,
                 TableUser.number_of_defeats,
                 TableUser.account_stars,
-                TableUserEmoji.emoji_str.label("selected_emoji_str"),
-                TableUser.game_location_game_id.is_not(None).label(
-                    "is_in_game",
-                ),
+                TableUser.rating,
             )
-            .outerjoin(
-                TableUserEmoji,
-                TableUserEmoji.id == TableUser.selected_emoji_id,
-            )
-            .where(TableUser.id == location.user_id)
+            .where(TableUser.id == user_id)
         )
-        emoji_stmt = (
-            select(TableUserEmoji.emoji_str)
-            .where(TableUserEmoji.player_id == location.user_id)
-            .order_by(TableUserEmoji.datetime_of_purchase)
-        )
-
-        user_result = await self._session.execute(user_stmt)
-        user_row = user_result.first()
+        result = await self._session.execute(user_stmt)
+        user_row = result.first()
 
         if user_row is None:
-            await need_to_start_message(self._bot, location.chat_id)
+            await need_to_start_message(self._bot, user_id)
             return
 
-        emojis = await self._session.scalars(emoji_stmt)
-
-        await profile_message(
-            self._bot,
-            location.chat_id,
-            user_row.account_stars,
-            tuple(emojis),
-            user_row.selected_emoji_str,
+        view = UserProfileView.of(
             user_row.number_of_wins,
             user_row.number_of_draws,
             user_row.number_of_defeats,
-            user_row.is_in_game,
+            user_row.account_stars,
+            user_row.rating,
+        )
+        self._result_buffer.result = view
+
+    async def user_menu_view(self, user_id: int, /) -> None:
+        has_user_emojis_stmt = (
+            exists(1).where(TableUserEmoji.user_id == user_id)
+            .label("has_user_emojis")
+        )
+        stmt = (
+            select(TableUser.game_location_game_id, has_user_emojis_stmt)
+            .where(TableUser.id == user_id)
+        )
+        result = await self._session.execute(stmt)
+        row = result.first()
+
+        if row is None:
+            game_location_game_id = None
+            has_user_emojis = False
+        else:
+            game_location_game_id = row.game_location_game_id
+            has_user_emojis = row.has_user_emojis
+
+        if game_location_game_id is None:
+            game_location = None
+        else:
+            game_location = UserGameLocation(user_id, game_location_game_id)
+
+        view = MainMenuView(
+            is_user_in_game(game_location), has_user_emojis,
+        )
+        self._result_buffer.result = view
+
+    async def view_of_user_emojis_with_id(
+        self,
+        user_id: int,
+        /,
+    ) -> None:
+        emojis = await user_emojis_from_postgres(self._session, user_id)
+        selected_user_emoji_str = await selected_user_emoji_str_from_postgres(
+            self._session, user_id,
         )
 
-    async def render_user_registered_view(
-        self,
-        location: UserLocation,
-    ) -> None:
-        await help_message(self._bot, location.chat_id)
-
-    async def render_user_is_not_registered_view(
-        self,
-        location: UserLocation,
-    ) -> None:
-        await need_to_start_message(self._bot, location.chat_id)
-
-    async def render_user_already_registered_view(
-        self,
-        location: UserLocation,
-    ) -> None:
-        await help_message(self._bot, location.chat_id)
-
-    async def render_wait_emoji_to_buy_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await wait_emoji_to_buy_message(self._bot, location.chat_id)
-
-    async def render_not_enough_stars_to_buy_emoji_view(
-        self,
-        location: UserLocation,
-        stars_to_become_enough: Stars,
-        /,
-    ) -> None:
-        await not_enough_stars_to_buy_emoji_message(
-            self._bot,
-            location.chat_id,
-            stars_to_become_enough,
+        self._result_buffer.result = (
+            EmojiMenuView.of(emojis, selected_user_emoji_str)
         )
 
-    async def render_emoji_already_purchased_view(
+    async def user_is_not_registered_view(
         self,
-        location: UserLocation,
-        /,
+        user_id: int,
     ) -> None:
-        await emoji_already_purchased_message(self._bot, location.chat_id)
+        await need_to_start_message(self._bot, user_id)
 
-    async def render_emoji_was_purchased_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await emoji_was_purchased_message(self._bot, location.chat_id)
 
-    async def render_invalid_emoji_to_buy_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await invalid_emoji_message(self._bot, location.chat_id)
+@dataclass(frozen=True, unsafe_hash=False)
+class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
+    _bot: Bot
+    _bg_dialog_manager_factory: BgManagerFactory
 
-    async def render_invalid_emoji_to_select_view(
+    async def invalid_stars_for_stars_purchase_view(
         self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await invalid_emoji_message(self._bot, location.chat_id)
-
-    async def render_emoji_not_purchased_to_select_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await emoji_not_purchased_to_select_message(self._bot, location.chat_id)
-
-    async def render_emoji_selected_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await emoji_selected_message(self._bot, location.chat_id)
-
-    async def render_selected_emoji_removed_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await selected_emoji_removed_message(self._bot, location.chat_id)
-
-    async def render_wait_stars_to_start_stars_purshase_view(
-        self,
-        location: UserLocation,
-        /,
-    ) -> None:
-        await wait_stars_to_start_stars_purshase_message(
-            self._bot,
-            location.chat_id,
-        )
-
-    async def render_invalid_stars_for_stars_purchase_view(
-        self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None:
         raise NotImplementedError
 
-    async def render_stars_purchase_will_be_completed_view(
+    async def stars_purchase_will_be_completed_view(
         self,
-        location: UserLocation,
+        user_id: int,
         /,
     ) -> None:
-        await stars_will_be_added_message(self._bot, location.chat_id)
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user_id, user_id,
+        )
+        await manager.start(
+            MainDialogState.stars_shop,
+            {"hint": "🌟 Звёзды скоро начислятся!"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
 
-    async def render_completed_stars_purshase_view(
+    async def completed_stars_purchase_view(
         self,
         user: User,
-        purshase_id: UUID,
-        location: UserLocation,
+        purchase_id: UUID,
         /,
     ) -> None:
-        await stars_added_message(self._bot, location.chat_id)
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user.id, user.id,
+        )
+        await manager.start(
+            MainDialogState.stars_shop,
+            {"hint": "🌟 Звезды начислились!"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
+
+
+@dataclass(frozen=True, unsafe_hash=False)
+class AiogramMessagesFromPostgresAsEmojiSelectionUserViews(
+    EmojiSelectionUserViews,
+):
+    _bot: Bot
+    _session: AsyncSession
+
+    async def invalid_emoji_to_select_view(
+        self,
+        user_id: int,
+        /,
+    ) -> None:
+        raise NotImplementedError
+
+    async def emoji_not_purchased_to_select_view(
+        self,
+        user_id: int,
+        /,
+    ) -> None:
+        raise NotImplementedError
+
+
+@dataclass(frozen=True, unsafe_hash=False)
+class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
+    _bot: Bot
+    _bg_dialog_manager_factory: BgManagerFactory
+
+    async def not_enough_stars_to_buy_emoji_view(
+        self,
+        user_id: int,
+        stars_to_become_enough: Stars,
+        /,
+    ) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user_id, user_id,
+        )
+        await manager.start(
+            MainDialogState.emoji_shop,
+            {"hint": f"😞 Нужно ещё {stars_to_become_enough} 🌟 для покупки"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
+
+    async def emoji_already_purchased_view(self, user_id: int, /) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user_id, user_id,
+        )
+        await manager.start(
+            MainDialogState.emoji_shop,
+            {"hint": "🎭 Эмоджи уже куплен"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
+
+    async def emoji_was_purchased_view(self, user_id: int, /) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user_id, user_id,
+        )
+        await manager.start(
+            MainDialogState.emoji_shop,
+            {"hint": "🌟 Куплено!"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
+
+    async def invalid_emoji_to_buy_view(self, user_id: int, /) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user_id, user_id,
+        )
+        message_text = (
+            "❌ Эмоджи должен состоять из одного символа"
+        )
+        await manager.start(
+            MainDialogState.emoji_shop,
+            {"hint": message_text},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
