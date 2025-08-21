@@ -23,6 +23,9 @@ from ttt.application.game.game.ports.game_starting_queue import (
     GameStartingQueue,
 )
 from ttt.application.game.game.ports.games import Games
+from ttt.application.user.common.ports.original_admin_token import (
+    OriginalAdminToken,
+)
 from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.common.ports.users import Users
 from ttt.application.user.emoji_purchase.ports.user_log import (
@@ -45,6 +48,9 @@ from ttt.infrastructure.adapters.game_starting_queue import (
 )
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
+from ttt.infrastructure.adapters.original_admin_token import (
+    TokenAsOriginalAdminToken,
+)
 from ttt.infrastructure.adapters.paid_stars_purchase_payment_inbox import (
     InNatsPaidStarsPurchasePaymentInbox,
 )
@@ -77,6 +83,12 @@ class InfrastructureProvider(Provider):
 
     provide_envs = provide(source=Envs.load, scope=Scope.APP)
     provide_secrets = provide(source=Secrets.load, scope=Scope.APP)
+
+    @provide(scope=Scope.APP)
+    def provide_original_admin_token(
+        self, secrets: Secrets,
+    ) -> OriginalAdminToken:
+        return TokenAsOriginalAdminToken(secrets.admin_token)
 
     @provide(scope=Scope.APP)
     async def provide_background_tasks(self) -> AsyncIterator[BackgroundTasks]:

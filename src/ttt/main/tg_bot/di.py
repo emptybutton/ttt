@@ -41,7 +41,9 @@ from ttt.application.user.emoji_selection.ports.user_views import (
     EmojiSelectionUserViews,
 )
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
+from ttt.application.user.get_admin_rights import GetAdminRights
 from ttt.application.user.register_user import RegisterUser
+from ttt.application.user.relinquish_admin_rights import RelinquishAdminRights
 from ttt.application.user.stars_purchase.complete_stars_purchase_payment import (  # noqa: E501
     CompleteStarsPurchasePayment,
 )
@@ -60,6 +62,7 @@ from ttt.application.user.stars_purchase.start_stars_purchase_payment import (
 from ttt.application.user.stars_purchase.start_stars_purchase_payment_completion import (  # noqa: E501
     StartStarsPurchasePaymentCompletion,
 )
+from ttt.application.user.view_admin_menu import ViewAdminMenu
 from ttt.application.user.view_main_menu import ViewMainMenu
 from ttt.application.user.view_user import ViewUser
 from ttt.application.user.view_user_emojis import ViewUserEmojis
@@ -81,6 +84,7 @@ from ttt.presentation.adapters.user_views import (
 from ttt.presentation.aiogram.common.bots import ttt_bot
 from ttt.presentation.aiogram.common.routes.all import common_routers
 from ttt.presentation.aiogram.user.routes.all import user_routers
+from ttt.presentation.aiogram_dialog.admin_dialog import admin_dialog
 from ttt.presentation.aiogram_dialog.main_dialog import main_dialog
 from ttt.presentation.result_buffer import ResultBuffer
 from ttt.presentation.unkillable_tasks import UnkillableTasks
@@ -181,7 +185,7 @@ class PresentationProvider(Provider):
             *user_routers,
         )
 
-        dp.include_routers(main_dialog)
+        dp.include_routers(main_dialog, admin_dialog)
         setup_dialogs(dp)
 
         return dp
@@ -251,7 +255,6 @@ class ApplicationProvider(Provider):
         ViewMainMenu,
         scope=Scope.REQUEST,
     )
-
     provide_view_user = provide(ViewUser, scope=Scope.REQUEST)
     provide_register_user = provide(RegisterUser, scope=Scope.REQUEST)
     probide_complete_stars_purchase_payment = provide(
@@ -262,6 +265,12 @@ class ApplicationProvider(Provider):
         StartStarsPurchasePaymentCompletion,
         scope=Scope.REQUEST,
     )
+    provide_get_admin_rights = provide(GetAdminRights, scope=Scope.REQUEST)
+    provide_relinquish_admin_rights = provide(
+        RelinquishAdminRights,
+        scope=Scope.REQUEST,
+    )
+    provide_view_admin_menu = provide(ViewAdminMenu, scope=Scope.REQUEST)
 
     provide_start_game_with_ai = provide(
         StartGameWithAi,

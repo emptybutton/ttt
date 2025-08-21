@@ -77,6 +77,57 @@ class StructlogCommonUserLog(CommonUserLog):
             user_id=user_id,
         )
 
+    async def user_got_admin_rights(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_got_admin_rights",
+            chat_id=user.id,
+            user_id=user.id,
+        )
+
+    async def user_already_admin_to_get_admin_rights(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_already_admin_to_get_admin_rights",
+            chat_id=user.id,
+            user_id=user.id,
+        )
+
+    async def admin_token_mismatch_to_get_admin_rights(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "admin_token_mismatch_to_get_admin_rights",
+            chat_id=user.id,
+            user_id=user.id,
+        )
+
+    async def not_admin_to_relinquish_admin_rights(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "not_admin_to_relinquish_admin_rights",
+            chat_id=user.id,
+            user_id=user.id,
+        )
+
+    async def user_relinquished_admin_rights(self, user: User, /) -> None:
+        await self._logger.ainfo(
+            "user_relinquished_admin_rights",
+            chat_id=user.id,
+            user_id=user.id,
+        )
+
 
 @dataclass(frozen=True, unsafe_hash=False)
 class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):

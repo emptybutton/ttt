@@ -10,6 +10,12 @@ from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.last_game import LastGame, last_game
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.loss import UserLoss
+from ttt.entities.core.user.role import (
+    AdminRole,
+    RegularUserRole,
+    Role,
+    RootAdminRole,
+)
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.elo.rating import (
@@ -25,6 +31,7 @@ from ttt.entities.finance.payment.payment import (
 from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.math.random import Random, deviated_int
 from ttt.entities.text.emoji import Emoji
+from ttt.entities.text.token import Token
 from ttt.entities.tools.assertion import assert_
 from ttt.entities.tools.tracking import Tracking
 
@@ -56,6 +63,15 @@ class NoPurchaseError(Exception): ...
 class UserAlreadyLeftGameError(Exception): ...
 
 
+class UserAlreadyAdminError(Exception): ...
+
+
+class AdminTokenMismatchError(Exception): ...
+
+
+class NotAdminError(Exception): ...
+
+
 @dataclass
 class User:
     id: int
@@ -65,6 +81,7 @@ class User:
     last_games: list[LastGame]
     selected_emoji_id: UUID | None
     rating: EloRating
+    role: Role
 
     number_of_wins: int
     number_of_draws: int
@@ -72,6 +89,41 @@ class User:
     game_location: UserGameLocation | None
 
     emoji_cost: ClassVar[Stars] = 1000
+
+    def get_admin_rights(
+        self,
+        user_admin_token: Token,
+        original_admin_token: Token,
+        tracking: Tracking,
+    ) -> None:
+        """
+        :raises ttt.entities.core.user.user.UserAlreadyAdminError:
+        :raises ttt.entities.core.user.user.AdminTokenMismatchError:
+        """
+
+        assert_(
+            not isinstance(self.role, AdminRole), else_=UserAlreadyAdminError,
+        )
+        assert_(
+            user_admin_token == original_admin_token,
+            else_=AdminTokenMismatchError,
+        )
+
+        self.role = RootAdminRole()
+        tracking.register_mutated(self)
+
+    def relinquish_admin_rights(
+        self,
+        tracking: Tracking,
+    ) -> None:
+        """
+        :raises ttt.entities.core.user.user.NotAdminError:
+        """
+
+        assert_(isinstance(self.role, AdminRole), else_=NotAdminError)
+
+        self.role = RegularUserRole()
+        tracking.register_mutated(self)
 
     def games_played(self) -> int:
         return len(self.last_games)
@@ -435,6 +487,7 @@ def register_user(user_id: int, tracking: Tracking) -> User:
         number_of_draws=0,
         number_of_defeats=0,
         game_location=None,
+        role=RegularUserRole(),
     )
     tracking.register_new(user)
 
@@ -443,3 +496,7 @@ def register_user(user_id: int, tracking: Tracking) -> User:
 
 def is_user_in_game(game_location: UserGameLocation | None) -> bool:
     return game_location is not None
+
+
+def is_user_admin(role: Role | None) -> bool:
+    return isinstance(role, AdminRole)

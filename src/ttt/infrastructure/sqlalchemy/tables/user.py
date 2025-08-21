@@ -1,13 +1,16 @@
 from datetime import datetime
+from enum import StrEnum
 from uuid import UUID
 
 from sqlalchemy import CHAR, BigInteger, ForeignKey, Index
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ttt.entities.core.user.account import Account
 from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.last_game import LastGame
 from ttt.entities.core.user.location import UserGameLocation
+from ttt.entities.core.user.role import RegularUserRole, Role, RootAdminRole
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.user import User, UserAtomic
 from ttt.entities.text.emoji import Emoji
@@ -115,6 +118,29 @@ class TableLastGame(Base):
         )
 
 
+class TableRole(StrEnum):
+    root_admin = "root_admin"
+    regular_user = "regular_user"
+
+    def entity(self) -> Role:
+        match self:
+            case TableRole.root_admin:
+                return RootAdminRole()
+            case TableRole.regular_user:
+                return RegularUserRole()
+
+    @classmethod
+    def of(cls, it: Role) -> "TableRole":
+        match it:
+            case RegularUserRole():
+                return TableRole.regular_user
+            case RootAdminRole():
+                return TableRole.root_admin
+
+
+role = postgresql.ENUM(TableRole, name="user_role")
+
+
 class TableUser(Base):
     __tablename__ = "users"
 
@@ -136,6 +162,7 @@ class TableUser(Base):
         ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
+    role: Mapped[TableRole] = mapped_column(role, server_default="regular_user")
 
     emojis: Mapped[list[TableUserEmoji]] = relationship(
         lazy="selectin",
@@ -171,6 +198,7 @@ class TableUser(Base):
             number_of_draws=self.number_of_draws,
             number_of_defeats=self.number_of_defeats,
             game_location=location,
+            role=self.role.entity(),
         )
 
     @classmethod
@@ -189,6 +217,7 @@ class TableUser(Base):
             number_of_draws=it.number_of_draws,
             number_of_defeats=it.number_of_defeats,
             game_location_game_id=game_location_game_id,
+            role=TableRole.of(it.role),
         )
 
 

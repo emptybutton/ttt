@@ -18,7 +18,7 @@ from ttt.application.user.stars_purchase.ports.user_views import (
 )
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.location import UserGameLocation
-from ttt.entities.core.user.user import User, is_user_in_game
+from ttt.entities.core.user.user import User, is_user_admin, is_user_in_game
 from ttt.infrastructure.sqlalchemy.stmts import (
     selected_user_emoji_str_from_postgres,
     user_emojis_from_postgres,
@@ -26,6 +26,10 @@ from ttt.infrastructure.sqlalchemy.stmts import (
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
+)
+from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState
+from ttt.presentation.aiogram_dialog.admin_dialog.main_window import (
+    AdminMainMenuView,
 )
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.aiogram_dialog.main_dialog.emojis_window import (
@@ -43,6 +47,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
     _bot: Bot
     _session: AsyncSession
     _result_buffer: ResultBuffer
+    _bg_dialog_manager_factory: BgManagerFactory
 
     async def view_of_user_with_id(
         self,
@@ -123,6 +128,79 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         user_id: int,
     ) -> None:
         await need_to_start_message(self._bot, user_id)
+
+    async def user_admin_view(self, user_id: int, /) -> None:
+        stmt = select(TableUser.role).where(TableUser.id == user_id)
+        table_role = await self._session.scalar(stmt)
+        role = None if table_role is None else table_role.entity()
+
+        self._result_buffer.result = (
+            AdminMainMenuView(is_user_admin=is_user_admin(role))
+        )
+
+    async def user_got_admin_rights_view(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user.id, user.id,
+        )
+        await manager.update({}, ShowMode.DELETE_AND_SEND)
+
+    async def user_already_admin_to_get_admin_rights_view(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user.id, user.id,
+        )
+        await manager.start(
+            AdminDialogState.main,
+            {"hint": "🧿 Вы уже админ"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
+
+    async def admin_token_mismatch_to_get_admin_rights_view(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user.id, user.id,
+        )
+        await manager.start(
+            AdminDialogState.main,
+            {"hint": "🧿 Админ-токен не верен"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
+
+    async def not_admin_to_relinquish_admin_rights_view(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user.id, user.id,
+        )
+        await manager.start(
+            AdminDialogState.main,
+            {"hint": "🧿 Вы уже не админ"},
+            StartMode.RESET_STACK,
+        )
+
+    async def user_relinquished_admin_rights_view(self, user: User, /) -> None:
+        manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user.id, user.id,
+        )
+        await manager.start(
+            AdminDialogState.main,
+            {"hint": "🧿 Вы больше не админ"},
+            StartMode.RESET_STACK,
+        )
 
 
 @dataclass(frozen=True, unsafe_hash=False)
