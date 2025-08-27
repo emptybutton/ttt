@@ -8,20 +8,6 @@ from ttt.entities.core.user.user import User
 
 class GameLog(ABC):
     @abstractmethod
-    async def waiting_for_game_start(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def double_waiting_for_game_start(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
     async def game_against_user_started(
         self,
         game: Game,

@@ -7,9 +7,6 @@ from ttt.entities.core.user.location import UserGameLocation
 
 class GameViews(ABC):
     @abstractmethod
-    async def waiting_for_game_view(self, user_id: int, /) -> None: ...
-
-    @abstractmethod
     async def current_game_view_with_user_id(self, user_id: int, /) -> None: ...
 
     @abstractmethod
