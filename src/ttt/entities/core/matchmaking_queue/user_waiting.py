@@ -8,6 +8,5 @@ from ttt.entities.core.user.user import User
 @dataclass
 class UserWaiting:
     id_: UUID
-    matchmaking_queue_id: UUID
     start_datetime: datetime
     user: User

@@ -1,4 +1,3 @@
-from asyncio import gather
 from dataclasses import dataclass
 
 from ttt.application.common.ports.clock import Clock
@@ -23,6 +22,7 @@ from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.matchmaking_queue.matchmaking_queue import (
     UserAlreadyWaitingForGameError,
 )
+from ttt.entities.core.user.user import UserAlreadyInGameError
 from ttt.entities.tools.tracking import Tracking
 
 
@@ -74,11 +74,30 @@ class WaitGame:
                 await self.matchmaking_queue_log.double_waiting_for_game_start(
                     user_id,
                 )
-                await self.matchmaking_queue_views.waiting_for_game_view()
-
-            if push.was_location_dedublicated:
-                await self.log.double_waiting_for_game_start(user_id)
+                await self.matchmaking_queue_views.double_waiting_for_game_view(
+                    user_id,
+                )
+            except UserAlreadyInGameError:
+                await (
+                    self.matchmaking_queue_log
+                    .user_already_in_game_to_add_to_matchmaking_queue(user_id)
+                )
+                await self.game_views.user_already_in_game_view(user_id)
             else:
-                await self.log.waiting_for_game_start(user_id)
+                if game is None:
+                    await self.matchmaking_queue_log.waiting_for_game_start(
+                        user_id,
+                    )
+                    await self.matchmaking_queue_views.waiting_for_game_view(
+                        user_id,
+                    )
+                    await self.map_(tracking)
+                    return
 
-            await self.game_views.waiting_for_game_view(user_id)
+                await self.game_log.game_against_user_started(game)
+                await self.map_(tracking)
+
+                await self.game_views.started_game_view_with_locations(
+                    game.locations(),
+                    game,
+                )

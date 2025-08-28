@@ -65,8 +65,4 @@ class GameViews(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def users_already_in_game_views(
-        self,
-        user_ids: Sequence[int],
-        /,
-    ) -> None: ...
+    async def user_already_in_game_view(self, user_id: int, /) -> None: ...

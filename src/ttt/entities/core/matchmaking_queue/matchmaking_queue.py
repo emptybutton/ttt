@@ -17,7 +17,6 @@ class UserAlreadyWaitingForGameError(Exception): ...
 
 @dataclass
 class MatchmakingQueue:
-    id_: UUID
     user_waitings: list[UserWaiting]
 
     def __contains__(self, user: User) -> bool:
@@ -47,7 +46,6 @@ class MatchmakingQueue:
 
         user_waiting = UserWaiting(
             id_=user_waiting_id,
-            matchmaking_queue_id=self.id_,
             start_datetime=current_datetime,
             user=user,
         )

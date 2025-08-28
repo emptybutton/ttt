@@ -36,17 +36,17 @@ from ttt.entities.tools.assertion import assert_
 from ttt.entities.tools.tracking import Tracking
 
 
-@dataclass(frozen=True)
+@dataclass
 class UserAlreadyInGameError(Exception):
     user: "User"
 
 
-@dataclass(frozen=True)
+@dataclass
 class UserNotInGameError(Exception):
     user: "User"
 
 
-@dataclass(frozen=True)
+@dataclass
 class NotEnoughStarsError(Exception):
     stars_to_become_enough: Stars
 

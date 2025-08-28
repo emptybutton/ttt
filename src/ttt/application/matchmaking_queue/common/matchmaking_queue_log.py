@@ -15,3 +15,8 @@ class CommonMatchmakingQueueLog(ABC):
         user_id: int,
         /,
     ) -> None: ...
+
+    @abstractmethod
+    async def user_already_in_game_to_add_to_matchmaking_queue(
+        self, user_id: int, /,
+    ) -> None: ...

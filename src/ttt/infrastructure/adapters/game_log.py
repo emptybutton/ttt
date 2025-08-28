@@ -1,5 +1,3 @@
-from asyncio import gather
-from collections.abc import Sequence
 from dataclasses import dataclass
 
 from structlog.types import FilteringBoundLogger
@@ -14,26 +12,6 @@ from ttt.entities.core.user.user import User
 class StructlogGameLog(GameLog):
     _logger: FilteringBoundLogger
 
-    async def waiting_for_game_start(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "waiting_for_game_start",
-            user_id=user_id,
-        )
-
-    async def double_waiting_for_game_start(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "waiting_for_game_start",
-            user_id=user_id,
-        )
-
     async def game_against_user_started(
         self,
         game: Game,
@@ -42,16 +20,6 @@ class StructlogGameLog(GameLog):
         await self._logger.ainfo(
             "game_against_user_started",
             game_id=game.id.hex,
-        )
-
-    async def user_intends_to_start_game_against_ai(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "user_intends_to_start_game_against_ai",
-            user_id=user_id,
         )
 
     async def game_against_ai_started(
@@ -115,16 +83,6 @@ class StructlogGameLog(GameLog):
             "game_completed",
             user_id=user_id,
             game_id=game.id.hex,
-        )
-
-    async def user_already_in_game_to_start_game(
-        self,
-        user: User,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "user_already_in_game_to_start_game",
-            user_id=user.id,
         )
 
     async def already_completed_game_to_make_move(
@@ -195,34 +153,14 @@ class StructlogGameLog(GameLog):
             game_id=game.id.hex,
         )
 
-    async def users_already_in_game_to_start_game_via_game_starting_queue(
+    async def user_already_in_game_to_start_game_against_ai(
         self,
-        user_ids: Sequence[int],
+        user: User,
         /,
     ) -> None:
-        await gather(
-            *(
-                self._logger.awarning(
-                    "user_already_in_game_to_start_game_via_game_starting_queue",
-                    user_id=user_id,
-                )
-                for user_id in user_ids
-            ),
-        )
-
-    async def bad_attempt_to_start_game_via_game_starting_queue(
-        self,
-        user_ids: Sequence[int],
-        /,
-    ) -> None:
-        await gather(
-            *(
-                self._logger.awarning(
-                    "bad_attempt_to_start_game_via_game_starting_queue",
-                    user_id=user_id,
-                )
-                for user_id in user_ids
-            ),
+        await self._logger.ainfo(
+            "user_already_in_game_to_start_game_against_ai",
+            user_id=user.id,
         )
 
     async def current_game_viewed(
@@ -232,15 +170,5 @@ class StructlogGameLog(GameLog):
     ) -> None:
         await self._logger.ainfo(
             "current_game_viewed",
-            user_id=user_id,
-        )
-
-    async def user_intends_to_start_game(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "user_intends_to_start_game",
             user_id=user_id,
         )

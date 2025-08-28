@@ -18,7 +18,7 @@ from ttt.infrastructure.sqlalchemy.tables.common import Base
 from ttt.infrastructure.sqlalchemy.tables.payment import TablePayment
 
 
-class TableUserEmoji(Base):
+class TableUserEmoji(Base[UserEmoji]):
     __tablename__ = "user_emojis"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -29,7 +29,7 @@ class TableUserEmoji(Base):
     emoji_str: Mapped[str] = mapped_column(CHAR(1))
     datetime_of_purchase: Mapped[datetime]
 
-    def entity(self) -> UserEmoji:
+    def __entity__(self) -> UserEmoji:
         return UserEmoji(
             self.id,
             self.user_id,
@@ -47,7 +47,7 @@ class TableUserEmoji(Base):
         )
 
 
-class TableStarsPurchase(Base):
+class TableStarsPurchase(Base[StarsPurchase]):
     __tablename__ = "stars_purchases"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -73,7 +73,7 @@ class TableStarsPurchase(Base):
         ),
     )
 
-    def entity(self) -> StarsPurchase:
+    def __entity__(self) -> StarsPurchase:
         return StarsPurchase(
             id_=self.id,
             user_id=self.user_id,
@@ -91,7 +91,7 @@ class TableStarsPurchase(Base):
         )
 
 
-class TableLastGame(Base):
+class TableLastGame(Base[LastGame]):
     __tablename__ = "last_games"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -102,7 +102,7 @@ class TableLastGame(Base):
         ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
     )
 
-    def entity(self) -> LastGame:
+    def __entity__(self) -> LastGame:
         return LastGame(
             id=self.id,
             user_id=self.user_id,
@@ -141,7 +141,7 @@ class TableRole(StrEnum):
 role = postgresql.ENUM(TableRole, name="user_role")
 
 
-class TableUser(Base):
+class TableUser(Base[User]):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(
@@ -177,7 +177,7 @@ class TableUser(Base):
         foreign_keys=[TableLastGame.user_id],
     )
 
-    def entity(self) -> User:
+    def __entity__(self) -> User:
         if self.game_location_game_id is not None:
             location = UserGameLocation(
                 self.id,

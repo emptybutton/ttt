@@ -19,10 +19,13 @@ from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.game.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.game.ports.game_log import GameLog
-from ttt.application.game.game.ports.game_starting_queue import (
-    GameStartingQueue,
-)
 from ttt.application.game.game.ports.games import Games
+from ttt.application.matchmaking_queue.common.matchmaking_queue_log import (
+    CommonMatchmakingQueueLog,
+)
+from ttt.application.matchmaking_queue.common.shared_matchmaking_queue import (
+    SharedMatchmakingQueue,
+)
 from ttt.application.user.common.ports.original_admin_token import (
     OriginalAdminToken,
 )
@@ -43,11 +46,11 @@ from ttt.application.user.stars_purchase.ports.user_log import (
 from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.game_ai_gateway import GeminiGameAiGateway
 from ttt.infrastructure.adapters.game_log import StructlogGameLog
-from ttt.infrastructure.adapters.game_starting_queue import (
-    InRedisFixedBatchesWaitingLocations,
-)
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.map import MapToPostgres
+from ttt.infrastructure.adapters.matchmaking_queue_log import (
+    StructlogCommonMatchmakingQueueLog,
+)
 from ttt.infrastructure.adapters.original_admin_token import (
     TokenAsOriginalAdminToken,
 )
@@ -55,6 +58,9 @@ from ttt.infrastructure.adapters.paid_stars_purchase_payment_inbox import (
     InNatsPaidStarsPurchasePaymentInbox,
 )
 from ttt.infrastructure.adapters.randoms import MersenneTwisterRandoms
+from ttt.infrastructure.adapters.shared_matchmaking_queue import (
+    InPostgresSharedMatchmakingQueue,
+)
 from ttt.infrastructure.adapters.transaction import InPostgresTransaction
 from ttt.infrastructure.adapters.user_log import (
     StructlogCommonUserLog,
@@ -71,7 +77,6 @@ from ttt.infrastructure.nats.paid_stars_purchase_payment_inbox import (
 from ttt.infrastructure.openai.gemini import Gemini, gemini
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
-from ttt.infrastructure.redis.batches import InRedisFixedBatches
 from ttt.infrastructure.structlog.logger import LoggerFactory
 
 
@@ -207,6 +212,12 @@ class InfrastructureProvider(Provider):
         scope=Scope.REQUEST,
     )
 
+    provide_shared_matchmaking_queue = provide(
+        InPostgresSharedMatchmakingQueue,
+        provides=SharedMatchmakingQueue,
+        scope=Scope.REQUEST,
+    )
+
     provide_map = provide(
         MapToPostgres,
         provides=Map,
@@ -228,21 +239,6 @@ class InfrastructureProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_randoms(self) -> Randoms:
         return MersenneTwisterRandoms()
-
-    @provide(scope=Scope.REQUEST)
-    def provide_game_starting_queue(
-        self,
-        redis: Redis,
-        envs: Envs,
-    ) -> GameStartingQueue:
-        return InRedisFixedBatchesWaitingLocations(
-            InRedisFixedBatches(
-                redis,
-                "game_starting_queue",
-                envs.game_waiting_queue_pulling_timeout_min_ms,
-                envs.game_waiting_queue_pulling_timeout_salt_ms,
-            ),
-        )
 
     provide_game_ai_gateway = provide(
         GeminiGameAiGateway,
@@ -277,5 +273,11 @@ class InfrastructureProvider(Provider):
     provide_stars_purchase_user_log = provide(
         StructlogStarsPurchaseUserLog,
         provides=StarsPurchaseUserLog,
+        scope=Scope.REQUEST,
+    )
+
+    provide_common_matchmaking_queue_log = provide(
+        StructlogCommonMatchmakingQueueLog,
+        provides=CommonMatchmakingQueueLog,
         scope=Scope.REQUEST,
     )

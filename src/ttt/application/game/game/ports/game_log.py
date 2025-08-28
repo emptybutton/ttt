@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 
 from ttt.entities.core.game.game import Game
 from ttt.entities.core.game.move import AiMove, UserMove
@@ -56,7 +55,9 @@ class GameLog(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def user_already_in_game_to_start_game(self, user: User, /) -> None:
+    async def user_already_in_game_to_start_game_against_ai(
+        self, user: User, /,
+    ) -> None:
         ...
 
     @abstractmethod
@@ -100,19 +101,5 @@ class GameLog(ABC):
         self,
         game: Game,
         user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def users_already_in_game_to_start_game_via_game_starting_queue(
-        self,
-        user_ids: Sequence[int],
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def bad_attempt_to_start_game_via_game_starting_queue(
-        self,
-        user_ids: Sequence[int],
         /,
     ) -> None: ...

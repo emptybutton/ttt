@@ -27,10 +27,12 @@ from ttt.application.common.ports.emojis import Emojis
 from ttt.application.game.game.cancel_game import CancelGame
 from ttt.application.game.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.game.ports.game_views import GameViews
-from ttt.application.game.game.start_game import StartGame
 from ttt.application.game.game.start_game_with_ai import StartGameWithAi
 from ttt.application.game.game.view_game import ViewGame
-from ttt.application.game.game.wait_game import WaitGame
+from ttt.application.matchmaking_queue.common.matchmaking_queue_views import (
+    CommonMatchmakingQueueViews,
+)
+from ttt.application.matchmaking_queue.game.wait_game import WaitGame
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
@@ -71,6 +73,9 @@ from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
     BackroundAiogramMessagesFromPostgresAsGameViews,
+)
+from ttt.presentation.adapters.matchmaking_queue_views import (
+    AiogramCommonMatchmakingQueueViews,
 )
 from ttt.presentation.adapters.stars_purchase_payment_gateway import (
     AiogramInAndBufferOutStarsPurchasePaymentGateway,
@@ -148,6 +153,11 @@ class PresentationProvider(Provider):
         provides=EmojiPurchaseUserViews,
         scope=Scope.APP,
     )
+    provide_common_matchmaking_queue_views = provide(
+        AiogramCommonMatchmakingQueueViews,
+        provides=CommonMatchmakingQueueViews,
+        scope=Scope.APP,
+    )
 
     @provide(scope=Scope.REQUEST)
     def provide_result_buffer(self) -> ResultBuffer:
@@ -157,14 +167,12 @@ class PresentationProvider(Provider):
     async def unkillable_tasks(
         self,
         logger: FilteringBoundLogger,
-        start_game: StartGame,
         start_stars_purchase_payment_completion: (
             StartStarsPurchasePaymentCompletion
         ),
         complete_stars_purchase_payment: CompleteStarsPurchasePayment,
     ) -> UnkillableTasks:
         tasks = UnkillableTasks(logger)
-        tasks.add(start_game)
         tasks.add(start_stars_purchase_payment_completion)
         tasks.add(complete_stars_purchase_payment)
 
@@ -276,8 +284,8 @@ class ApplicationProvider(Provider):
         StartGameWithAi,
         scope=Scope.REQUEST,
     )
-    provide_start_game = provide(StartGame, scope=Scope.REQUEST)
-    provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
     provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
     provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)
     provide_view_game = provide(ViewGame, scope=Scope.REQUEST)
+
+    provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)

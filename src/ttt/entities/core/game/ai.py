@@ -24,7 +24,7 @@ class AiWin:
     ai_id: UUID
 
 
-@dataclass(frozen=True)
+@dataclass
 class Ai:
     id: UUID
     type: AiType

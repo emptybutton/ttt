@@ -32,16 +32,6 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
     _bg_dialog_manager_factory: BgManagerFactory
     _result_buffer: ResultBuffer
 
-    async def waiting_for_game_view(self, user_id: int, /) -> None:
-        dialog_manager = self._bg_dialog_manager_factory.bg(
-            self._bot, user_id, user_id,
-        )
-        await dialog_manager.start(
-            MainDialogState.game_mode_to_start_game,
-            {"hint": "⚔️ Поиск игры начат"},
-            StartMode.RESET_STACK,
-        )
-
     async def current_game_view_with_user_id(self, user_id: int, /) -> None:
         join_condition = (
             (TableUser.id == user_id)
@@ -139,11 +129,15 @@ class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
     ) -> None:
         raise NotImplementedError
 
-    async def users_already_in_game_views(
-        self,
-        user_ids: Sequence[int],
-        /,
-    ) -> None: ...
+    async def user_already_in_game_view(self, user_id: int, /) -> None:
+        data = {"hint": "❌ Вы уже в игре"}
+
+        dialog_manager = self._bg_dialog_manager_factory.bg(
+            self._bot, user_id, user_id,
+        )
+        await dialog_manager.start(
+            MainDialogState.main, data, StartMode.RESET_STACK,
+        )
 
     async def already_filled_cell_error(
         self,

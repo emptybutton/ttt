@@ -8,9 +8,6 @@ from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.game.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.game.ports.game_log import GameLog
-from ttt.application.game.game.ports.game_starting_queue import (
-    GameStartingQueue,
-)
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.ports.games import Games
 from ttt.application.user.common.ports.user_views import CommonUserViews
@@ -32,7 +29,6 @@ class StartGameWithAi:
     user_views: CommonUserViews
     games: Games
     game_views: GameViews
-    game_starting_queue: GameStartingQueue
     transaction: Transaction
     ai_gateway: GameAiGateway
     log: GameLog
@@ -66,8 +62,10 @@ class StartGameWithAi:
                     tracking,
                 )
             except UserAlreadyInGameError:
-                await self.log.user_already_in_game_to_start_game(user)
-                await self.game_views.users_already_in_game_views([user_id])
+                await self.log.user_already_in_game_to_start_game_against_ai(
+                    user,
+                )
+                await self.game_views.user_already_in_game_view(user_id)
             else:
                 await self.log.game_against_ai_started(started_game.game)
 
