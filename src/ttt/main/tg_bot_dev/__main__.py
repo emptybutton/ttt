@@ -25,6 +25,7 @@ async def amain() -> None:
             LoggerFactory: DevLoggerFactory(adds_request_id=True),
         },
     )
+
     await start_aiogram(container)
 
 

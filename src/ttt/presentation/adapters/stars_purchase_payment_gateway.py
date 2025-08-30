@@ -21,9 +21,7 @@ from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 
 
 @dataclass
-class AiogramInAndBufferOutStarsPurchasePaymentGateway(
-    StarsPurchasePaymentGateway,
-):
+class AiogramPaymentGateway(StarsPurchasePaymentGateway):
     _pre_checkout_query: PreCheckoutQuery | None
     _buffer: Buffer[PaidStarsPurchasePayment]
     _bot: Bot

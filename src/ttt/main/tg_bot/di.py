@@ -73,19 +73,19 @@ from ttt.infrastructure.buffer import Buffer
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
-    BackroundAiogramMessagesFromPostgresAsGameViews,
+    AiogramGameViews,
 )
 from ttt.presentation.adapters.matchmaking_queue_views import (
     AiogramCommonMatchmakingQueueViews,
 )
 from ttt.presentation.adapters.stars_purchase_payment_gateway import (
-    AiogramInAndBufferOutStarsPurchasePaymentGateway,
+    AiogramPaymentGateway,
 )
 from ttt.presentation.adapters.user_views import (
-    AiogramMessagesAsEmojiPurchaseUserViews,
-    AiogramMessagesAsStarsPurchaseUserViews,
-    AiogramMessagesFromPostgresAsCommonUserViews,
-    AiogramMessagesFromPostgresAsEmojiSelectionUserViews,
+    AiogramCommonUserViews,
+    AiogramEmojiPurchaseUserViews,
+    AiogramEmojiSelectionUserViews,
+    AiogramStarsPurchaseUserViews,
 )
 from ttt.presentation.aiogram.common.bots import ttt_bot
 from ttt.presentation.aiogram.common.routes.all import common_routers
@@ -151,28 +151,28 @@ class PresentationProvider(Provider):
     )
 
     provide_game_views = provide(
-        BackroundAiogramMessagesFromPostgresAsGameViews,
+        AiogramGameViews,
         provides=GameViews,
         scope=Scope.REQUEST,
     )
 
     provide_user_views = provide(
-        AiogramMessagesFromPostgresAsCommonUserViews,
+        AiogramCommonUserViews,
         provides=CommonUserViews,
         scope=Scope.REQUEST,
     )
     provide_stars_purchase_user_views = provide(
-        AiogramMessagesAsStarsPurchaseUserViews,
+        AiogramStarsPurchaseUserViews,
         provides=StarsPurchaseUserViews,
         scope=Scope.REQUEST,
     )
     provide_emoji_selection_user_views = provide(
-        AiogramMessagesFromPostgresAsEmojiSelectionUserViews,
+        AiogramEmojiSelectionUserViews,
         provides=EmojiSelectionUserViews,
         scope=Scope.REQUEST,
     )
     provide_emoji_purchase_user_views = provide(
-        AiogramMessagesAsEmojiPurchaseUserViews,
+        AiogramEmojiPurchaseUserViews,
         provides=EmojiPurchaseUserViews,
         scope=Scope.REQUEST,
     )
@@ -258,7 +258,7 @@ class PresentationProvider(Provider):
         buffer: Buffer[PaidStarsPurchasePayment],
         dialog_manager_for_user: DialogManagerForUser,
     ) -> StarsPurchasePaymentGateway:
-        return AiogramInAndBufferOutStarsPurchasePaymentGateway(
+        return AiogramPaymentGateway(
             pre_checkout_query,
             buffer,
             bot,

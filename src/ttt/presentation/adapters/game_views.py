@@ -27,7 +27,7 @@ from ttt.presentation.result_buffer import ResultBuffer
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class BackroundAiogramMessagesFromPostgresAsGameViews(GameViews):
+class AiogramGameViews(GameViews):
     _session: AsyncSession
     _bot: Bot
     _dialog_manager_for_user: DialogManagerForUser

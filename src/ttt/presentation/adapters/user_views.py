@@ -46,7 +46,7 @@ from ttt.presentation.result_buffer import ResultBuffer
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
+class AiogramCommonUserViews(CommonUserViews):
     _bot: Bot
     _session: AsyncSession
     _result_buffer: ResultBuffer
@@ -197,7 +197,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
+class AiogramStarsPurchaseUserViews(StarsPurchaseUserViews):
     _dialog_manager_for_user: DialogManagerForUser
 
     async def invalid_stars_for_stars_purchase_view(
@@ -236,9 +236,7 @@ class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class AiogramMessagesFromPostgresAsEmojiSelectionUserViews(
-    EmojiSelectionUserViews,
-):
+class AiogramEmojiSelectionUserViews(EmojiSelectionUserViews):
     async def invalid_emoji_to_select_view(
         self,
         user_id: int,
@@ -255,7 +253,7 @@ class AiogramMessagesFromPostgresAsEmojiSelectionUserViews(
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
+class AiogramEmojiPurchaseUserViews(EmojiPurchaseUserViews):
     _dialog_manager_for_user: DialogManagerForUser
 
     async def not_enough_stars_to_buy_emoji_view(
