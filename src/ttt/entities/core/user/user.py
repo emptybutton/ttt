@@ -10,6 +10,7 @@ from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.last_game import LastGame, last_game
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.loss import UserLoss
+from ttt.entities.core.user.rank import Rank, rank
 from ttt.entities.core.user.role import (
     AdminRole,
     RegularUserRole,
@@ -89,6 +90,9 @@ class User:
     game_location: UserGameLocation | None
 
     emoji_cost: ClassVar[Stars] = 1000
+
+    def rank(self) -> Rank:
+        return rank(self.rating)
 
     def get_admin_rights(
         self,

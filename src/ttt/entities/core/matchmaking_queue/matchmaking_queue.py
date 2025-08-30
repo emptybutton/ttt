@@ -5,6 +5,7 @@ from uuid import UUID
 
 from ttt.entities.core.game.game import Game, start_game
 from ttt.entities.core.matchmaking_queue.user_waiting import UserWaiting
+from ttt.entities.core.user.rank import are_ranks_adjacent
 from ttt.entities.core.user.user import User, UserAlreadyInGameError
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.text.emoji import Emoji
@@ -75,10 +76,12 @@ class MatchmakingQueue:
 
     def _is_game_allowed(
         self,
-        user_waiting1: UserWaiting,  # noqa: ARG002
-        user_waiting2: UserWaiting,  # noqa: ARG002
+        user_waiting1: UserWaiting,
+        user_waiting2: UserWaiting,
     ) -> bool:
-        return True
+        return are_ranks_adjacent(
+            user_waiting1.user.rank, user_waiting2.user.rank,
+        )
 
 
 MatchmakingQueueAtomic = MatchmakingQueue | UserWaiting
