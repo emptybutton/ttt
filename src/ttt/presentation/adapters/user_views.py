@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from aiogram import Bot
-from aiogram_dialog import BgManagerFactory, ShowMode, StartMode
+from aiogram_dialog import ShowMode, StartMode
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,6 +31,9 @@ from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState
 from ttt.presentation.aiogram_dialog.admin_dialog.main_window import (
     AdminMainMenuView,
 )
+from ttt.presentation.aiogram_dialog.common.dialog_manager_for_user import (
+    DialogManagerForUser,
+)
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.aiogram_dialog.main_dialog.emojis_window import (
     EmojiMenuView,
@@ -47,7 +50,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
     _bot: Bot
     _session: AsyncSession
     _result_buffer: ResultBuffer
-    _bg_dialog_manager_factory: BgManagerFactory
+    _dialog_manager_for_user: DialogManagerForUser
 
     async def view_of_user_with_id(
         self,
@@ -143,9 +146,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         user: User,
         /,
     ) -> None:
-        manager = self._bg_dialog_manager_factory.bg(
-            self._bot, user.id, user.id,
-        )
+        manager = self._dialog_manager_for_user(user.id)
         await manager.update({}, ShowMode.DELETE_AND_SEND)
 
     async def user_already_admin_to_get_admin_rights_view(
@@ -153,9 +154,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         user: User,
         /,
     ) -> None:
-        manager = self._bg_dialog_manager_factory.bg(
-            self._bot, user.id, user.id,
-        )
+        manager = self._dialog_manager_for_user(user.id)
         await manager.start(
             AdminDialogState.main,
             {"hint": "🧿 Вы уже админ"},
@@ -168,9 +167,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         user: User,
         /,
     ) -> None:
-        manager = self._bg_dialog_manager_factory.bg(
-            self._bot, user.id, user.id,
-        )
+        manager = self._dialog_manager_for_user(user.id)
         await manager.start(
             AdminDialogState.main,
             {"hint": "🧿 Админ-токен не верен"},
@@ -183,9 +180,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         user: User,
         /,
     ) -> None:
-        manager = self._bg_dialog_manager_factory.bg(
-            self._bot, user.id, user.id,
-        )
+        manager = self._dialog_manager_for_user(user.id)
         await manager.start(
             AdminDialogState.main,
             {"hint": "🧿 Вы уже не админ"},
@@ -193,9 +188,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
         )
 
     async def user_relinquished_admin_rights_view(self, user: User, /) -> None:
-        manager = self._bg_dialog_manager_factory.bg(
-            self._bot, user.id, user.id,
-        )
+        manager = self._dialog_manager_for_user(user.id)
         await manager.start(
             AdminDialogState.main,
             {"hint": "🧿 Вы больше не админ"},
@@ -205,8 +198,7 @@ class AiogramMessagesFromPostgresAsCommonUserViews(CommonUserViews):
 
 @dataclass(frozen=True, unsafe_hash=False)
 class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
-    _bot: Bot
-    _bg_dialog_manager_factory: BgManagerFactory
+    _dialog_manager_for_user: DialogManagerForUser
 
     async def invalid_stars_for_stars_purchase_view(
         self,
@@ -220,9 +212,7 @@ class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
         user_id: int,
         /,
     ) -> None:
-        manager = self._bg_dialog_manager_factory.bg(
-            self._bot, user_id, user_id,
-        )
+        manager = self._dialog_manager_for_user(user_id)
         await manager.start(
             MainDialogState.stars_shop,
             {"hint": "🌟 Звёзды скоро начислятся!"},
@@ -236,9 +226,7 @@ class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
         purchase_id: UUID,
         /,
     ) -> None:
-        manager = self._bg_dialog_manager_factory.bg(
-            self._bot, user.id, user.id,
-        )
+        manager = self._dialog_manager_for_user(user.id)
         await manager.start(
             MainDialogState.stars_shop,
             {"hint": "🌟 Звезды начислились!"},
@@ -251,9 +239,6 @@ class AiogramMessagesAsStarsPurchaseUserViews(StarsPurchaseUserViews):
 class AiogramMessagesFromPostgresAsEmojiSelectionUserViews(
     EmojiSelectionUserViews,
 ):
-    _bot: Bot
-    _session: AsyncSession
-
     async def invalid_emoji_to_select_view(
         self,
         user_id: int,
@@ -271,8 +256,7 @@ class AiogramMessagesFromPostgresAsEmojiSelectionUserViews(
 
 @dataclass(frozen=True, unsafe_hash=False)
 class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
-    _bot: Bot
-    _bg_dialog_manager_factory: BgManagerFactory
+    _dialog_manager_for_user: DialogManagerForUser
 
     async def not_enough_stars_to_buy_emoji_view(
         self,
@@ -280,9 +264,7 @@ class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
         stars_to_become_enough: Stars,
         /,
     ) -> None:
-        manager = self._bg_dialog_manager_factory.bg(
-            self._bot, user_id, user_id,
-        )
+        manager = self._dialog_manager_for_user(user_id)
         await manager.start(
             MainDialogState.emoji_shop,
             {"hint": f"😞 Нужно ещё {stars_to_become_enough} 🌟 для покупки"},
@@ -291,9 +273,7 @@ class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
         )
 
     async def emoji_already_purchased_view(self, user_id: int, /) -> None:
-        manager = self._bg_dialog_manager_factory.bg(
-            self._bot, user_id, user_id,
-        )
+        manager = self._dialog_manager_for_user(user_id)
         await manager.start(
             MainDialogState.emoji_shop,
             {"hint": "🎭 Эмоджи уже куплен"},
@@ -302,9 +282,7 @@ class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
         )
 
     async def emoji_was_purchased_view(self, user_id: int, /) -> None:
-        manager = self._bg_dialog_manager_factory.bg(
-            self._bot, user_id, user_id,
-        )
+        manager = self._dialog_manager_for_user(user_id)
         await manager.start(
             MainDialogState.emoji_shop,
             {"hint": "🌟 Куплено!"},
@@ -313,9 +291,7 @@ class AiogramMessagesAsEmojiPurchaseUserViews(EmojiPurchaseUserViews):
         )
 
     async def invalid_emoji_to_buy_view(self, user_id: int, /) -> None:
-        manager = self._bg_dialog_manager_factory.bg(
-            self._bot, user_id, user_id,
-        )
+        manager = self._dialog_manager_for_user(user_id)
         message_text = (
             "❌ Эмоджи должен состоять из одного символа"
         )

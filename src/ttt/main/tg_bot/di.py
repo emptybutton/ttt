@@ -14,6 +14,7 @@ from aiogram.types import (
 )
 from aiogram_dialog import BgManagerFactory, setup_dialogs
 from aiogram_dialog.manager.bg_manager import BgManagerFactoryImpl
+from aiogram_dialog.manager.manager import ManagerImpl
 from dishka import (
     Provider,
     Scope,
@@ -90,6 +91,9 @@ from ttt.presentation.aiogram.common.bots import ttt_bot
 from ttt.presentation.aiogram.common.routes.all import common_routers
 from ttt.presentation.aiogram.user.routes.all import user_routers
 from ttt.presentation.aiogram_dialog.admin_dialog import admin_dialog
+from ttt.presentation.aiogram_dialog.common.dialog_manager_for_user import (
+    DialogManagerForUser,
+)
 from ttt.presentation.aiogram_dialog.main_dialog import main_dialog
 from ttt.presentation.result_buffer import ResultBuffer
 from ttt.presentation.unkillable_tasks import UnkillableTasks
@@ -105,6 +109,12 @@ class PresentationProvider(Provider):
     def provide_event(self, event: TelegramObject) -> TelegramObject | None:
         return event
 
+    @provide(scope=Scope.REQUEST)
+    def provide_aiogram_middleware_data(
+        self, data: AiogramMiddlewareData,
+    ) -> AiogramMiddlewareData | None:
+        return data
+
     @provide(scope=Scope.APP)
     def provide_strage(self, redis: Redis) -> BaseStorage:
         return RedisStorage(redis, DefaultKeyBuilder(with_destiny=True))
@@ -113,6 +123,15 @@ class PresentationProvider(Provider):
     def provide_bg_manager_factory(self, dp: Dispatcher) -> BgManagerFactory:
         return BgManagerFactoryImpl(dp)
 
+    @provide(scope=Scope.REQUEST)
+    def provide_manager_impl(
+        self, middleware_data: AiogramMiddlewareData | None,
+    ) -> ManagerImpl | None:
+        if middleware_data is None:
+            return None
+
+        return cast(ManagerImpl, middleware_data["dialog_manager"])
+
     @provide(scope=Scope.APP)
     async def provide_bot(self, secrets: Secrets) -> AsyncIterator[Bot]:
         bot = Bot(secrets.bot_token)
@@ -120,6 +139,10 @@ class PresentationProvider(Provider):
         async with bot:
             await ttt_bot(bot)
             yield bot
+
+    provide_dialog_manager_for_user = provide(
+        DialogManagerForUser, scope=Scope.REQUEST,
+    )
 
     provide_emoji = provide(
         PictographsAsEmojis,
@@ -141,7 +164,7 @@ class PresentationProvider(Provider):
     provide_stars_purchase_user_views = provide(
         AiogramMessagesAsStarsPurchaseUserViews,
         provides=StarsPurchaseUserViews,
-        scope=Scope.APP,
+        scope=Scope.REQUEST,
     )
     provide_emoji_selection_user_views = provide(
         AiogramMessagesFromPostgresAsEmojiSelectionUserViews,
@@ -151,12 +174,12 @@ class PresentationProvider(Provider):
     provide_emoji_purchase_user_views = provide(
         AiogramMessagesAsEmojiPurchaseUserViews,
         provides=EmojiPurchaseUserViews,
-        scope=Scope.APP,
+        scope=Scope.REQUEST,
     )
     provide_common_matchmaking_queue_views = provide(
         AiogramCommonMatchmakingQueueViews,
         provides=CommonMatchmakingQueueViews,
-        scope=Scope.APP,
+        scope=Scope.REQUEST,
     )
 
     @provide(scope=Scope.REQUEST)
@@ -192,8 +215,8 @@ class PresentationProvider(Provider):
             *common_routers,
             *user_routers,
         )
-
         dp.include_routers(main_dialog, admin_dialog)
+
         setup_dialogs(dp)
 
         return dp
@@ -233,14 +256,14 @@ class PresentationProvider(Provider):
         secrets: Secrets,
         bot: Bot,
         buffer: Buffer[PaidStarsPurchasePayment],
-        bg_manager_factory: BgManagerFactory,
+        dialog_manager_for_user: DialogManagerForUser,
     ) -> StarsPurchasePaymentGateway:
         return AiogramInAndBufferOutStarsPurchasePaymentGateway(
             pre_checkout_query,
             buffer,
             bot,
             secrets.payments_token,
-            bg_manager_factory,
+            dialog_manager_for_user,
         )
 
 
