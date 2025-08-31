@@ -7,7 +7,7 @@ from aiogram_dialog.widgets.kbd import (
     Button,
     SwitchTo,
 )
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
@@ -15,6 +15,9 @@ from magic_filter import F
 from ttt.application.game.game.cancel_game import CancelGame
 from ttt.application.game.game.view_game import ViewGame
 from ttt.application.user.view_main_menu import ViewMainMenu
+from ttt.entities.core.stars import Stars
+from ttt.entities.core.user.rank import rank_for_rating
+from ttt.entities.elo.rating import EloRating
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.common.wigets.hint import Hint
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
@@ -22,12 +25,33 @@ from ttt.presentation.aiogram_dialog.main_dialog.game_window import (
     ActiveGameView,
 )
 from ttt.presentation.result_buffer import ResultBuffer
+from ttt.presentation.texts import rank_progres_text, rank_title
 
 
 @dataclass(frozen=True)
 class MainMenuView(EncodableToWindowData):
     is_user_in_game: bool
     has_user_emojis: bool
+    rank_text: str
+    stars: Stars
+
+    @classmethod
+    def of(
+        cls,
+        *,
+        is_user_in_game: bool,
+        has_user_emojis: bool,
+        rating: EloRating,
+        stars: Stars,
+    ) -> "MainMenuView":
+        rank = rank_for_rating(rating)
+
+        return MainMenuView(
+            is_user_in_game=is_user_in_game,
+            has_user_emojis=has_user_emojis,
+            rank_text=f"{rank_title(rank)} {rank_progres_text(rating)}",
+            stars=stars,
+        )
 
 
 @inject
@@ -70,8 +94,13 @@ async def on_back_to_game_clicked(
 
 
 main_window = Window(
-    Const("🧭 Меню", when=~F["start_data"]["hint"]),
-    Hint(Format("{start_data[hint]}")),
+    Format("Вы — {main[rank_text]}"),
+    Format("Звёзд: {main[stars]} 🌟"),
+
+    Hint(Multi(
+        Const(" "),
+        Format("{start_data[hint]}"),
+    )),
 
     SwitchTo(
         Const("Начать игру"),

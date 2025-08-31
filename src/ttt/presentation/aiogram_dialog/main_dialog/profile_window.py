@@ -11,12 +11,12 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from ttt.application.user.view_user import ViewUser
-from ttt.entities.core.user.rank import rank
+from ttt.entities.core.user.rank import rank_for_rating
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.result_buffer import ResultBuffer
 from ttt.presentation.texts import (
-    rank_text,
+    rank_title,
     short_float_text,
 )
 
@@ -45,7 +45,7 @@ class UserProfileView(EncodableToWindowData):
             number_of_defeats=number_of_defeats,
             account_stars=account_stars,
             rating_text=short_float_text(rating),
-            rank_text=rank_text(rank(rating)),
+            rank_text=rank_title(rank_for_rating(rating)),
         )
 
 

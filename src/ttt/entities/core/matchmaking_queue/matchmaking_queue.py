@@ -80,7 +80,7 @@ class MatchmakingQueue:
         user_waiting2: UserWaiting,
     ) -> bool:
         return are_ranks_adjacent(
-            user_waiting1.user.rank, user_waiting2.user.rank,
+            user_waiting1.user.rank(), user_waiting2.user.rank(),
         )
 
 

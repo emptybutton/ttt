@@ -89,26 +89,32 @@ class AiogramCommonUserViews(CommonUserViews):
             .label("has_user_emojis")
         )
         stmt = (
-            select(TableUser.game_location_game_id, has_user_emojis_stmt)
+            select(
+                TableUser.game_location_game_id,
+                TableUser.account_stars,
+                TableUser.rating,
+                has_user_emojis_stmt,
+            )
             .where(TableUser.id == user_id)
         )
         result = await self._session.execute(stmt)
         row = result.first()
 
         if row is None:
-            game_location_game_id = None
-            has_user_emojis = False
-        else:
-            game_location_game_id = row.game_location_game_id
-            has_user_emojis = row.has_user_emojis
+            raise ValueError
+
+        game_location_game_id = row.game_location_game_id
 
         if game_location_game_id is None:
             game_location = None
         else:
             game_location = UserGameLocation(user_id, game_location_game_id)
 
-        view = MainMenuView(
-            is_user_in_game(game_location), has_user_emojis,
+        view = MainMenuView.of(
+            is_user_in_game=is_user_in_game(game_location),
+            has_user_emojis=row.has_user_emojis,
+            stars=row.account_stars,
+            rating=row.rating,
         )
         self._result_buffer.result = view
 
