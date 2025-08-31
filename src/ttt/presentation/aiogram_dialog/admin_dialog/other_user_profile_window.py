@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from typing import Any
 
 from aiogram.enums import ContentType
-from aiogram.types import Message, User
+from aiogram.types import Message
 from aiogram_dialog import DialogManager, ShowMode, StartMode, Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import (
@@ -14,7 +13,6 @@ from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
 from ttt.application.user.view_other_user import ViewOtherUser
-from ttt.application.user.view_user import ViewUser
 from ttt.entities.core.user.rank import rank_for_rating
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState
@@ -22,8 +20,6 @@ from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
     OneTimekey,
 )
-from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
-from ttt.presentation.result_buffer import ResultBuffer
 from ttt.presentation.texts import (
     rank_title,
     short_float_text,
@@ -72,7 +68,7 @@ async def input_user_id(
     view_other_user: FromDishka[ViewOtherUser],
 ) -> None:
     try:
-        other_user_id = int(message.text)
+        other_user_id = int(message.text)  # type: ignore[arg-type]
     except ValueError:
         await manager.start(
             AdminDialogState.other_user_profile,

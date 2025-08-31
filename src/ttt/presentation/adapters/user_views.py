@@ -31,7 +31,9 @@ from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState
 from ttt.presentation.aiogram_dialog.admin_dialog.main_window import (
     AdminMainMenuView,
 )
-from ttt.presentation.aiogram_dialog.admin_dialog.other_user_profile_window import OtherUserProfileView
+from ttt.presentation.aiogram_dialog.admin_dialog.other_user_profile_window import (  # noqa: E501
+    OtherUserProfileView,
+)
 from ttt.presentation.aiogram_dialog.common.dialog_manager_for_user import (
     DialogManagerForUser,
 )

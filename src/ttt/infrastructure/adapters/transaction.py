@@ -38,8 +38,6 @@ class InPostgresTransaction(Transaction):
 
         if self._nesting_counter == 0:
             transaction = not_none(self._transaction)
-            result = await transaction.__aexit__(error_type, error, traceback)
+            await transaction.__aexit__(error_type, error, traceback)
             self._transaction = None
-            return result
-
-        return None
+            return
