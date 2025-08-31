@@ -152,8 +152,7 @@ class AiogramCommonUserViews(CommonUserViews):
         user: User,
         /,
     ) -> None:
-        manager = self._dialog_manager_for_user(user.id)
-        await manager.update({}, ShowMode.DELETE_AND_SEND)
+        ...
 
     async def user_already_admin_to_get_admin_rights_view(
         self,
