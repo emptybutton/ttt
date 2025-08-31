@@ -27,7 +27,9 @@ from ttt.entities.core.user.loss import UserLoss
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
-from ttt.presentation.aiogram_dialog.common.wigets.hint import Hint
+from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
+    OneTimekey,
+)
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.texts import (
     copy_signed_text,
@@ -193,7 +195,12 @@ game_window = Window(
             False: Const("Ждите хода врага"),
         },
     ),
-    Hint(Multi(Const(" "), Format("{start_data[hint]}"), when=active_game_f)),
+    Multi(
+        Const(" "),
+        Format("{start_data[hint]}"),
+        when=active_game_f & F["start_data"]["hint"],
+    ),
+
     Group(
         Row(cell_button(1), cell_button(2), cell_button(3)),
         Row(cell_button(4), cell_button(5), cell_button(6)),
@@ -242,5 +249,6 @@ game_window = Window(
     ),
 
     SwitchTo(Const("Назад"), id="back", state=MainDialogState.main),
+    OneTimekey("hint"),
     state=MainDialogState.game,
 )

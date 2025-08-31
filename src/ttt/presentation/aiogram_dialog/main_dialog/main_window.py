@@ -19,7 +19,9 @@ from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.rank import rank_for_rating
 from ttt.entities.elo.rating import EloRating
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
-from ttt.presentation.aiogram_dialog.common.wigets.hint import Hint
+from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
+    OneTimekey,
+)
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.aiogram_dialog.main_dialog.game_window import (
     ActiveGameView,
@@ -97,10 +99,11 @@ main_window = Window(
     Format("Вы — {main[rank_text]}"),
     Format("Звёзд: {main[stars]} 🌟"),
 
-    Hint(Multi(
+    Multi(
         Const(" "),
         Format("{start_data[hint]}"),
-    )),
+        when="start_data[hint]",
+    ),
 
     SwitchTo(
         Const("Начать игру"),
@@ -136,6 +139,8 @@ main_window = Window(
         id="shop",
         state=MainDialogState.shop,
     ),
+
+    OneTimekey("hint"),
     state=MainDialogState.main,
     getter=main_getter,
 )
