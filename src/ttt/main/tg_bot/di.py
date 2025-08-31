@@ -67,6 +67,7 @@ from ttt.application.user.stars_purchase.start_stars_purchase_payment_completion
 )
 from ttt.application.user.view_admin_menu import ViewAdminMenu
 from ttt.application.user.view_main_menu import ViewMainMenu
+from ttt.application.user.view_other_user import ViewOtherUser
 from ttt.application.user.view_user import ViewUser
 from ttt.application.user.view_user_emojis import ViewUserEmojis
 from ttt.infrastructure.buffer import Buffer
@@ -302,6 +303,7 @@ class ApplicationProvider(Provider):
         scope=Scope.REQUEST,
     )
     provide_view_admin_menu = provide(ViewAdminMenu, scope=Scope.REQUEST)
+    provide_view_other_user = provide(ViewOtherUser, scope=Scope.REQUEST)
 
     provide_start_game_with_ai = provide(
         StartGameWithAi,

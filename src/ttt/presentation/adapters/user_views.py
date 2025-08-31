@@ -31,6 +31,7 @@ from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState
 from ttt.presentation.aiogram_dialog.admin_dialog.main_window import (
     AdminMainMenuView,
 )
+from ttt.presentation.aiogram_dialog.admin_dialog.other_user_profile_window import OtherUserProfileView
 from ttt.presentation.aiogram_dialog.common.dialog_manager_for_user import (
     DialogManagerForUser,
 )
@@ -198,6 +199,56 @@ class AiogramCommonUserViews(CommonUserViews):
             AdminDialogState.main,
             {"hint": "🧿 Вы больше не админ"},
             StartMode.RESET_STACK,
+        )
+
+    async def user_is_not_admin_view(self, user: User, /) -> None:
+        manager = self._dialog_manager_for_user(user.id)
+        await manager.start(
+            AdminDialogState.main,
+            mode=StartMode.RESET_STACK,
+            show_mode=ShowMode.DELETE_AND_SEND,
+        )
+
+    async def other_user_view(self, user: User, other_user_id: int, /) -> None:
+        stmt = (
+            select(
+                TableUser.number_of_wins,
+                TableUser.number_of_draws,
+                TableUser.number_of_defeats,
+                TableUser.account_stars,
+                TableUser.rating,
+            )
+            .where(TableUser.id == other_user_id)
+        )
+        result = await self._session.execute(stmt)
+        other_user_row = result.first()
+
+        if other_user_row is None:
+            manager = self._dialog_manager_for_user(user.id)
+            await manager.start(
+                AdminDialogState.other_user_profile,
+                {"hint": "❌ Нет пользователя с таким ID:"},
+                StartMode.RESET_STACK,
+                ShowMode.DELETE_AND_SEND,
+            )
+            return
+
+        view = OtherUserProfileView.of(
+            other_user_id,
+            other_user_row.number_of_wins,
+            other_user_row.number_of_draws,
+            other_user_row.number_of_defeats,
+            other_user_row.account_stars,
+            other_user_row.rating,
+        )
+
+        manager = self._dialog_manager_for_user(user.id)
+        start_data = view.window_data()
+        await manager.start(
+            AdminDialogState.other_user_profile,
+            start_data,
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
         )
 
 

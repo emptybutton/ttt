@@ -63,3 +63,11 @@ class CommonUserViews(ABC):
     @abstractmethod
     async def user_admin_view(self, user_id: int, /) -> None:
         ...
+
+    @abstractmethod
+    async def user_is_not_admin_view(self, user: User, /) -> None:
+        ...
+
+    @abstractmethod
+    async def other_user_view(self, user: User, other_user_id: int, /) -> None:
+        ...

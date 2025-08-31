@@ -5,7 +5,7 @@ from aiogram.enums import ContentType
 from aiogram.types import CallbackQuery, Message, User
 from aiogram_dialog import DialogManager, ShowMode, StartMode, Window
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Button, Start
+from aiogram_dialog.widgets.kbd import Button, Start, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
@@ -76,6 +76,12 @@ main_window = Window(
     Const(
         "🧿 Что хотите сделать?",
         when=F["main"]["is_user_admin"] & ~F["start_data"]["hint"],
+    ),
+    SwitchTo(
+        Const("Посмотреть профиль пользователя"),
+        state=AdminDialogState.other_user_profile,
+        id="other_user_profile",
+        when=F["main"]["is_user_admin"],
     ),
     Button(
         Const("Отказатся от прав админа"),
