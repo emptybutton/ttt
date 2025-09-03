@@ -5,11 +5,16 @@ from dataclasses import dataclass
 class RootAdminRole: ...
 
 
-AdminRole = RootAdminRole
+@dataclass(frozen=True)
+class NotRootAdminRole:
+    root_admin_id: int
+
+
+AdminRole = RootAdminRole | NotRootAdminRole
 
 
 @dataclass(frozen=True)
 class RegularUserRole: ...
 
 
-type Role = RegularUserRole | RootAdminRole
+type Role = RegularUserRole | AdminRole

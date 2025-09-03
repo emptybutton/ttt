@@ -13,6 +13,7 @@ from ttt.entities.core.user.loss import UserLoss
 from ttt.entities.core.user.rank import Rank, rank_for_rating
 from ttt.entities.core.user.role import (
     AdminRole,
+    NotRootAdminRole,
     RegularUserRole,
     Role,
     RootAdminRole,
@@ -73,7 +74,16 @@ class AdminTokenMismatchError(Exception): ...
 class NotAdminError(Exception): ...
 
 
-@dataclass
+class NotRootAdminError(Exception): ...
+
+
+class UserIsNotRegularUserToGiveAdminRightsError(Exception): ...
+
+
+class NotRootAdminForUserError(Exception): ...
+
+
+@dataclass  # noqa: PLR0904
 class User:
     id: int
     account: Account
@@ -128,6 +138,40 @@ class User:
 
         self.role = RegularUserRole()
         tracking.register_mutated(self)
+
+    def give_admin_rights(self, user: "User", tracking: Tracking) -> None:
+        """
+        :raises ttt.entities.core.user.user.NotRootAdminError:
+        :raises ttt.entities.core.user.user.UserIsNotRegularUserToGiveAdminRightsError:
+        """  # noqa: E501
+
+        assert_(isinstance(self.role, RootAdminRole), else_=NotRootAdminError)
+        assert_(
+            isinstance(user.role, RegularUserRole),
+            else_=UserIsNotRegularUserToGiveAdminRightsError,
+        )
+
+        user.role = NotRootAdminRole(root_admin_id=self.id)
+        tracking.register_mutated(user)
+
+    def take_away_admin_rights(self, user: "User", tracking: Tracking) -> None:
+        """
+        :raises ttt.entities.core.user.user.NotRootAdminForUserError:
+        """
+
+        assert_(
+            self.is_root_admin_for_user(user), else_=NotRootAdminForUserError,
+        )
+
+        user.role = RegularUserRole()
+        tracking.register_mutated(user)
+
+    def is_root_admin_for_user(self, admin: "User") -> bool:
+        match admin:
+            case User(role=NotRootAdminRole(root_id)) if root_id == self.id:
+                return True
+            case _:
+                return False
 
     def games_played(self) -> int:
         return len(self.last_games)
