@@ -5,19 +5,17 @@ from uuid import UUID
 
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.account import Account
+from ttt.entities.core.user.admin_right import (
+    AdminRight,
+    AdminRightViaAdminToken,
+    AdminRightViaOtherAdmin,
+)
 from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.last_game import LastGame, last_game
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.loss import UserLoss
 from ttt.entities.core.user.rank import Rank, rank_for_rating
-from ttt.entities.core.user.role import (
-    AdminRole,
-    NotRootAdminRole,
-    RegularUserRole,
-    Role,
-    RootAdminRole,
-)
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.elo.rating import (
@@ -34,7 +32,7 @@ from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.math.random import Random, deviated_int
 from ttt.entities.text.emoji import Emoji
 from ttt.entities.text.token import Token
-from ttt.entities.tools.assertion import assert_
+from ttt.entities.tools.assertion import assert_, not_none
 from ttt.entities.tools.tracking import Tracking
 
 
@@ -68,19 +66,22 @@ class UserAlreadyLeftGameError(Exception): ...
 class UserAlreadyAdminError(Exception): ...
 
 
+class OtherUserAlreadyAdminError(Exception): ...
+
+
+class OtherUserIsNotAdminError(Exception): ...
+
+
 class AdminTokenMismatchError(Exception): ...
 
 
 class NotAdminError(Exception): ...
 
 
-class NotRootAdminError(Exception): ...
+class NotAuthorizedAsAdminViaAdminTokenError(Exception): ...
 
 
-class UserIsNotRegularUserToGiveAdminRightsError(Exception): ...
-
-
-class NotRootAdminForUserError(Exception): ...
+class UserAlredyAdminToAuthorizeAsAdminError(Exception): ...
 
 
 @dataclass  # noqa: PLR0904
@@ -92,7 +93,7 @@ class User:
     last_games: list[LastGame]
     selected_emoji_id: UUID | None
     rating: EloRating
-    role: Role
+    admin_right: AdminRight | None
 
     number_of_wins: int
     number_of_draws: int
@@ -104,7 +105,10 @@ class User:
     def rank(self) -> Rank:
         return rank_for_rating(self.rating)
 
-    def get_admin_rights(
+    def is_admin(self) -> bool:
+        return is_user_admin(self.admin_right)
+
+    def authorize_as_admin(
         self,
         user_admin_token: Token,
         original_admin_token: Token,
@@ -115,18 +119,16 @@ class User:
         :raises ttt.entities.core.user.user.AdminTokenMismatchError:
         """
 
-        assert_(
-            not isinstance(self.role, AdminRole), else_=UserAlreadyAdminError,
-        )
+        assert_(not self.is_admin(), else_=UserAlreadyAdminError)
         assert_(
             user_admin_token == original_admin_token,
             else_=AdminTokenMismatchError,
         )
 
-        self.role = RootAdminRole()
+        self.admin_right = AdminRightViaAdminToken()
         tracking.register_mutated(self)
 
-    def relinquish_admin_rights(
+    def relinquish_admin_right(
         self,
         tracking: Tracking,
     ) -> None:
@@ -134,44 +136,54 @@ class User:
         :raises ttt.entities.core.user.user.NotAdminError:
         """
 
-        assert_(isinstance(self.role, AdminRole), else_=NotAdminError)
+        assert_(self.is_admin(), else_=NotAdminError)
 
-        self.role = RegularUserRole()
+        self.admin_right = None
         tracking.register_mutated(self)
 
-    def give_admin_rights(self, user: "User", tracking: Tracking) -> None:
+    def authorize_user_as_admin(
+        self,
+        user: "User | None",
+        user_id: int,
+        tracking: Tracking,
+    ) -> None:
         """
-        :raises ttt.entities.core.user.user.NotRootAdminError:
-        :raises ttt.entities.core.user.user.UserIsNotRegularUserToGiveAdminRightsError:
+        :raises ttt.entities.core.user.user.NotAuthorizedAsAdminViaAdminTokenError:
+        :raises ttt.entities.core.user.user.OtherUserAlreadyAdminError:
         """  # noqa: E501
 
-        assert_(isinstance(self.role, RootAdminRole), else_=NotRootAdminError)
         assert_(
-            isinstance(user.role, RegularUserRole),
-            else_=UserIsNotRegularUserToGiveAdminRightsError,
+            isinstance(self.admin_right, AdminRightViaAdminToken),
+            else_=NotAuthorizedAsAdminViaAdminTokenError,
         )
 
-        user.role = NotRootAdminRole(root_admin_id=self.id)
+        if user is None:
+            user = register_user(user_id, tracking)
+        else:
+            assert_(not user.is_admin(), else_=OtherUserAlreadyAdminError)
+
+        user.admin_right = AdminRightViaOtherAdmin(admin_id=self.id)
         tracking.register_mutated(user)
 
-    def take_away_admin_rights(self, user: "User", tracking: Tracking) -> None:
+    def deauthorize_user_as_admin(
+        self, user: "User | None", tracking: Tracking,
+    ) -> None:
         """
-        :raises ttt.entities.core.user.user.NotRootAdminForUserError:
-        """
+        :raises ttt.entities.core.user.user.NotAuthorizedAsAdminViaAdminTokenError:
+        :raises ttt.entities.core.user.user.OtherUserIsNotAdminError:
+        """  # noqa: E501
 
         assert_(
-            self.is_root_admin_for_user(user), else_=NotRootAdminForUserError,
+            isinstance(self.admin_right, AdminRightViaAdminToken),
+            else_=NotAuthorizedAsAdminViaAdminTokenError,
         )
+        assert_(
+            user is None or user.is_admin(), else_=OtherUserIsNotAdminError,
+        )
+        user = not_none(user)
 
-        user.role = RegularUserRole()
+        user.admin_right = None
         tracking.register_mutated(user)
-
-    def is_root_admin_for_user(self, admin: "User") -> bool:
-        match admin:
-            case User(role=NotRootAdminRole(root_id)) if root_id == self.id:
-                return True
-            case _:
-                return False
 
     def games_played(self) -> int:
         return len(self.last_games)
@@ -546,5 +558,5 @@ def is_user_in_game(game_location: UserGameLocation | None) -> bool:
     return game_location is not None
 
 
-def is_user_admin(role: Role | None) -> bool:
-    return isinstance(role, AdminRole)
+def is_user_admin(admin_right: AdminRight | None) -> bool:
+    return admin_right is not None

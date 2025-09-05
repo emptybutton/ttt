@@ -4,7 +4,6 @@ from ttt.application.common.ports.transaction import Transaction
 from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
-from ttt.entities.core.user.role import AdminRole
 
 
 @dataclass(frozen=True, unsafe_hash=False)
@@ -22,7 +21,7 @@ class ViewOtherUser:
                 await self.views.user_is_not_registered_view(user_id)
                 return
 
-            if isinstance(user.role, AdminRole):
+            if user.is_admin():
                 await self.views.other_user_view(user, other_user_id)
             else:
                 await self.views.user_is_not_admin_view(user)

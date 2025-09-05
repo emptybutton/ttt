@@ -77,13 +77,13 @@ class StructlogCommonUserLog(CommonUserLog):
             user_id=user_id,
         )
 
-    async def user_got_admin_rights(
+    async def user_authorized_as_admin(
         self,
         user: User,
         /,
     ) -> None:
         await self._logger.ainfo(
-            "user_got_admin_rights",
+            "user_authorized_as_admin",
             chat_id=user.id,
             user_id=user.id,
         )
@@ -126,6 +126,36 @@ class StructlogCommonUserLog(CommonUserLog):
             "user_relinquished_admin_rights",
             chat_id=user.id,
             user_id=user.id,
+        )
+
+    async def not_authorized_as_admin_via_admin_token_to_authorize_other_user_as_admin(  # noqa: E501
+        self, user: User, other_user: User | None, /,
+    ) -> None:
+        await self._logger.ainfo(
+            "not_authorized_as_admin_via_admin_token_to_authorize_other_user_as_admin",
+            chat_id=user.id,
+            user_id=user.id,
+            other_user_id=None if other_user is None else other_user.id,
+        )
+
+    async def other_user_already_admin_to_authorize_other_user_as_admin(
+        self, user: User, other_user: User | None, /,
+    ) -> None:
+        await self._logger.ainfo(
+            "other_user_already_admin_to_authorize_other_user_as_admin",
+            chat_id=user.id,
+            user_id=user.id,
+            other_user_id=None if other_user is None else other_user.id,
+        )
+
+    async def user_authorized_other_user_as_admin(
+        self, user: User, other_user: User | None, /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_authorized_other_user_as_admin",
+            chat_id=user.id,
+            user_id=user.id,
+            other_user_id=None if other_user is None else other_user.id,
         )
 
 

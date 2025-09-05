@@ -19,7 +19,7 @@ class CommonUserLog(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def user_got_admin_rights(
+    async def user_authorized_as_admin(
         self,
         user: User,
         /,
@@ -48,3 +48,18 @@ class CommonUserLog(ABC):
 
     @abstractmethod
     async def user_relinquished_admin_rights(self, user: User, /) -> None: ...
+
+    @abstractmethod
+    async def not_authorized_as_admin_via_admin_token_to_authorize_other_user_as_admin(  # noqa: E501
+        self, user: User, other_user: User | None, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def other_user_already_admin_to_authorize_other_user_as_admin(
+        self, user: User, other_user: User | None, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def user_authorized_other_user_as_admin(
+        self, user: User, other_user: User | None, /,
+    ) -> None: ...

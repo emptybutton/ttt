@@ -1,9 +1,10 @@
 from dataclasses import dataclass
+from typing import cast
 from uuid import UUID
 
 from aiogram import Bot
 from aiogram_dialog import ShowMode, StartMode
-from sqlalchemy import exists, select
+from sqlalchemy import exists, func, select, union
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.user.common.ports.user_views import CommonUserViews
@@ -17,13 +18,19 @@ from ttt.application.user.stars_purchase.ports.user_views import (
     StarsPurchaseUserViews,
 )
 from ttt.entities.core.stars import Stars
+from ttt.entities.core.user.admin_right import AdminRightViaAdminToken, AdminRightViaOtherAdmin
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.user import User, is_user_admin, is_user_in_game
+from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.sqlalchemy.stmts import (
     selected_user_emoji_str_from_postgres,
     user_emojis_from_postgres,
 )
-from ttt.infrastructure.sqlalchemy.tables.user import TableUser, TableUserEmoji
+from ttt.infrastructure.sqlalchemy.tables.user import (
+    TableAdminRight,
+    TableUser,
+    TableUserEmoji,
+)
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
@@ -142,15 +149,62 @@ class AiogramCommonUserViews(CommonUserViews):
         await need_to_start_message(self._bot, user_id)
 
     async def user_admin_view(self, user_id: int, /) -> None:
-        stmt = select(TableUser.role).where(TableUser.id == user_id)
-        table_role = await self._session.scalar(stmt)
-        role = None if table_role is None else table_role.entity()
+        user_stmt = (
+            select(
+                TableUser.admin_right,
+                TableUser.admin_right_via_other_admin_admin_id,
+            )
+            .where(TableUser.id == user_id)
+        )
+        user_result = await self._session.execute(user_stmt)
+        user_row = user_result.first()
 
-        self._result_buffer.result = (
-            AdminMainMenuView(is_user_admin=is_user_admin(role))
+        if user_row is None:
+            admin_right = None
+        else:
+            match cast(TableAdminRight | None, user_row.admin_right):
+                case TableAdminRight.via_admin_token:
+                    admin_right = AdminRightViaAdminToken()
+                case TableAdminRight.via_other_admin:
+                    admin_right = AdminRightViaOtherAdmin(
+                        user_row.admin_right_via_other_admin_admin_id,
+                    )
+                case None:
+                    admin_right = None
+
+        authorized_admins_by_user_stmt = (
+            select(TableUser.id)
+            .where(TableUser.admin_right_via_other_admin_admin_id == user_id)
+        )
+        authorized_admins_by_user_result = await self._session.scalars(
+            authorized_admins_by_user_stmt,
+        )
+        authorized_admins_by_user = authorized_admins_by_user_result.all()
+
+        admins_authorized_via_admin_token_count_stmt = (
+            select(func.count(1))
+            .where(TableUser.admin_right == TableAdminRight.via_admin_token)
+        )
+        admins_authorized_via_admin_token_count = await self._session.scalar(
+            admins_authorized_via_admin_token_count_stmt,
         )
 
-    async def user_got_admin_rights_view(
+        admins_authorized_via_other_admins_count_stmt = (
+            select(func.count(1))
+            .where(TableUser.admin_right == TableAdminRight.via_other_admin)
+        )
+        admins_authorized_via_other_admins_count = await self._session.scalar(
+            admins_authorized_via_other_admins_count_stmt,
+        )
+
+        self._result_buffer.result = AdminMainMenuView.of(
+            admin_right,
+            list(authorized_admins_by_user),
+            not_none(admins_authorized_via_admin_token_count),
+            not_none(admins_authorized_via_other_admins_count),
+        )
+
+    async def user_authorized_as_admin_view(
         self,
         user: User,
         /,
@@ -249,6 +303,39 @@ class AiogramCommonUserViews(CommonUserViews):
         await manager.start(
             AdminDialogState.other_user_profile,
             start_data,
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
+
+    async def not_authorized_as_admin_via_admin_token_to_authorize_other_user_as_admin_view(  # noqa: E501
+        self, user: User, other_user: User | None, /,
+    ) -> None:
+        manager = self._dialog_manager_for_user(user.id)
+        await manager.start(
+            AdminDialogState.other_user_profile,
+            {"hint": "❌ Вы не авторизованы через админ-токен"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
+
+    async def other_user_already_admin_to_authorize_other_user_as_admin_view(
+        self, user: User, other_user: User | None, /,
+    ) -> None:
+        manager = self._dialog_manager_for_user(user.id)
+        await manager.start(
+            AdminDialogState.other_user_profile,
+            {"hint": "🧿 Пользователь уже админ"},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
+
+    async def user_authorized_other_user_as_admin_view(
+        self, user: User, other_user: User | None, /,
+    ) -> None:
+        manager = self._dialog_manager_for_user(user.id)
+        await manager.start(
+            AdminDialogState.other_user_profile,
+            {"hint": "🧿 Права выданы"},
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,
         )

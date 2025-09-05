@@ -34,6 +34,10 @@ from ttt.application.matchmaking_queue.common.matchmaking_queue_views import (
     CommonMatchmakingQueueViews,
 )
 from ttt.application.matchmaking_queue.game.wait_game import WaitGame
+from ttt.application.user.authorize_as_admin import AuthorizeAsAdmin
+from ttt.application.user.authorize_other_user_as_admin import (
+    AuthorizeOtherUserAsAdmin,
+)
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
@@ -44,7 +48,6 @@ from ttt.application.user.emoji_selection.ports.user_views import (
     EmojiSelectionUserViews,
 )
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
-from ttt.application.user.get_admin_rights import GetAdminRights
 from ttt.application.user.register_user import RegisterUser
 from ttt.application.user.relinquish_admin_rights import RelinquishAdminRights
 from ttt.application.user.stars_purchase.complete_stars_purchase_payment import (  # noqa: E501
@@ -297,13 +300,16 @@ class ApplicationProvider(Provider):
         StartStarsPurchasePaymentCompletion,
         scope=Scope.REQUEST,
     )
-    provide_get_admin_rights = provide(GetAdminRights, scope=Scope.REQUEST)
+    provide_authorize_as_admin = provide(AuthorizeAsAdmin, scope=Scope.REQUEST)
     provide_relinquish_admin_rights = provide(
         RelinquishAdminRights,
         scope=Scope.REQUEST,
     )
     provide_view_admin_menu = provide(ViewAdminMenu, scope=Scope.REQUEST)
     provide_view_other_user = provide(ViewOtherUser, scope=Scope.REQUEST)
+    provide_authorize_other_user_as_admin = provide(
+        AuthorizeOtherUserAsAdmin, scope=Scope.REQUEST,
+    )
 
     provide_start_game_with_ai = provide(
         StartGameWithAi,

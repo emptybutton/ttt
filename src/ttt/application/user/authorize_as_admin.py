@@ -18,7 +18,7 @@ from ttt.entities.tools.tracking import Tracking
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class GetAdminRights:
+class AuthorizeAsAdmin:
     transaction: Transaction
     users: Users
     map_: Map
@@ -39,7 +39,7 @@ class GetAdminRights:
 
             try:
                 tracking = Tracking()
-                user.get_admin_rights(
+                user.authorize_as_admin(
                     admin_token, original_admin_token, tracking,
                 )
             except UserAlreadyAdminError:
@@ -53,6 +53,6 @@ class GetAdminRights:
                     user,
                 )
             else:
-                await self.log.user_got_admin_rights(user)
+                await self.log.user_authorized_as_admin(user)
                 await self.map_(tracking)
-                await self.views.user_got_admin_rights_view(user)
+                await self.views.user_authorized_as_admin_view(user)

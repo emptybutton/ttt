@@ -29,7 +29,7 @@ class CommonUserViews(ABC):
     async def user_menu_view(self, user_id: int, /) -> None: ...
 
     @abstractmethod
-    async def user_got_admin_rights_view(
+    async def user_authorized_as_admin_view(
         self,
         user: User,
         /,
@@ -71,3 +71,20 @@ class CommonUserViews(ABC):
     @abstractmethod
     async def other_user_view(self, user: User, other_user_id: int, /) -> None:
         ...
+
+    @abstractmethod
+    async def not_authorized_as_admin_via_admin_token_to_authorize_other_user_as_admin_view(  # noqa: E501
+        self, user: User, other_user: User | None, /,
+    ) -> None:
+        ...
+
+    @abstractmethod
+    async def other_user_already_admin_to_authorize_other_user_as_admin_view(
+        self, user: User, other_user: User | None, /,
+    ) -> None:
+        ...
+
+    @abstractmethod
+    async def user_authorized_other_user_as_admin_view(
+        self, user: User, other_user: User | None, /,
+    ) -> None: ...

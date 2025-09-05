@@ -7,13 +7,17 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ttt.entities.core.user.account import Account
+from ttt.entities.core.user.admin_right import (
+    AdminRightViaAdminToken,
+    AdminRightViaOtherAdmin,
+)
 from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.last_game import LastGame
 from ttt.entities.core.user.location import UserGameLocation
-from ttt.entities.core.user.role import RegularUserRole, Role, RootAdminRole
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.user import User, UserAtomic
 from ttt.entities.text.emoji import Emoji
+from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.sqlalchemy.tables.common import Base
 from ttt.infrastructure.sqlalchemy.tables.payment import TablePayment
 
@@ -118,27 +122,12 @@ class TableLastGame(Base[LastGame]):
         )
 
 
-class TableRole(StrEnum):
-    root_admin = "root_admin"
-    regular_user = "regular_user"
-
-    def entity(self) -> Role:
-        match self:
-            case TableRole.root_admin:
-                return RootAdminRole()
-            case TableRole.regular_user:
-                return RegularUserRole()
-
-    @classmethod
-    def of(cls, it: Role) -> "TableRole":
-        match it:
-            case RegularUserRole():
-                return TableRole.regular_user
-            case RootAdminRole():
-                return TableRole.root_admin
+class TableAdminRight(StrEnum):
+    via_admin_token = "via_admin_token"  # noqa: S105
+    via_other_admin = "via_other_admin"
 
 
-role = postgresql.ENUM(TableRole, name="user_role")
+admin_right = postgresql.ENUM(TableAdminRight, name="admin_right")
 
 
 class TableUser(Base[User]):
@@ -162,7 +151,10 @@ class TableUser(Base[User]):
         ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
-    role: Mapped[TableRole] = mapped_column(role, server_default="regular_user")
+    admin_right: Mapped[TableAdminRight | None] = mapped_column(admin_right)
+    admin_right_via_other_admin_admin_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
+    )
 
     emojis: Mapped[list[TableUserEmoji]] = relationship(
         lazy="selectin",
@@ -177,6 +169,19 @@ class TableUser(Base[User]):
         foreign_keys=[TableLastGame.user_id],
     )
 
+    __table_args__ = (
+        Index(
+            "ix_users_admin_right_via_other_admin_admin_id",
+            admin_right_via_other_admin_admin_id,
+            postgresql_where=(admin_right_via_other_admin_admin_id.is_not(None)),
+        ),
+        Index(
+            "ix_users_admin_right",
+            admin_right,
+            postgresql_where=(admin_right.is_not(None)),
+        ),
+    )
+
     def __entity__(self) -> User:
         if self.game_location_game_id is not None:
             location = UserGameLocation(
@@ -185,6 +190,16 @@ class TableUser(Base[User]):
             )
         else:
             location = None
+
+        match self.admin_right:
+            case TableAdminRight.via_admin_token:
+                admin_right = AdminRightViaAdminToken()
+            case TableAdminRight.via_other_admin:
+                admin_right = AdminRightViaOtherAdmin(
+                    admin_id=not_none(self.admin_right_via_other_admin_admin_id),
+                )
+            case None:
+                admin_right = None
 
         return User(
             id=self.id,
@@ -198,7 +213,7 @@ class TableUser(Base[User]):
             number_of_draws=self.number_of_draws,
             number_of_defeats=self.number_of_defeats,
             game_location=location,
-            role=self.role.entity(),
+            admin_right=admin_right,
         )
 
     @classmethod
@@ -207,6 +222,17 @@ class TableUser(Base[User]):
             game_location_game_id = None
         else:
             game_location_game_id = it.game_location.game_id
+
+        match it.admin_right:
+            case AdminRightViaAdminToken():
+                admin_right = TableAdminRight.via_admin_token
+                admin_right_via_other_admin_admin_id = None
+            case AdminRightViaOtherAdmin(admin_id):
+                admin_right = TableAdminRight.via_other_admin
+                admin_right_via_other_admin_admin_id = admin_id
+            case None:
+                admin_right = None
+                admin_right_via_other_admin_admin_id = None
 
         return TableUser(
             id=it.id,
@@ -217,7 +243,10 @@ class TableUser(Base[User]):
             number_of_draws=it.number_of_draws,
             number_of_defeats=it.number_of_defeats,
             game_location_game_id=game_location_game_id,
-            role=TableRole.of(it.role),
+            admin_right=admin_right,
+            admin_right_via_other_admin_admin_id=(
+                admin_right_via_other_admin_admin_id,
+            ),
         )
 
 
