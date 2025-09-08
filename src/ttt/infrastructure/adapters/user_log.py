@@ -110,13 +110,13 @@ class StructlogCommonUserLog(CommonUserLog):
             user_id=user.id,
         )
 
-    async def not_admin_to_relinquish_admin_rights(
+    async def not_admin_to_relinquish_admin_right(
         self,
         user: User,
         /,
     ) -> None:
         await self._logger.ainfo(
-            "not_admin_to_relinquish_admin_rights",
+            "not_admin_to_relinquish_admin_right",
             chat_id=user.id,
             user_id=user.id,
         )
@@ -153,6 +153,36 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_authorized_other_user_as_admin",
+            chat_id=user.id,
+            user_id=user.id,
+            other_user_id=None if other_user is None else other_user.id,
+        )
+
+    async def not_authorized_as_admin_via_admin_token_to_deauthorize_other_user_as_admin(  # noqa: E501
+        self, user: User, other_user: User | None, /,
+    ) -> None:
+        await self._logger.ainfo(
+            "not_authorized_as_admin_via_admin_token_to_deauthorize_other_user_as_admin",
+            chat_id=user.id,
+            user_id=user.id,
+            other_user_id=None if other_user is None else other_user.id,
+        )
+
+    async def other_user_is_not_authorized_as_admin_via_other_admin_to_deauthorize(
+        self, user: User, other_user: User | None, /,
+    ) -> None:
+        await self._logger.ainfo(
+            "other_user_is_not_authorized_as_admin_via_other_admin_to_deauthorize",
+            chat_id=user.id,
+            user_id=user.id,
+            other_user_id=None if other_user is None else other_user.id,
+        )
+
+    async def user_deauthorized_other_user_as_admin(
+        self, user: User, other_user: User | None, /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_deauthorized_other_user_as_admin",
             chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,

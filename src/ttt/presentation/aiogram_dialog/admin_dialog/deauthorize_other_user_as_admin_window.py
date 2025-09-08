@@ -15,6 +15,9 @@ from magic_filter import F
 from ttt.application.user.authorize_other_user_as_admin import (
     AuthorizeOtherUserAsAdmin,
 )
+from ttt.application.user.deauthorize_other_user_as_admin import (
+    DeauthorizeOtherUserAsAdmin,
+)
 from ttt.application.user.view_other_user import ViewOtherUser
 from ttt.entities.core.user.rank import rank_for_rating
 from ttt.entities.tools.assertion import not_none
@@ -30,7 +33,7 @@ async def input_user_id(
     message: Message,
     _: MessageInput,
     manager: DialogManager,
-    authorize_other_user_as_admin: FromDishka[AuthorizeOtherUserAsAdmin],
+    deauthorize_other_user_as_admin: FromDishka[DeauthorizeOtherUserAsAdmin],
 ) -> None:
     try:
         other_user_id = int(message.text)  # type: ignore[arg-type]
@@ -42,10 +45,12 @@ async def input_user_id(
             ShowMode.DELETE_AND_SEND,
         )
     else:
-        await authorize_other_user_as_admin(not_none(message.from_user).id, other_user_id)
+        await deauthorize_other_user_as_admin(
+            not_none(message.from_user).id, other_user_id,
+        )
 
 
-authorize_other_user_as_admin_window = Window(
+deauthorize_other_user_as_admin_window = Window(
     Format("{start_data[hint]}", when=F["start_data"]["hint"]),
 
     Const(
@@ -60,5 +65,5 @@ authorize_other_user_as_admin_window = Window(
     SwitchTo(Const("Назад"), id="back", state=AdminDialogState.main),
 
     OneTimekey("hint"),
-    state=AdminDialogState.authorize_other_user_as_admin,
+    state=AdminDialogState.deauthorize_other_user_as_admin,
 )

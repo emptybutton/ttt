@@ -1,8 +1,10 @@
 from dataclasses import dataclass
+from itertools import starmap
 from typing import Any, Literal
 
-from aiogram.enums import ContentType
+from aiogram.enums import ContentType, ParseMode
 from aiogram.types import CallbackQuery, Message, User
+from aiogram.utils.formatting import Code, Text
 from aiogram_dialog import DialogManager, ShowMode, StartMode, Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Start, SwitchTo
@@ -12,7 +14,7 @@ from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
 from ttt.application.user.authorize_as_admin import AuthorizeAsAdmin
-from ttt.application.user.relinquish_admin_rights import RelinquishAdminRights
+from ttt.application.user.relinquish_admin_right import RelinquishAdminRight
 from ttt.application.user.view_admin_menu import ViewAdminMenu
 from ttt.entities.core.user.admin_right import (
     AdminRight,
@@ -20,8 +22,14 @@ from ttt.entities.core.user.admin_right import (
     AdminRightViaOtherAdmin,
 )
 from ttt.entities.tools.assertion import not_none
-from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState
+from ttt.presentation.aiogram_dialog.admin_dialog.common import (
+    AdminDialogState,
+    AdminRightName,
+    admin_right_name,
+    admin_tree_html,
+)
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
+from ttt.presentation.aiogram_dialog.common.wigets.func_text import FuncText
 from ttt.presentation.aiogram_dialog.common.wigets.hint import hint
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
     OneTimekey,
@@ -30,23 +38,23 @@ from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.result_buffer import ResultBuffer
 
 
-type AdminRightName = Literal["via_admin_token", "via_other_admin"]
-
-
 @dataclass(frozen=True)
 class AdminMainMenuView(EncodableToWindowData):
+    user_id: int
     user_admin_right_name: AdminRightName | None
-    user_admin_right: AdminRight | None
-    authorized_admins_by_user: list[int]
+    admin_trees: dict[int, list[int]]
+    admin_set: set[int]
     admins_authorized_via_admin_token_count: int
     admins_authorized_via_other_admins_count: int
     admin_count: int
 
     @classmethod
-    def of(
+    def of(  # noqa: PLR0913, PLR0917
         cls,
+        user_id: int,
         user_admin_right: AdminRight | None,
-        authorized_admins_by_user: list[int],
+        admin_trees: dict[int, list[int]],
+        admin_set: set[int],
         admins_authorized_via_admin_token_count: int,
         admins_authorized_via_other_admins_count: int,
     ) -> "AdminMainMenuView":
@@ -54,20 +62,18 @@ class AdminMainMenuView(EncodableToWindowData):
             admins_authorized_via_admin_token_count
             + admins_authorized_via_other_admins_count
         )
-        match user_admin_right:
-            case AdminRightViaAdminToken():
-                admin_right_name = "via_admin_token"
-            case AdminRightViaOtherAdmin():
-                admin_right_name = "via_other_admin"
-            case None:
-                admin_right_name = None
 
         return AdminMainMenuView(
-            admin_right_name,
-            user_admin_right,
-            authorized_admins_by_user,
-            admins_authorized_via_admin_token_count,
-            admins_authorized_via_other_admins_count,
+            user_id=user_id,
+            user_admin_right_name=admin_right_name(user_admin_right),
+            admin_trees=admin_trees,
+            admin_set=admin_set,
+            admins_authorized_via_admin_token_count=(
+                admins_authorized_via_admin_token_count
+            ),
+            admins_authorized_via_other_admins_count=(
+                admins_authorized_via_other_admins_count
+            ),
             admin_count=admin_count,
         )
 
@@ -108,16 +114,28 @@ async def input_admin_token(
 
 
 @inject
-async def on_relinquish_admin_rights_clicked(
+async def on_relinquish_admin_right_clicked(
     callback: CallbackQuery,
     _: Button,
     __: DialogManager,
-    relinquish_admin_rights: FromDishka[RelinquishAdminRights],
+    relinquish_admin_right: FromDishka[RelinquishAdminRight],
 ) -> None:
-    await relinquish_admin_rights(callback.from_user.id)
+    await relinquish_admin_right(callback.from_user.id)
 
 
-is_admin_f = F["main"]["user_admin_right"].is_not(None)
+async def admin_trees_text(data: dict[str, Any], _: DialogManager) -> str:  # noqa: RUF029
+    return "\n\n".join(
+        admin_tree_html(
+            parent,
+            childs,
+            data["main"]["user_id"],
+            is_parent_admin=parent in data["main"]["admin_set"],
+        )
+        for parent, childs in data["main"]["admin_trees"].items()
+    )
+
+
+is_admin_f = F["main"]["user_admin_right_name"].is_not(None)
 
 main_window = Window(
     Multi(
@@ -126,16 +144,10 @@ main_window = Window(
             " ({main[admins_authorized_via_admin_token_count]}"
             "+{main[admins_authorized_via_other_admins_count]})",
         ),
-        Case(selector="user_admin_right_name", texts={
-            "via_admin_token": Const("Вы авторизованы админ-токеном"),
-            "via_other_admin": Format(
-                "Вы авторизованы админом {main[user_admin_right][admin_id]}",
-            ),
-        }),
         Multi(
-            Const("Админы, которых вы авторизовали:"),
-            List(Format(" - {item}"), F["main"]["authorized_admins_by_user"]),
-            when=F["main"]["authorized_admins_by_user"].len() > 0,
+            Const("Админы:"),
+            FuncText(admin_trees_text),
+            when=F["main"]["admin_trees"].len() > 0,
         ),
         Const(" "),
         Const("🧿 Что хотите сделать?"),
@@ -148,22 +160,28 @@ main_window = Window(
         when=is_admin_f,
     ),
     SwitchTo(
-        Const("Выдать права админа"),
+        Const("Выдать админ-права"),
         id="authorize_other_user_as_admin",
         state=AdminDialogState.authorize_other_user_as_admin,
-        when=is_admin_f,
+        when=F["main"]["user_admin_right_name"] == "via_admin_token",
     ),
-    Button(
-        Const("Отказатся от прав админа"),
-        id="relinquish_admin_rights",
-        on_click=on_relinquish_admin_rights_clicked,
+    SwitchTo(
+        Const("Забрать админ-права"),
+        id="deauthorize_other_user_as_admin",
+        state=AdminDialogState.deauthorize_other_user_as_admin,
+        when=F["main"]["user_admin_right_name"] == "via_admin_token",
+    ),
+    SwitchTo(
+        Const("Отказатся от админ-прав"),
+        id="relinquish_admin_right",
+        state=AdminDialogState.relinquish_admin_right1,
         when=is_admin_f,
     ),
 
     Multi(
-        Const("🧿 Вы не админ"),
+        Const("Вы не админ"),
         Const(" "),
-        Const("Что бы получить права админа введите админ-токен:"),
+        Const("🧿 Что бы получить права админа введите админ-токен:"),
         when=~is_admin_f & ~F["start_data"]["hint"],
     ),
     MessageInput(
@@ -184,4 +202,5 @@ main_window = Window(
     OneTimekey("hint"),
     state=AdminDialogState.main,
     getter=main_getter,
+    parse_mode=ParseMode.HTML,
 )

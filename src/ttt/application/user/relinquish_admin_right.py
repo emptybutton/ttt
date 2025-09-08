@@ -10,7 +10,7 @@ from ttt.entities.tools.tracking import Tracking
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class RelinquishAdminRights:
+class RelinquishAdminRight:
     transaction: Transaction
     users: Users
     map_: Map
@@ -27,10 +27,10 @@ class RelinquishAdminRights:
 
             try:
                 tracking = Tracking()
-                user.relinquish_admin_rights(tracking)
+                user.relinquish_admin_right(tracking)
             except NotAdminError:
-                await self.log.not_admin_to_relinquish_admin_rights(user)
-                await self.views.not_admin_to_relinquish_admin_rights_view(user)
+                await self.log.not_admin_to_relinquish_admin_right(user)
+                await self.views.not_admin_to_relinquish_admin_right_view(user)
             else:
                 await self.log.user_relinquished_admin_rights(user)
                 await self.map_(tracking)

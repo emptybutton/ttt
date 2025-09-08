@@ -40,6 +40,7 @@ from ttt.application.user.authorize_other_user_as_admin import (
 )
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.user_views import CommonUserViews
+from ttt.application.user.deauthorize_other_user_as_admin import DeauthorizeOtherUserAsAdmin
 from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
 from ttt.application.user.emoji_purchase.ports.user_views import (
     EmojiPurchaseUserViews,
@@ -49,7 +50,7 @@ from ttt.application.user.emoji_selection.ports.user_views import (
 )
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
 from ttt.application.user.register_user import RegisterUser
-from ttt.application.user.relinquish_admin_rights import RelinquishAdminRights
+from ttt.application.user.relinquish_admin_right import RelinquishAdminRight
 from ttt.application.user.stars_purchase.complete_stars_purchase_payment import (  # noqa: E501
     CompleteStarsPurchasePayment,
 )
@@ -301,14 +302,17 @@ class ApplicationProvider(Provider):
         scope=Scope.REQUEST,
     )
     provide_authorize_as_admin = provide(AuthorizeAsAdmin, scope=Scope.REQUEST)
-    provide_relinquish_admin_rights = provide(
-        RelinquishAdminRights,
+    provide_relinquish_admin_right = provide(
+        RelinquishAdminRight,
         scope=Scope.REQUEST,
     )
     provide_view_admin_menu = provide(ViewAdminMenu, scope=Scope.REQUEST)
     provide_view_other_user = provide(ViewOtherUser, scope=Scope.REQUEST)
     provide_authorize_other_user_as_admin = provide(
         AuthorizeOtherUserAsAdmin, scope=Scope.REQUEST,
+    )
+    provide_deauthorize_other_user_as_admin = provide(
+        DeauthorizeOtherUserAsAdmin, scope=Scope.REQUEST,
     )
 
     provide_start_game_with_ai = provide(

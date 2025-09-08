@@ -69,7 +69,7 @@ class UserAlreadyAdminError(Exception): ...
 class OtherUserAlreadyAdminError(Exception): ...
 
 
-class OtherUserIsNotAdminError(Exception): ...
+class OtherUserIsNotAuthorizedAsAdminViaOtherAdminError(Exception): ...
 
 
 class AdminTokenMismatchError(Exception): ...
@@ -170,17 +170,21 @@ class User:
     ) -> None:
         """
         :raises ttt.entities.core.user.user.NotAuthorizedAsAdminViaAdminTokenError:
-        :raises ttt.entities.core.user.user.OtherUserIsNotAdminError:
+        :raises ttt.entities.core.user.user.OtherUserIsNotAuthorizedAsAdminViaOtherAdminError:
         """  # noqa: E501
 
         assert_(
             isinstance(self.admin_right, AdminRightViaAdminToken),
             else_=NotAuthorizedAsAdminViaAdminTokenError,
         )
-        assert_(
-            user is None or user.is_admin(), else_=OtherUserIsNotAdminError,
+
+        user = not_none(
+            user, else_=OtherUserIsNotAuthorizedAsAdminViaOtherAdminError,
         )
-        user = not_none(user)
+        assert_(
+            isinstance(user.admin_right, AdminRightViaOtherAdmin),
+            else_=OtherUserIsNotAuthorizedAsAdminViaOtherAdminError,
+        )
 
         user.admin_right = None
         tracking.register_mutated(user)
@@ -547,7 +551,7 @@ def register_user(user_id: int, tracking: Tracking) -> User:
         number_of_draws=0,
         number_of_defeats=0,
         game_location=None,
-        role=RegularUserRole(),
+        admin_right=None,
     )
     tracking.register_new(user)
 

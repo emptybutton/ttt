@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ttt.entities.core.user.account import Account
 from ttt.entities.core.user.admin_right import (
+    AdminRight,
     AdminRightViaAdminToken,
     AdminRightViaOtherAdmin,
 )
@@ -126,6 +127,17 @@ class TableAdminRight(StrEnum):
     via_admin_token = "via_admin_token"  # noqa: S105
     via_other_admin = "via_other_admin"
 
+    def entity(
+        self, admin_right_via_other_admin_admin_id: int | None,
+    ) -> AdminRight:
+        match self:
+            case TableAdminRight.via_admin_token:
+                return AdminRightViaAdminToken()
+            case TableAdminRight.via_other_admin:
+                return AdminRightViaOtherAdmin(
+                    admin_id=not_none(admin_right_via_other_admin_admin_id),
+                )
+
 
 admin_right = postgresql.ENUM(TableAdminRight, name="admin_right")
 
@@ -191,15 +203,12 @@ class TableUser(Base[User]):
         else:
             location = None
 
-        match self.admin_right:
-            case TableAdminRight.via_admin_token:
-                admin_right = AdminRightViaAdminToken()
-            case TableAdminRight.via_other_admin:
-                admin_right = AdminRightViaOtherAdmin(
-                    admin_id=not_none(self.admin_right_via_other_admin_admin_id),
-                )
-            case None:
-                admin_right = None
+        if self.admin_right is not None:
+            admin_right = self.admin_right.entity(
+                self.admin_right_via_other_admin_admin_id,
+            )
+        else:
+            admin_right = None
 
         return User(
             id=self.id,
@@ -245,7 +254,7 @@ class TableUser(Base[User]):
             game_location_game_id=game_location_game_id,
             admin_right=admin_right,
             admin_right_via_other_admin_admin_id=(
-                admin_right_via_other_admin_admin_id,
+                admin_right_via_other_admin_admin_id
             ),
         )
 

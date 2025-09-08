@@ -50,7 +50,7 @@ class CommonUserViews(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def not_admin_to_relinquish_admin_rights_view(
+    async def not_admin_to_relinquish_admin_right_view(
         self,
         user: User,
         /,
@@ -86,5 +86,20 @@ class CommonUserViews(ABC):
 
     @abstractmethod
     async def user_authorized_other_user_as_admin_view(
+        self, user: User, other_user: User | None, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def not_authorized_as_admin_via_admin_token_to_deauthorize_other_user_as_admin_view(  # noqa: E501
+        self, user: User, other_user: User | None, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def other_user_is_not_authorized_as_admin_via_other_admin_to_deauthorize_view(  # noqa: E501
+        self, user: User, other_user: User | None, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def user_deauthorized_other_user_as_admin_view(
         self, user: User, other_user: User | None, /,
     ) -> None: ...
