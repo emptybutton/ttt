@@ -3,6 +3,9 @@ from uuid import UUID
 
 from structlog.types import FilteringBoundLogger
 
+from ttt.application.user.change_other_user_account.ports.user_log import (
+    ChangeOtherUserAccountLog,
+)
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.emoji_purchase.ports.user_log import (
@@ -375,4 +378,100 @@ class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
             "no_purchase_to_start_stars_purchase_payment",
             user_id=user.id,
             purchase_id=purchase_id.hex,
+        )
+
+
+@dataclass(frozen=True, unsafe_hash=False)
+class StructlogChangeOtherUserAccountLog(ChangeOtherUserAccountLog):
+    _logger: FilteringBoundLogger
+
+    async def user_is_not_admin_to_set_other_user_account(
+        self,
+        user: User,
+        other_user: User | None,
+        other_user_id: int,
+        other_user_account_stars: Stars,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_is_not_admin_to_set_other_user_account",
+            user_id=user.id,
+            other_user_id=other_user_id,
+            other_user_account_stars=other_user_account_stars,
+        )
+
+    async def user_is_not_admin_to_change_other_user_account(
+        self,
+        user: User,
+        other_user: User | None,
+        other_user_id: int,
+        other_user_account_stars_vector: Stars,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_is_not_admin_to_change_other_user_account",
+            user_id=user.id,
+            other_user_id=other_user_id,
+            other_user_account=(
+                None if other_user is None else other_user.account.stars
+            ),
+            other_user_account_stars_vector=other_user_account_stars_vector,
+        )
+
+    async def user_set_other_user_account(
+        self, user: User, other_user: User, /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_set_other_user_account",
+            user_id=user.id,
+            other_user_id=other_user.id,
+            other_user_account_stars=other_user.account.stars,
+        )
+
+    async def user_changed_other_user_account(
+        self,
+        user: User,
+        other_user: User,
+        other_user_account_stars_vector: Stars,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_changed_other_user_account",
+            user_id=user.id,
+            other_user_id=other_user.id,
+            other_user_account_stars=other_user.account.stars,
+            other_user_account_stars_vector=other_user_account_stars_vector,
+        )
+
+    async def negative_account_on_change_other_user_account(
+        self,
+        user: User,
+        other_user: User | None,
+        other_user_id: int,
+        other_user_account_stars_vector: Stars,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "negative_account_on_change_other_user_account",
+            user_id=user.id,
+            other_user_id=other_user_id,
+            other_user_account_stars_vector=other_user_account_stars_vector,
+            other_user_account_stars=(
+                None if other_user is None else other_user.account.stars
+            ),
+        )
+
+    async def negative_account_on_set_other_user_account(
+        self,
+        user: User,
+        other_user: User | None,
+        other_user_id: int,
+        other_user_account_stars: Stars,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "negative_account_on_change_other_user_account",
+            user_id=user.id,
+            other_user_id=other_user_id,
+            other_user_account_stars=other_user_account_stars,
         )

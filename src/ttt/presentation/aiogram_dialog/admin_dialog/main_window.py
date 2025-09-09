@@ -165,6 +165,12 @@ main_window = Window(
         when=is_admin_f,
     ),
     SwitchTo(
+        Const("Изменить счёт пользователя"),
+        state=AdminDialogState.change_other_user_account1,
+        id="change_other_user_account",
+        when=is_admin_f,
+    ),
+    SwitchTo(
         Const("Выдать админ-права"),
         id="authorize_other_user_as_admin",
         state=AdminDialogState.authorize_other_user_as_admin,

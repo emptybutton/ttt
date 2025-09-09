@@ -38,6 +38,18 @@ from ttt.application.user.authorize_as_admin import AuthorizeAsAdmin
 from ttt.application.user.authorize_other_user_as_admin import (
     AuthorizeOtherUserAsAdmin,
 )
+from ttt.application.user.change_other_user_account.change_other_user_account import (  # noqa: E501
+    ChangeOtherUserAccount,
+)
+from ttt.application.user.change_other_user_account.ports.user_views import (
+    ChangeOtherUserAccountViews,
+)
+from ttt.application.user.change_other_user_account.set_other_user_account import (  # noqa: E501
+    SetOtherUserAccount,
+)
+from ttt.application.user.change_other_user_account.view_user_account_to_change import (  # noqa: E501
+    ViewUserAccountToChange,
+)
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.deauthorize_other_user_as_admin import (
@@ -89,6 +101,7 @@ from ttt.presentation.adapters.stars_purchase_payment_gateway import (
     AiogramPaymentGateway,
 )
 from ttt.presentation.adapters.user_views import (
+    AiogramChangeOtherUserAccountViews,
     AiogramCommonUserViews,
     AiogramEmojiPurchaseUserViews,
     AiogramEmojiSelectionUserViews,
@@ -186,6 +199,11 @@ class PresentationProvider(Provider):
     provide_common_matchmaking_queue_views = provide(
         AiogramCommonMatchmakingQueueViews,
         provides=CommonMatchmakingQueueViews,
+        scope=Scope.REQUEST,
+    )
+    provide_change_other_user_account_views = provide(
+        AiogramChangeOtherUserAccountViews,
+        provides=ChangeOtherUserAccountViews,
         scope=Scope.REQUEST,
     )
 
@@ -315,6 +333,15 @@ class ApplicationProvider(Provider):
     )
     provide_deauthorize_other_user_as_admin = provide(
         DeauthorizeOtherUserAsAdmin, scope=Scope.REQUEST,
+    )
+    provide_set_other_user_account = provide(
+        SetOtherUserAccount, scope=Scope.REQUEST,
+    )
+    provide_change_other_user_account = provide(
+        ChangeOtherUserAccount, scope=Scope.REQUEST,
+    )
+    provide_view_user_account_to_change = provide(
+        ViewUserAccountToChange, scope=Scope.REQUEST,
     )
 
     provide_start_game_with_ai = provide(

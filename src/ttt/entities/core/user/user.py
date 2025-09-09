@@ -189,6 +189,52 @@ class User:
         user.admin_right = None
         tracking.register_mutated(user)
 
+    def change_user_account(
+        self,
+        user: "User | None",
+        user_id: int,
+        user_account_stars_vector: Stars,
+        tracking: Tracking,
+    ) -> "User":
+        """
+        :raises ttt.entities.core.user.user.NotAdminError:
+        :raises ttt.entities.user.account.NegativeAccountError:
+        """
+
+        assert_(self.is_admin(), else_=NotAdminError)
+
+        if user is None:
+            user = register_user(user_id, tracking)
+
+        user.account = user.account.map(
+            lambda stars: stars + user_account_stars_vector,
+        )
+        tracking.register_mutated(user)
+
+        return user
+
+    def set_user_account(
+        self,
+        user: "User | None",
+        user_id: int,
+        user_account_stars: Stars,
+        tracking: Tracking,
+    ) -> "User":
+        """
+        :raises ttt.entities.core.user.user.NotAdminError:
+        :raises ttt.entities.user.account.NegativeAccountError:
+        """
+
+        assert_(self.is_admin(), else_=NotAdminError)
+
+        if user is None:
+            user = register_user(user_id, tracking)
+
+        user.account = user.account.map(lambda _: user_account_stars)
+        tracking.register_mutated(user)
+
+        return user
+
     def games_played(self) -> int:
         return len(self.last_games)
 
@@ -564,3 +610,7 @@ def is_user_in_game(game_location: UserGameLocation | None) -> bool:
 
 def is_user_admin(admin_right: AdminRight | None) -> bool:
     return admin_right is not None
+
+
+def user_stars(stars: Stars | None) -> Stars:
+    return 0 if stars is None else stars

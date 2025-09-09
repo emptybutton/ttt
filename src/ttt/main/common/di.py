@@ -26,6 +26,9 @@ from ttt.application.matchmaking_queue.common.matchmaking_queue_log import (
 from ttt.application.matchmaking_queue.common.shared_matchmaking_queue import (
     SharedMatchmakingQueue,
 )
+from ttt.application.user.change_other_user_account.ports.user_log import (
+    ChangeOtherUserAccountLog,
+)
 from ttt.application.user.common.ports.original_admin_token import (
     OriginalAdminToken,
 )
@@ -63,6 +66,7 @@ from ttt.infrastructure.adapters.shared_matchmaking_queue import (
 )
 from ttt.infrastructure.adapters.transaction import InPostgresTransaction
 from ttt.infrastructure.adapters.user_log import (
+    StructlogChangeOtherUserAccountLog,
     StructlogCommonUserLog,
     StructlogEmojiPurchaseUserLog,
     StructlogEmojiSelectionUserLog,
@@ -279,5 +283,11 @@ class InfrastructureProvider(Provider):
     provide_common_matchmaking_queue_log = provide(
         StructlogCommonMatchmakingQueueLog,
         provides=CommonMatchmakingQueueLog,
+        scope=Scope.REQUEST,
+    )
+
+    provide_change_other_user_account_log = provide(
+        StructlogChangeOtherUserAccountLog,
+        provides=ChangeOtherUserAccountLog,
         scope=Scope.REQUEST,
     )

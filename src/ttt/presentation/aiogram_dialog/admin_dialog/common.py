@@ -17,6 +17,8 @@ class AdminDialogState(StatesGroup):
     relinquish_admin_right2 = State()
     authorize_other_user_as_admin = State()
     deauthorize_other_user_as_admin = State()
+    change_other_user_account1 = State()
+    change_other_user_account2 = State()
 
 
 type AdminRightName = Literal["via_admin_token", "via_other_admin"]

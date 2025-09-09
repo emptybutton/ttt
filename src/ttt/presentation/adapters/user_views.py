@@ -8,6 +8,9 @@ from aiogram_dialog import ShowMode, StartMode
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ttt.application.user.change_other_user_account.ports.user_views import (
+    ChangeOtherUserAccountViews,
+)
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.emoji_purchase.ports.user_views import (
     EmojiPurchaseUserViews,
@@ -20,7 +23,7 @@ from ttt.application.user.stars_purchase.ports.user_views import (
 )
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.location import UserGameLocation
-from ttt.entities.core.user.user import User, is_user_in_game
+from ttt.entities.core.user.user import User, is_user_in_game, user_stars
 from ttt.infrastructure.sqlalchemy.stmts import (
     selected_user_emoji_str_from_postgres,
     user_emojis_from_postgres,
@@ -32,6 +35,9 @@ from ttt.infrastructure.sqlalchemy.tables.user import (
 )
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
+)
+from ttt.presentation.aiogram_dialog.admin_dialog.change_other_user_account2_window import (  # noqa: E501
+    ChangeOtherUserAccount2View,
 )
 from ttt.presentation.aiogram_dialog.admin_dialog.common import (
     AdminDialogState,
@@ -506,6 +512,93 @@ class AiogramEmojiPurchaseUserViews(EmojiPurchaseUserViews):
         await manager.start(
             MainDialogState.emoji_shop,
             {"hint": message_text},
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
+
+
+@dataclass(frozen=True, unsafe_hash=False)
+class AiogramChangeOtherUserAccountViews(ChangeOtherUserAccountViews):
+    _dialog_manager_for_user: DialogManagerForUser
+    _session: AsyncSession
+    _result_buffer: ResultBuffer
+
+    async def user_account_to_change_view(
+        self, user_id: int, other_user_id: int, /,
+    ) -> None:
+        stmt = (
+            select(TableUser.account_stars)
+            .where(TableUser.id == other_user_id)
+        )
+        stars = await self._session.scalar(stmt)
+        stars = user_stars(stars)
+
+        self._result_buffer.result = ChangeOtherUserAccount2View(stars)
+
+    async def user_set_other_user_account_view(
+        self, user: User, other_user: User, /,
+    ) -> None:
+        await self._account_view(
+            user.id, other_user.id, other_user.account.stars,
+        )
+
+    async def user_changed_other_user_account_view(
+        self,
+        user: User,
+        other_user: User,
+        other_user_account_stars_vector: Stars,
+        /,
+    ) -> None:
+        await self._account_view(
+            user.id, other_user.id, other_user.account.stars,
+        )
+
+    async def negative_account_on_change_other_user_account_view(
+        self,
+        user: User,
+        other_user: User | None,
+        other_user_id: int,
+        other_user_account_stars_vector: Stars,
+        /,
+    ) -> None:
+        await self._negative_account_view(user.id, other_user_id)
+
+    async def negative_account_on_set_other_user_account_view(
+        self,
+        user: User,
+        other_user: User | None,
+        other_user_id: int,
+        other_user_account_stars: Stars,
+        /,
+    ) -> None:
+        await self._negative_account_view(user.id, other_user_id)
+
+    async def _negative_account_view(
+        self, user_id: int, other_user_id: int,
+    ) -> None:
+        manager = self._dialog_manager_for_user(user_id)
+        start_data = {
+            "hint": "Счёт не может быть отрицательным 👎",
+            "other_user_id": other_user_id,
+        }
+        await manager.start(
+            AdminDialogState.change_other_user_account2,
+            start_data,
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
+        )
+
+    async def _account_view(
+        self, user_id: int, other_user_id: int, other_user_account_stars: Stars,
+    ) -> None:
+        manager = self._dialog_manager_for_user(user_id)
+        start_data = {
+            "other_user_id": other_user_id,
+            "other_user_account_stars": other_user_account_stars,
+        }
+        await manager.start(
+            AdminDialogState.change_other_user_account2,
+            start_data,
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,
         )
