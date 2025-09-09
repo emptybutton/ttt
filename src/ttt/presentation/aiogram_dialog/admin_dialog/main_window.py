@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import starmap
 from typing import Any, Literal
 
@@ -39,11 +39,12 @@ from ttt.presentation.result_buffer import ResultBuffer
 
 
 @dataclass(frozen=True)
-class AdminMainMenuView(EncodableToWindowData):
+class AdminMainMenuViewForAdmin(EncodableToWindowData):
+    type_: Literal["admin"] = field(init=False, default="admin")
     user_id: int
-    user_admin_right_name: AdminRightName | None
+    user_admin_right_name: AdminRightName
     admin_trees: dict[int, list[int]]
-    admin_set: set[int]
+    admin_right_name_map: dict[int, AdminRightName]
     admins_authorized_via_admin_token_count: int
     admins_authorized_via_other_admins_count: int
     admin_count: int
@@ -52,22 +53,22 @@ class AdminMainMenuView(EncodableToWindowData):
     def of(  # noqa: PLR0913, PLR0917
         cls,
         user_id: int,
-        user_admin_right: AdminRight | None,
+        user_admin_right_name: AdminRightName,
         admin_trees: dict[int, list[int]],
-        admin_set: set[int],
+        admin_right_name_map: dict[int, AdminRightName],
         admins_authorized_via_admin_token_count: int,
         admins_authorized_via_other_admins_count: int,
-    ) -> "AdminMainMenuView":
+    ) -> "AdminMainMenuViewForAdmin":
         admin_count = (
             admins_authorized_via_admin_token_count
             + admins_authorized_via_other_admins_count
         )
 
-        return AdminMainMenuView(
+        return AdminMainMenuViewForAdmin(
             user_id=user_id,
-            user_admin_right_name=admin_right_name(user_admin_right),
+            user_admin_right_name=user_admin_right_name,
             admin_trees=admin_trees,
-            admin_set=admin_set,
+            admin_right_name_map=admin_right_name_map,
             admins_authorized_via_admin_token_count=(
                 admins_authorized_via_admin_token_count
             ),
@@ -76,6 +77,14 @@ class AdminMainMenuView(EncodableToWindowData):
             ),
             admin_count=admin_count,
         )
+
+
+@dataclass(frozen=True)
+class AdminMainMenuViewForNotAdmin(EncodableToWindowData):
+    type_: Literal["not_admin"] = field(init=False, default="not_admin")
+
+
+AdminMainMenuView = AdminMainMenuViewForAdmin | AdminMainMenuViewForNotAdmin
 
 
 @inject
@@ -123,19 +132,23 @@ async def on_relinquish_admin_right_clicked(
     await relinquish_admin_right(callback.from_user.id)
 
 
+@FuncText
 async def admin_trees_text(data: dict[str, Any], _: DialogManager) -> str:  # noqa: RUF029
     return "\n\n".join(
         admin_tree_html(
             parent,
             childs,
+            data["main"]["admin_right_name_map"],
             data["main"]["user_id"],
-            is_parent_admin=parent in data["main"]["admin_set"],
         )
         for parent, childs in data["main"]["admin_trees"].items()
     )
 
 
-is_admin_f = F["main"]["user_admin_right_name"].is_not(None)
+is_admin_f = F["main"]["type_"] == "admin"
+is_admin_via_admin_token_f = (
+    is_admin_f & F["main"]["user_admin_right_name"] == "via_admin_token"
+)
 
 main_window = Window(
     Multi(
@@ -146,7 +159,7 @@ main_window = Window(
         ),
         Multi(
             Const("Админы:"),
-            FuncText(admin_trees_text),
+            admin_trees_text,
             when=F["main"]["admin_trees"].len() > 0,
         ),
         Const(" "),
@@ -163,13 +176,13 @@ main_window = Window(
         Const("Выдать админ-права"),
         id="authorize_other_user_as_admin",
         state=AdminDialogState.authorize_other_user_as_admin,
-        when=F["main"]["user_admin_right_name"] == "via_admin_token",
+        when=is_admin_via_admin_token_f,
     ),
     SwitchTo(
         Const("Забрать админ-права"),
         id="deauthorize_other_user_as_admin",
         state=AdminDialogState.deauthorize_other_user_as_admin,
-        when=F["main"]["user_admin_right_name"] == "via_admin_token",
+        when=is_admin_via_admin_token_f,
     ),
     SwitchTo(
         Const("Отказатся от админ-прав"),
@@ -188,7 +201,6 @@ main_window = Window(
         input_admin_token,
         content_types=[ContentType.ANY],
     ),
-
 
     hint(key="hint"),
 

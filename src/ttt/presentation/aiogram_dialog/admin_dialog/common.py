@@ -34,32 +34,64 @@ def admin_right_name(admin_right: AdminRight | None) -> AdminRightName | None:
             return None
 
 
-def admin_tree_html(
-    parent: int,
-    parent_admin_right: AdminRight | None,
-    childs: list[int],
-    current_user_id: int,
-) -> str:
-    match parent_admin_right:
+def user_sign(user_admin_right_name: AdminRightName | None) -> str:
+    match user_admin_right_name:
         case None:
-            parent_sing = "X"
-        case AdminRightViaAdminToken():
-            parent_sing = "*"
-        case AdminRightViaOtherAdmin():
-            parent_sing = "#"
-
-    parent_part = (
-        f"   {parent_sing} {admin_tree_user_id_html(parent, current_user_id)}:"
-        if childs
-        else f"   * {admin_tree_user_id_html(parent, current_user_id)}"
-    )
-    child_part = "\n".join(
-        f"      # {admin_tree_user_id_html(child, current_user_id)}"
-        for child in childs
-    )
-    return f"{parent_part}\n{child_part}" if child_part else parent_part
+            return "-"
+        case "via_admin_token":
+            return "*"
+        case "via_other_admin":
+            return "#"
 
 
 def admin_tree_user_id_html(user_id: int, current_user_id: int) -> str:
     trailer = " (Вы)" if user_id == current_user_id else ""
     return f"{Code(user_id).as_html()}{trailer}"
+
+
+def admin_tree_user_id_title_html(
+    user_id: int,
+    user_admin_right_name: AdminRightName | None,
+    current_user_id: int,
+) -> str:
+    sign = user_sign(user_admin_right_name)
+    id_ = admin_tree_user_id_html(user_id, current_user_id)
+
+    return f"{sign} {id_}"
+
+
+def admin_tree_html(
+    parent: int,
+    childs: list[int],
+    admin_right_name_map: dict[int, AdminRightName],
+    current_user_id: int,
+) -> str:
+    parent_indetation = " " * 4
+    child_indetation = " " * 8
+
+    parent_title = admin_tree_user_id_title_html(
+        parent, admin_right_name_map.get(parent), current_user_id,
+    )
+    parent_part = (
+        f"{parent_indetation}{parent_title}:"
+        if childs
+        else f"{parent_indetation}{parent_title}"
+    )
+
+    if not childs:
+        return parent_part
+
+    child_part = "\n".join(
+        f"""{
+            child_indetation
+        }{
+            admin_tree_user_id_title_html(
+                child,
+                admin_right_name_map.get(child),
+                current_user_id,
+            )
+        }"""
+        for child in childs
+    )
+
+    return f"{parent_part}\n{child_part}"

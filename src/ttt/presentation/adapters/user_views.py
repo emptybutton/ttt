@@ -36,9 +36,10 @@ from ttt.infrastructure.sqlalchemy.tables.user import (
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
-from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState
+from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState, AdminRightName
 from ttt.presentation.aiogram_dialog.admin_dialog.main_window import (
-    AdminMainMenuView,
+    AdminMainMenuViewForAdmin,
+    AdminMainMenuViewForNotAdmin,
 )
 from ttt.presentation.aiogram_dialog.admin_dialog.other_user_profile_window import (  # noqa: E501
     OtherUserProfileView,
@@ -150,25 +151,24 @@ class AiogramCommonUserViews(CommonUserViews):
     ) -> None:
         await need_to_start_message(self._bot, user_id)
 
+    def _admin_right_name(self, table_admin_right: TableAdminRight) -> AdminRightName:
+        match table_admin_right:
+            case TableAdminRight.via_admin_token:
+                return "via_admin_token"
+            case TableAdminRight.via_other_admin:
+                return "via_other_admin"
+
     async def user_admin_view(self, user_id: int, /) -> None:
-        user_stmt = (
-            select(
-                TableUser.admin_right,
-                TableUser.admin_right_via_other_admin_admin_id,
-            )
-            .where(TableUser.id == user_id)
-        )
-        user_result = await self._session.execute(user_stmt)
-        user_row = user_result.first()
+        user_stmt = select(TableUser.admin_right).where(TableUser.id == user_id)
+        user_table_admin_right = await self._session.scalar(user_stmt)
 
-        if user_row is None or user_row.admin_right is None:
-            user_admin_right = None
-        else:
-            user_admin_right = user_row.admin_right.entity(
-                user_row.admin_right_via_other_admin_admin_id,
-            )
+        if user_table_admin_right is None:
+            self._result_buffer.result = AdminMainMenuViewForNotAdmin()
+            return
 
-        admin_trees_stmt = (
+        user_admin_right_name = self._admin_right_name(user_table_admin_right)
+
+        admin_stmt = (
             select(
                 TableUser.id,
                 TableUser.admin_right,
@@ -176,34 +176,47 @@ class AiogramCommonUserViews(CommonUserViews):
             )
             .where(TableUser.admin_right.is_not(None))
         )
-        admin_trees_result = await self._session.execute(admin_trees_stmt)
-        admin_trees_rows = admin_trees_result.all()
-        admin_trees = OrderedDict[int, list[int]]()
-        admin_set = set[int]()
+        admin_result = await self._session.execute(admin_stmt)
+        admin_rows = admin_result.all()
+
+        admin_tree_index = dict[int, list[int]]()
+        admin_right_name_map = dict[int, AdminRightName]()
         admins_authorized_via_admin_token_count = 0
         admins_authorized_via_other_admins_count = 0
-        for (
-            row_id, row_admin_right, row_admin_right_via_other_admin_admin_id,
-        ) in admin_trees_rows:
-            admin_set.add(row_id)
 
-            match cast(TableAdminRight, row_admin_right):
+        for row in admin_rows:
+            match cast(TableAdminRight, row.admin_right):
                 case TableAdminRight.via_admin_token:
                     admins_authorized_via_admin_token_count += 1
-                    admin_trees.setdefault(row_id, list())
                 case TableAdminRight.via_other_admin:
                     admins_authorized_via_other_admins_count += 1
-                    childs = admin_trees.setdefault(
-                        row_admin_right_via_other_admin_admin_id,
-                        list(),
-                    )
-                    childs.append(row_id)
 
-        self._result_buffer.result = AdminMainMenuView.of(
+        for row in admin_rows:
+            admin_right_name_map[row.id] = self._admin_right_name(
+                row.admin_right,
+            )
+
+        for row in admin_rows:
+            match cast(TableAdminRight, row.admin_right):
+                case TableAdminRight.via_admin_token:
+                    admin_tree_index.setdefault(row.id, list())
+                case TableAdminRight.via_other_admin:
+                    childs = admin_tree_index.setdefault(
+                        row.admin_right_via_other_admin_admin_id, list(),
+                    )
+                    childs.append(row.id)
+
+        admin_trees = OrderedDict(
+            sorted(admin_tree_index.items(), key=lambda item: item[0]),
+        )
+        for childs in admin_trees.values():
+            childs.sort()
+
+        self._result_buffer.result = AdminMainMenuViewForAdmin.of(
             user_id,
-            user_admin_right,
+            user_admin_right_name,
             admin_trees,
-            admin_set,
+            admin_right_name_map,
             admins_authorized_via_admin_token_count,
             admins_authorized_via_other_admins_count,
         )
