@@ -2,14 +2,12 @@ from typing import Literal
 
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.utils.formatting import Code
-from aiogram_dialog.widgets.text import Jinja
 
 from ttt.entities.core.user.admin_right import (
     AdminRight,
     AdminRightViaAdminToken,
     AdminRightViaOtherAdmin,
 )
-from itertools import starmap
 
 
 class AdminDialogState(StatesGroup):

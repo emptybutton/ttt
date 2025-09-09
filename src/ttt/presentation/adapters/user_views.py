@@ -5,9 +5,8 @@ from uuid import UUID
 
 from aiogram import Bot
 from aiogram_dialog import ShowMode, StartMode
-from sqlalchemy import exists, func, select, union
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import aliased
 
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.emoji_purchase.ports.user_views import (
@@ -20,10 +19,8 @@ from ttt.application.user.stars_purchase.ports.user_views import (
     StarsPurchaseUserViews,
 )
 from ttt.entities.core.stars import Stars
-from ttt.entities.core.user.admin_right import AdminRightViaAdminToken, AdminRightViaOtherAdmin
 from ttt.entities.core.user.location import UserGameLocation
-from ttt.entities.core.user.user import User, is_user_admin, is_user_in_game
-from ttt.entities.tools.assertion import not_none
+from ttt.entities.core.user.user import User, is_user_in_game
 from ttt.infrastructure.sqlalchemy.stmts import (
     selected_user_emoji_str_from_postgres,
     user_emojis_from_postgres,
@@ -36,7 +33,10 @@ from ttt.infrastructure.sqlalchemy.tables.user import (
 from ttt.presentation.aiogram.common.messages import (
     need_to_start_message,
 )
-from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState, AdminRightName
+from ttt.presentation.aiogram_dialog.admin_dialog.common import (
+    AdminDialogState,
+    AdminRightName,
+)
 from ttt.presentation.aiogram_dialog.admin_dialog.main_window import (
     AdminMainMenuViewForAdmin,
     AdminMainMenuViewForNotAdmin,
@@ -151,7 +151,9 @@ class AiogramCommonUserViews(CommonUserViews):
     ) -> None:
         await need_to_start_message(self._bot, user_id)
 
-    def _admin_right_name(self, table_admin_right: TableAdminRight) -> AdminRightName:
+    def _admin_right_name(
+        self, table_admin_right: TableAdminRight,
+    ) -> AdminRightName:
         match table_admin_right:
             case TableAdminRight.via_admin_token:
                 return "via_admin_token"
@@ -378,7 +380,7 @@ class AiogramCommonUserViews(CommonUserViews):
             ShowMode.DELETE_AND_SEND,
         )
 
-    async def other_user_is_not_authorized_as_admin_via_other_admin_to_deauthorize_view(
+    async def other_user_is_not_authorized_as_admin_via_other_admin_to_deauthorize_view(  # noqa: E501
         self, user: User, other_user: User | None, /,
     ) -> None:
         manager = self._dialog_manager_for_user(user.id)

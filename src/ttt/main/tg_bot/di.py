@@ -40,7 +40,9 @@ from ttt.application.user.authorize_other_user_as_admin import (
 )
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.user_views import CommonUserViews
-from ttt.application.user.deauthorize_other_user_as_admin import DeauthorizeOtherUserAsAdmin
+from ttt.application.user.deauthorize_other_user_as_admin import (
+    DeauthorizeOtherUserAsAdmin,
+)
 from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
 from ttt.application.user.emoji_purchase.ports.user_views import (
     EmojiPurchaseUserViews,

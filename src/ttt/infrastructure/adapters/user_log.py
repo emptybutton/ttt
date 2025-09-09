@@ -168,7 +168,7 @@ class StructlogCommonUserLog(CommonUserLog):
             other_user_id=None if other_user is None else other_user.id,
         )
 
-    async def other_user_is_not_authorized_as_admin_via_other_admin_to_deauthorize(
+    async def other_user_is_not_authorized_as_admin_via_other_admin_to_deauthorize(  # noqa: E501
         self, user: User, other_user: User | None, /,
     ) -> None:
         await self._logger.ainfo(

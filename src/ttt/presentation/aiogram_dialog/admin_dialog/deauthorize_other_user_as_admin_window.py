@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 
 from aiogram.enums import ContentType
 from aiogram.types import Message
@@ -7,22 +6,16 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import (
     SwitchTo,
 )
-from aiogram_dialog.widgets.text import Const, Format, Multi
+from aiogram_dialog.widgets.text import Const, Format
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
-from ttt.application.user.authorize_other_user_as_admin import (
-    AuthorizeOtherUserAsAdmin,
-)
 from ttt.application.user.deauthorize_other_user_as_admin import (
     DeauthorizeOtherUserAsAdmin,
 )
-from ttt.application.user.view_other_user import ViewOtherUser
-from ttt.entities.core.user.rank import rank_for_rating
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState
-from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
     OneTimekey,
 )

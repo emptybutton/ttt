@@ -7,7 +7,6 @@ from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.user.user import (
     NotAuthorizedAsAdminViaAdminTokenError,
-    OtherUserAlreadyAdminError,
     OtherUserIsNotAuthorizedAsAdminViaOtherAdminError,
 )
 from ttt.entities.tools.tracking import Tracking

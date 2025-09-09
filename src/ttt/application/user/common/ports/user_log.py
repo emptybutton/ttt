@@ -70,7 +70,7 @@ class CommonUserLog(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def other_user_is_not_authorized_as_admin_via_other_admin_to_deauthorize(
+    async def other_user_is_not_authorized_as_admin_via_other_admin_to_deauthorize(  # noqa: E501
         self, user: User, other_user: User | None, /,
     ) -> None: ...
 

@@ -1,14 +1,12 @@
 from dataclasses import dataclass, field
-from itertools import starmap
 from typing import Any, Literal
 
 from aiogram.enums import ContentType, ParseMode
 from aiogram.types import CallbackQuery, Message, User
-from aiogram.utils.formatting import Code, Text
 from aiogram_dialog import DialogManager, ShowMode, StartMode, Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Start, SwitchTo
-from aiogram_dialog.widgets.text import Case, Const, Format, List, Multi
+from aiogram_dialog.widgets.text import Const, Format, Multi
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
@@ -16,16 +14,10 @@ from magic_filter import F
 from ttt.application.user.authorize_as_admin import AuthorizeAsAdmin
 from ttt.application.user.relinquish_admin_right import RelinquishAdminRight
 from ttt.application.user.view_admin_menu import ViewAdminMenu
-from ttt.entities.core.user.admin_right import (
-    AdminRight,
-    AdminRightViaAdminToken,
-    AdminRightViaOtherAdmin,
-)
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram_dialog.admin_dialog.common import (
     AdminDialogState,
     AdminRightName,
-    admin_right_name,
     admin_tree_html,
 )
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
