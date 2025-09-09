@@ -1,7 +1,6 @@
 from pytest import mark
 
 from ttt.entities.core.user.account import Account
-from ttt.entities.core.user.role import RegularUserRole
 from ttt.entities.core.user.user import User, register_user
 from ttt.entities.tools.tracking import Tracking
 
@@ -23,7 +22,7 @@ def test_create_user(tracking: Tracking, object_: str) -> None:
             number_of_draws=0,
             number_of_defeats=0,
             game_location=None,
-            role=RegularUserRole(),
+            admin_right=None,
         )
 
     if object_ == "tracking":

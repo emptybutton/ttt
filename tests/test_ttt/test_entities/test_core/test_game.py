@@ -21,7 +21,6 @@ from ttt.entities.core.user.account import Account
 from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.last_game import LastGame
 from ttt.entities.core.user.loss import UserLoss
-from ttt.entities.core.user.role import RegularUserRole
 from ttt.entities.core.user.user import User
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.math.matrix import Matrix
@@ -444,7 +443,7 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             number_of_draws=0,
             number_of_defeats=0,
             game_location=None,
-            role=RegularUserRole(),
+            admin_right=None,
         )
 
     if object_ == "user2":
@@ -462,7 +461,7 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             number_of_draws=0,
             number_of_defeats=1,
             game_location=None,
-            role=RegularUserRole(),
+            admin_right=None,
         )
 
     if object_ == "extra_move":
@@ -547,7 +546,7 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             number_of_draws=1,
             number_of_defeats=0,
             game_location=None,
-            role=RegularUserRole(),
+            admin_right=None,
         )
 
     if object_ == "user2":
@@ -565,7 +564,7 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             number_of_draws=1,
             number_of_defeats=0,
             game_location=None,
-            role=RegularUserRole(),
+            admin_right=None,
         )
 
     if object_ == "extra_move":
@@ -650,7 +649,7 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             number_of_draws=0,
             number_of_defeats=0,
             game_location=None,
-            role=RegularUserRole(),
+            admin_right=None,
         )
 
     if object_ == "user2":
@@ -668,7 +667,7 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             number_of_draws=0,
             number_of_defeats=1,
             game_location=None,
-            role=RegularUserRole(),
+            admin_right=None,
         )
 
     if object_ == "extra_move":

@@ -4,7 +4,6 @@ from pytest import fixture
 
 from ttt.entities.core.user.account import Account
 from ttt.entities.core.user.location import UserGameLocation
-from ttt.entities.core.user.role import RegularUserRole
 from ttt.entities.core.user.user import User
 from ttt.entities.math.random import Random
 from ttt.entities.text.emoji import Emoji
@@ -35,7 +34,7 @@ def user1() -> User:
         number_of_draws=0,
         number_of_defeats=0,
         game_location=UserGameLocation(1, UUID(int=0)),
-        role=RegularUserRole(),
+        admin_right=None,
     )
 
 
@@ -53,7 +52,7 @@ def user2() -> User:
         number_of_draws=0,
         number_of_defeats=0,
         game_location=UserGameLocation(2, UUID(int=0)),
-        role=RegularUserRole(),
+        admin_right=None,
     )
 
 
