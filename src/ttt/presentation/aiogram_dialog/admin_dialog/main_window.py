@@ -88,7 +88,7 @@ async def main_getter(
     **_: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
     await view_admin_menu(event_from_user.id)
-    view = result_buffer(AdminMainMenuView)
+    view: AdminMainMenuView = result_buffer(AdminMainMenuView)  # type: ignore[arg-type]
 
     return view.window_data()
 

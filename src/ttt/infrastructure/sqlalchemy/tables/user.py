@@ -233,15 +233,15 @@ class TableUser(Base[User]):
             game_location_game_id = it.game_location.game_id
 
         match it.admin_right:
+            case None:
+                admin_right = None
+                admin_right_via_other_admin_admin_id = None
             case AdminRightViaAdminToken():
                 admin_right = TableAdminRight.via_admin_token
                 admin_right_via_other_admin_admin_id = None
             case AdminRightViaOtherAdmin(admin_id):
                 admin_right = TableAdminRight.via_other_admin
                 admin_right_via_other_admin_admin_id = admin_id
-            case None:
-                admin_right = None
-                admin_right_via_other_admin_admin_id = None
 
         return TableUser(
             id=it.id,
