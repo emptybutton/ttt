@@ -1,4 +1,3 @@
-
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager, Window
 from aiogram_dialog.widgets.kbd import (
@@ -20,7 +19,7 @@ from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 
 
 @inject
-async def on_game_against_user_clicked(
+async def on_matchmaking_clicked(
     callback: CallbackQuery,
     _: Button,
     __: DialogManager,
@@ -30,21 +29,28 @@ async def on_game_against_user_clicked(
 
 
 game_start_window = Window(
-    Const("⚔️ Выберите режим игры", when=~F["start_data"]["hint"]),
+    Const("⚔️ Выберите режим", when=~F["start_data"]["hint"]),
     hint(key="hint"),
     Row(
         Button(
-            Const("👥 Против человека"),
-            id="game_against_user",
-            on_click=on_game_against_user_clicked,
+            Const("🗡 Подбор матчей"),
+            id="matchmaking",
+            on_click=on_matchmaking_clicked,
         ),
         SwitchTo(
-            Const("🤖 Против ИИ"),
-            id="game_against_ai",
-            state=MainDialogState.ai_type_to_start_game,
+            Const("👤 Пригласить в игру"),
+            id="outcoming_invitations_to_game",
+            state=MainDialogState.outcoming_invitations_to_game,
         ),
     ),
-    SwitchTo(Const("Назад"), id="back", state=MainDialogState.main),
+    Row(
+        SwitchTo(
+            Const("🤖 Однопользовательская игра"),
+            id="single_game",
+            state=MainDialogState.ai_type_to_start_game,
+        ),
+        SwitchTo(Const("Назад"), id="back", state=MainDialogState.main),
+    ),
 
     OneTimekey("hint"),
     state=MainDialogState.game_mode_to_start_game,

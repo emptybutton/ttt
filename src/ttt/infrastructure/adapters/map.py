@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ttt.application.common.ports.map import (
     Map,
     MappableTracking,
+    NotUniqueActiveInvitationToGameUserIdsError,
     NotUniqueUserIdError,
 )
 from ttt.infrastructure.sqlalchemy.tables.atomic import (
@@ -47,6 +48,9 @@ class MapToPostgres(Map):
 
                 if constraint_name == "users_pkey":
                     raise NotUniqueUserIdError from error
+
+                if constraint_name == "ix_invitations_to_game_user_ids":
+                    raise NotUniqueActiveInvitationToGameUserIdsError from error
             case _: ...
 
         raise error from error

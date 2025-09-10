@@ -30,6 +30,13 @@ from ttt.application.game.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.start_game_with_ai import StartGameWithAi
 from ttt.application.game.game.view_game import ViewGame
+from ttt.application.invitation_to_game.game.accpet_invitation_to_game import AcceptInvitationToGame
+from ttt.application.invitation_to_game.game.cancel_invitation_to_game import CancelInvitationToGame
+from ttt.application.invitation_to_game.game.invite_to_game import InviteToGame
+from ttt.application.invitation_to_game.game.ports.invitation_to_game_views import InvitationToGameViews
+from ttt.application.invitation_to_game.game.reject_invitation_to_game import RejectInvitationToGame
+from ttt.application.invitation_to_game.game.view_incoming_invitations_to_game import ViewIncomingInvitationsToGame
+from ttt.application.invitation_to_game.game.view_outcoming_invitations_to_game import ViewOutcomingInvitationsToGame
 from ttt.application.matchmaking_queue.common.matchmaking_queue_views import (
     CommonMatchmakingQueueViews,
 )
@@ -94,6 +101,7 @@ from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
     AiogramGameViews,
 )
+from ttt.presentation.adapters.invitation_to_game_views import AiogramInvitationToGameViews
 from ttt.presentation.adapters.matchmaking_queue_views import (
     AiogramCommonMatchmakingQueueViews,
 )
@@ -204,6 +212,12 @@ class PresentationProvider(Provider):
     provide_change_other_user_account_views = provide(
         AiogramChangeOtherUserAccountViews,
         provides=ChangeOtherUserAccountViews,
+        scope=Scope.REQUEST,
+    )
+
+    provide_invitation_to_game_views = provide(
+        AiogramInvitationToGameViews,
+        provides=InvitationToGameViews,
         scope=Scope.REQUEST,
     )
 
@@ -353,3 +367,22 @@ class ApplicationProvider(Provider):
     provide_view_game = provide(ViewGame, scope=Scope.REQUEST)
 
     provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
+
+    provide_accept_invitation_to_game = provide(
+        AcceptInvitationToGame, scope=Scope.REQUEST,
+    )
+    provide_cancel_invitation_to_game = provide(
+        CancelInvitationToGame, scope=Scope.REQUEST,
+    )
+    provide_invite_to_game = provide(
+        InviteToGame, scope=Scope.REQUEST,
+    )
+    provide_reject_invitation_to_game = provide(
+        RejectInvitationToGame, scope=Scope.REQUEST,
+    )
+    provide_view_outcoming_invitations_to_game = provide(
+        ViewOutcomingInvitationsToGame, scope=Scope.REQUEST,
+    )
+    provide_view_incoming_invitations_to_game = provide(
+        ViewIncomingInvitationsToGame, scope=Scope.REQUEST,
+    )

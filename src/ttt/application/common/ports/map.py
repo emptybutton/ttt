@@ -7,6 +7,9 @@ from ttt.entities.tools.tracking import Tracking
 class NotUniqueUserIdError(Exception): ...
 
 
+class NotUniqueActiveInvitationToGameUserIdsError(Exception): ...
+
+
 type MappableTracking = Tracking[Atomic]
 
 
@@ -19,4 +22,5 @@ class Map(ABC):
     ) -> None:
         """
         :raises ttt.application.common.ports.map.NotUniqueUserIdError:
-        """
+        :raises ttt.application.common.ports.map.NotUniqueActiveInvitationToGameUserIdsError:
+        """  # noqa: E501

@@ -28,6 +28,10 @@ from ttt.infrastructure.sqlalchemy.stmts import (
     selected_user_emoji_str_from_postgres,
     user_emojis_from_postgres,
 )
+from ttt.infrastructure.sqlalchemy.tables.invitation_to_game import (
+    TableInvitationToGame,
+    TableInvitationToGameState,
+)
 from ttt.infrastructure.sqlalchemy.tables.user import (
     TableAdminRight,
     TableUser,
@@ -57,7 +61,10 @@ from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.aiogram_dialog.main_dialog.emojis_window import (
     EmojiMenuView,
 )
-from ttt.presentation.aiogram_dialog.main_dialog.main_window import MainMenuView
+from ttt.presentation.aiogram_dialog.main_dialog.main_window import (
+    IncomingInvitationToGameData,
+    MainMenuView,
+)
 from ttt.presentation.aiogram_dialog.main_dialog.profile_window import (
     UserProfileView,
 )
@@ -129,11 +136,49 @@ class AiogramCommonUserViews(CommonUserViews):
         else:
             game_location = UserGameLocation(user_id, game_location_game_id)
 
-        view = MainMenuView.of(
+        incoming_invitations_to_game_stmt = (
+            select(
+                TableInvitationToGame.id,
+                TableInvitationToGame.inviting_user_id,
+            )
+            .where(
+                (TableInvitationToGame.invited_user_id == user_id)
+                & (
+                    TableInvitationToGame.state
+                    == TableInvitationToGameState.active.value,
+                ),
+            )
+            .limit(2)
+        )
+        incoming_invitations_to_game_result = await self._session.execute(
+            incoming_invitations_to_game_stmt,
+        )
+        incoming_invitations_to_game = incoming_invitations_to_game_result.all()
+
+        if len(incoming_invitations_to_game) == 0:
+            amout_of_incoming_invitations_to_game = "no"
+            one_incoming_invitation_to_game = None
+        elif len(incoming_invitations_to_game) == 1:
+            amout_of_incoming_invitations_to_game = "one"
+
+            invitation_to_game = incoming_invitations_to_game[0]
+            one_incoming_invitation_to_game = IncomingInvitationToGameData(
+                id_hex=invitation_to_game.id.hex,
+                inviting_user_id=invitation_to_game.inviting_user_id,
+            )
+        else:
+            amout_of_incoming_invitations_to_game = "many"
+            one_incoming_invitation_to_game = None
+
+        view = MainMenuView(
             is_user_in_game=is_user_in_game(game_location),
             has_user_emojis=row.has_user_emojis,
             stars=row.account_stars,
             rating=row.rating,
+            amout_of_incoming_invitations_to_game=(
+                amout_of_incoming_invitations_to_game
+            ),
+            one_incoming_invitation_to_game=one_incoming_invitation_to_game,
         )
         self._result_buffer.result = view
 

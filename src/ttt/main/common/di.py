@@ -20,6 +20,12 @@ from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.game.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.game.game.ports.games import Games
+from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import (  # noqa: E501
+    InvitationToGameLog,
+)
+from ttt.application.invitation_to_game.game.ports.invitations_to_game import (
+    InvitationsToGame,
+)
 from ttt.application.matchmaking_queue.common.matchmaking_queue_log import (
     CommonMatchmakingQueueLog,
 )
@@ -50,6 +56,12 @@ from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.game_ai_gateway import GeminiGameAiGateway
 from ttt.infrastructure.adapters.game_log import StructlogGameLog
 from ttt.infrastructure.adapters.games import InPostgresGames
+from ttt.infrastructure.adapters.invitation_to_game_log import (
+    StructlogInvitationToGameLog,
+)
+from ttt.infrastructure.adapters.invitations_to_game import (
+    InPostgresInvitationsToGame,
+)
 from ttt.infrastructure.adapters.map import MapToPostgres
 from ttt.infrastructure.adapters.matchmaking_queue_log import (
     StructlogCommonMatchmakingQueueLog,
@@ -222,6 +234,12 @@ class InfrastructureProvider(Provider):
         scope=Scope.REQUEST,
     )
 
+    provide_invitations_to_game = provide(
+        InvitationsToGame,
+        provides=InPostgresInvitationsToGame,
+        scope=Scope.REQUEST,
+    )
+
     provide_map = provide(
         MapToPostgres,
         provides=Map,
@@ -289,5 +307,11 @@ class InfrastructureProvider(Provider):
     provide_change_other_user_account_log = provide(
         StructlogChangeOtherUserAccountLog,
         provides=ChangeOtherUserAccountLog,
+        scope=Scope.REQUEST,
+    )
+
+    provide_invitation_to_game_log = provide(
+        StructlogInvitationToGameLog,
+        provides=InvitationToGameLog,
         scope=Scope.REQUEST,
     )

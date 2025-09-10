@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from aiogram.types import CallbackQuery, User
 from aiogram_dialog import DialogManager, StartMode, Window
@@ -19,6 +19,7 @@ from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.rank import rank_for_rating
 from ttt.entities.elo.rating import EloRating
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
+from ttt.presentation.aiogram_dialog.common.wigets.func_text import FuncText
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
     OneTimekey,
 )
@@ -26,34 +27,40 @@ from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.aiogram_dialog.main_dialog.game_window import (
     ActiveGameView,
 )
+from ttt.presentation.aiogram_dialog.main_dialog.incoming_invitation_to_game_window import (
+    IncomingInvitationToGameView,
+)
 from ttt.presentation.result_buffer import ResultBuffer
 from ttt.presentation.texts import rank_progres_text, rank_title
+
+
+type AmoutOfIncomingInvitationsToGame = Literal["no", "one", "many"]
+
+
+@dataclass(frozen=True)
+class IncomingInvitationToGameData:
+    id_hex: str
+    inviting_user_id: int
 
 
 @dataclass(frozen=True)
 class MainMenuView(EncodableToWindowData):
     is_user_in_game: bool
     has_user_emojis: bool
-    rank_text: str
+    rating: EloRating
     stars: Stars
+    amout_of_incoming_invitations_to_game: AmoutOfIncomingInvitationsToGame
+    one_incoming_invitation_to_game: IncomingInvitationToGameData | None
 
-    @classmethod
-    def of(
-        cls,
-        *,
-        is_user_in_game: bool,
-        has_user_emojis: bool,
-        rating: EloRating,
-        stars: Stars,
-    ) -> "MainMenuView":
-        rank = rank_for_rating(rating)
 
-        return MainMenuView(
-            is_user_in_game=is_user_in_game,
-            has_user_emojis=has_user_emojis,
-            rank_text=f"{rank_title(rank)} {rank_progres_text(rating)}",
-            stars=stars,
-        )
+async def rank_text(  # noqa: RUF029
+    data: dict[str, Any],
+    _: DialogManager,
+) -> str:
+    rating = data["main"]["rating"]
+    rank = rank_for_rating(rating)
+
+    return f"Вы — {rank_title(rank)} {rank_progres_text(rating)}"
 
 
 @inject
@@ -95,8 +102,23 @@ async def on_back_to_game_clicked(
     await manager.start(MainDialogState.game, data, StartMode.RESET_STACK)
 
 
+async def on_incoming_invitation_to_game_clicked(
+    _: CallbackQuery,
+    __: Button,
+    manager: DialogManager,
+) -> None:
+    invitation = manager.dialog_data["one_incoming_invitation_to_game"]
+    view = IncomingInvitationToGameView(
+        id_hex=invitation["id_hex"],
+        inviting_user_id=invitation["inviting_user_id"],
+    )
+    data = view.window_data()
+
+    await manager.start(MainDialogState.game, data)
+
+
 main_window = Window(
-    Format("Вы — {main[rank_text]}"),
+    FuncText(rank_text),
     Format("Звёзд: {main[stars]} 🌟"),
 
     Multi(
@@ -122,6 +144,18 @@ main_window = Window(
         id="cancel_game",
         when=F["main"]["is_user_in_game"],
         on_click=on_cancel_game_clicked,
+    ),
+    Button(
+        Const("Предложение к игре"),
+        id="incoming_invitation_to_game",
+        when=F["main"]["amout_of_incoming_invitations_to_game"] == "one",
+        on_click=on_incoming_invitation_to_game_clicked,
+    ),
+    SwitchTo(
+        Const("Предложения к игре"),
+        id="incoming_invitations_to_game",
+        when=F["main"]["amout_of_incoming_invitations_to_game"] == "many",
+        state=MainDialogState.incoming_invitations_to_game,
     ),
     SwitchTo(
         Const("Профиль"),
