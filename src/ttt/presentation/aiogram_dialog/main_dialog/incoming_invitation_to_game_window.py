@@ -7,7 +7,6 @@ from aiogram.types import CallbackQuery
 from aiogram.utils.formatting import Code, Text
 from aiogram_dialog import DialogManager, Window
 from aiogram_dialog.widgets.kbd import (
-    Back,
     Button,
     Cancel,
     Row,

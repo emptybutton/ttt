@@ -5,7 +5,6 @@ from aiogram.types import CallbackQuery, User
 from aiogram_dialog import DialogManager, StartMode, Window
 from aiogram_dialog.widgets.kbd import (
     Button,
-    Select,
     SwitchTo,
 )
 from aiogram_dialog.widgets.text import Const, Format, Multi
@@ -15,10 +14,9 @@ from magic_filter import F
 
 from ttt.application.game.game.cancel_game import CancelGame
 from ttt.application.game.game.view_game import ViewGame
-from ttt.application.invitation_to_game.game.view_incoming_invitation_to_game import (
-    ViewIncomingInvitationToGame,
+from ttt.application.invitation_to_game.game.view_one_incoming_invitation_to_game import (
+    ViewOneIncomingInvitationToGame,
 )
-from ttt.application.invitation_to_game.game.view_one_incoming_invitation_to_game import ViewOneIncomingInvitationToGame
 from ttt.application.user.view_main_menu import ViewMainMenu
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.rank import rank_for_rating

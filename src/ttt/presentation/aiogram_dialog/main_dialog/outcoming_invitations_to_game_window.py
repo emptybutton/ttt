@@ -24,9 +24,10 @@ from ttt.application.invitation_to_game.game.invite_to_game import InviteToGame
 from ttt.application.invitation_to_game.game.view_outcoming_invitations_to_game import (  # noqa: E501
     ViewOutcomingInvitationsToGame,
 )
-from ttt.entities.tools.assertion import assert_
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
-from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import OneTimekey
+from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
+    OneTimekey,
+)
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.result_buffer import ResultBuffer
 

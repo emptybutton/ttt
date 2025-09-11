@@ -20,8 +20,12 @@ from ttt.presentation.aiogram_dialog.main_dialog.incoming_invitations_to_game_wi
     incoming_invitations_to_game_window,
 )
 from ttt.presentation.aiogram_dialog.main_dialog.main_window import main_window
-from ttt.presentation.aiogram_dialog.main_dialog.notification_window import notification_window
-from ttt.presentation.aiogram_dialog.main_dialog.outcoming_invitations_to_game_window import outcoming_invitations_to_game_window
+from ttt.presentation.aiogram_dialog.main_dialog.notification_window import (
+    notification_window,
+)
+from ttt.presentation.aiogram_dialog.main_dialog.outcoming_invitations_to_game_window import (
+    outcoming_invitations_to_game_window,
+)
 from ttt.presentation.aiogram_dialog.main_dialog.profile_window import (
     profile_window,
 )

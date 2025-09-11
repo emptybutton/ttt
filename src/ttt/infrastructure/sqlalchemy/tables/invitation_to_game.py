@@ -11,11 +11,6 @@ from ttt.entities.core.invitation_to_game.invitation_to_game import (
     InvitationToGameAtomic,
     InvitationToGameState,
 )
-from ttt.entities.core.matchmaking_queue.matchmaking_queue import (
-    MatchmakingQueue,
-    MatchmakingQueueAtomic,
-)
-from ttt.entities.core.matchmaking_queue.user_waiting import UserWaiting
 from ttt.infrastructure.sqlalchemy.tables.common import Base
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 

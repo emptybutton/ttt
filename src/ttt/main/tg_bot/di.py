@@ -30,15 +30,31 @@ from ttt.application.game.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.start_game_with_ai import StartGameWithAi
 from ttt.application.game.game.view_game import ViewGame
-from ttt.application.invitation_to_game.game.accpet_invitation_to_game import AcceptInvitationToGame
-from ttt.application.invitation_to_game.game.cancel_invitation_to_game import CancelInvitationToGame
+from ttt.application.invitation_to_game.game.accpet_invitation_to_game import (
+    AcceptInvitationToGame,
+)
+from ttt.application.invitation_to_game.game.cancel_invitation_to_game import (
+    CancelInvitationToGame,
+)
 from ttt.application.invitation_to_game.game.invite_to_game import InviteToGame
-from ttt.application.invitation_to_game.game.ports.invitation_to_game_views import InvitationToGameViews
-from ttt.application.invitation_to_game.game.reject_invitation_to_game import RejectInvitationToGame
-from ttt.application.invitation_to_game.game.view_incoming_invitation_to_game import ViewIncomingInvitationToGame
-from ttt.application.invitation_to_game.game.view_incoming_invitations_to_game import ViewIncomingInvitationsToGame
-from ttt.application.invitation_to_game.game.view_one_incoming_invitation_to_game import ViewOneIncomingInvitationToGame
-from ttt.application.invitation_to_game.game.view_outcoming_invitations_to_game import ViewOutcomingInvitationsToGame
+from ttt.application.invitation_to_game.game.ports.invitation_to_game_views import (
+    InvitationToGameViews,
+)
+from ttt.application.invitation_to_game.game.reject_invitation_to_game import (
+    RejectInvitationToGame,
+)
+from ttt.application.invitation_to_game.game.view_incoming_invitation_to_game import (
+    ViewIncomingInvitationToGame,
+)
+from ttt.application.invitation_to_game.game.view_incoming_invitations_to_game import (
+    ViewIncomingInvitationsToGame,
+)
+from ttt.application.invitation_to_game.game.view_one_incoming_invitation_to_game import (
+    ViewOneIncomingInvitationToGame,
+)
+from ttt.application.invitation_to_game.game.view_outcoming_invitations_to_game import (
+    ViewOutcomingInvitationsToGame,
+)
 from ttt.application.matchmaking_queue.common.matchmaking_queue_views import (
     CommonMatchmakingQueueViews,
 )
@@ -103,7 +119,9 @@ from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
     AiogramGameViews,
 )
-from ttt.presentation.adapters.invitation_to_game_views import AiogramInvitationToGameViews
+from ttt.presentation.adapters.invitation_to_game_views import (
+    AiogramInvitationToGameViews,
+)
 from ttt.presentation.adapters.matchmaking_queue_views import (
     AiogramCommonMatchmakingQueueViews,
 )

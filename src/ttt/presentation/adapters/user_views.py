@@ -62,7 +62,6 @@ from ttt.presentation.aiogram_dialog.main_dialog.emojis_window import (
     EmojiMenuView,
 )
 from ttt.presentation.aiogram_dialog.main_dialog.main_window import (
-    IncomingInvitationToGameData,
     MainMenuView,
 )
 from ttt.presentation.aiogram_dialog.main_dialog.profile_window import (
