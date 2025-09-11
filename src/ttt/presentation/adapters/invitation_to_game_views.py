@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import cast
 from uuid import UUID
 
+from aiogram.utils.formatting import Code, Text
 from aiogram_dialog import DialogManager, StartMode
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,14 +18,28 @@ from ttt.entities.core.invitation_to_game.invitation_to_game import (
     InvitationToGameState,
 )
 from ttt.entities.core.user.user import User
-from ttt.infrastructure.sqlalchemy.tables.invitation_to_game import TableInvitationToGame, TableInvitationToGameState
+from ttt.infrastructure.sqlalchemy.tables.invitation_to_game import (
+    TableInvitationToGame,
+    TableInvitationToGameState,
+)
 from ttt.presentation.aiogram_dialog.common.dialog_manager_for_user import (
     DialogManagerForUser,
 )
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
-from ttt.presentation.aiogram_dialog.main_dialog.game_window import ActiveGameView
-from ttt.presentation.aiogram_dialog.main_dialog.incoming_invitations_to_game_window import IncomingInvitationToGameData, IncomingInvitationsToGameView
-from ttt.presentation.aiogram_dialog.main_dialog.outcoming_invitations_to_game_window import OutcomingInvitationToGameData, OutcomingInvitationsToGameView
+from ttt.presentation.aiogram_dialog.main_dialog.game_window import (
+    ActiveGameView,
+)
+from ttt.presentation.aiogram_dialog.main_dialog.incoming_invitation_to_game_window import (  # noqa: E501
+    IncomingInvitationToGameView,
+)
+from ttt.presentation.aiogram_dialog.main_dialog.incoming_invitations_to_game_window import (  # noqa: E501
+    IncomingInvitationsToGameView,
+    IncomingInvitationToGameData,
+)
+from ttt.presentation.aiogram_dialog.main_dialog.outcoming_invitations_to_game_window import (  # noqa: E501
+    OutcomingInvitationsToGameView,
+    OutcomingInvitationToGameData,
+)
 from ttt.presentation.result_buffer import ResultBuffer
 
 
@@ -43,7 +58,8 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
             select(
                 TableInvitationToGame.id,
                 TableInvitationToGame.inviting_user_id,
-            ).where(
+            )
+            .where(
                 (TableInvitationToGame.invited_user_id == user_id)
                 & (
                     TableInvitationToGame.state
@@ -71,7 +87,8 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
             select(
                 TableInvitationToGame.id,
                 TableInvitationToGame.invited_user_id,
-            ).where(
+            )
+            .where(
                 (TableInvitationToGame.inviting_user_id == user_id)
                 & (
                     TableInvitationToGame.state
@@ -83,43 +100,120 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
         rows = result.all()
 
         invitations = [
-            OutcomingInvitationToGameData(row.id, row.invited_user_id)
+            OutcomingInvitationToGameData(row.id.hex, row.invited_user_id)
             for row in rows
         ]
         self._result_buffer.result = OutcomingInvitationsToGameView.of(
             invitations,
         )
 
-    async def invited_user_is_not_registered_to_invite_to_game_view(
-        self,
-        user: User,
-        invited_user_id: int,
-        /,
+    async def one_incoming_invitation_to_game_view(
+        self, user_id: int, /,
     ) -> None:
-        manager = self._dialog_manager_for_user(user.id)
-        await manager.start(
-            MainDialogState.outcoming_invitations_to_game,
-            {"hint": "Пользователь не зарегестрирован 👎"},
-            StartMode.RESET_STACK,
+        stmt = (
+            select(
+                TableInvitationToGame.id,
+                TableInvitationToGame.inviting_user_id,
+            )
+            .where(
+                (TableInvitationToGame.invited_user_id == user_id)
+                & (
+                    TableInvitationToGame.state
+                    == TableInvitationToGameState.active.value
+                ),
+            )
+            .limit(1)
+        )
+        result = await self._session.execute(stmt)
+        row = result.first()
+
+        if row is None:
+            self._result_buffer.result = None
+            return
+
+        self._result_buffer.result = IncomingInvitationToGameView(
+            id_hex=row.id.hex,
+            inviting_user_id=row.inviting_user_id,
+        )
+
+    async def incoming_invitation_to_game_view(
+        self, user_id: int, invitation_to_game_id: UUID, /,
+    ) -> None:
+        stmt = (
+            select(TableInvitationToGame.inviting_user_id)
+            .where(
+                (TableInvitationToGame.id == invitation_to_game_id)
+                & (
+                    TableInvitationToGame.state
+                    == TableInvitationToGameState.active.value
+                ),
+            )
+        )
+        inviting_user_id = await self._session.scalar(stmt)
+
+        if inviting_user_id is None:
+            self._result_buffer.result = None
+            return
+
+        self._result_buffer.result = IncomingInvitationToGameView(
+            id_hex=invitation_to_game_id.hex,
+            inviting_user_id=inviting_user_id,
         )
 
     async def invitation_to_game_view(
         self,
         invitation_to_game: InvitationToGame,
         /,
-    ) -> None: ...
+    ) -> None:
+        if invitation_to_game.invited_user.is_in_game():
+            return
+
+        manager = self._dialog_manager_for_user(
+            invitation_to_game.invited_user.id,
+        )
+        view = IncomingInvitationToGameView(
+            id_hex=invitation_to_game.id_.hex,
+            inviting_user_id=invitation_to_game.inviting_user.id,
+        )
+        start_data = view.window_data()
+        await manager.start(
+            MainDialogState.incoming_invitation_to_game,
+            start_data,
+        )
 
     async def cancelled_invitation_to_game_view(
         self,
         invitation_to_game: InvitationToGame,
         /,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     async def rejected_invitation_to_game_view(
         self,
         invitation_to_game: InvitationToGame,
         /,
-    ) -> None: ...
+    ) -> None:
+        invited_user_manager = cast(
+            DialogManager,
+            self._dialog_manager_for_user(invitation_to_game.invited_user.id),
+        )
+        inviting_user_manager = self._dialog_manager_for_user(
+            invitation_to_game.inviting_user.id,
+        )
+
+        inviting_user_hint = Text(
+            "👤 Пользователь ",
+            Code(invitation_to_game.invited_user.id),
+            " отклонил ваше приглашение к игре",
+        ).as_html()
+
+        await gather(
+            invited_user_manager.done(),
+            inviting_user_manager.start(
+                MainDialogState.notification,
+                {"hint": inviting_user_hint},
+            ),
+        )
 
     async def accepted_invitation_to_game_view(
         self,
@@ -132,6 +226,18 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
             self._active_game_view(game, invitation_to_game.inviting_user.id),
         )
 
+    async def invitation_self_to_game_view(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        manager = self._dialog_manager_for_user(user.id)
+        await manager.start(
+            MainDialogState.outcoming_invitations_to_game,
+            {"hint": "😭 Вы не можете пригласить самого себя"},
+            StartMode.RESET_STACK,
+        )
+
     async def double_invitation_to_game_view(
         self,
         invitation_to_game: InvitationToGame,
@@ -142,7 +248,7 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
         )
         await manager.start(
             MainDialogState.outcoming_invitations_to_game,
-            {"hint": "Пользователь уже приглашён в игру 👎"},
+            {"hint": "👎 Пользователь уже приглашён в игру"},
             StartMode.RESET_STACK,
         )
 
@@ -172,7 +278,7 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
             DialogManager,
             self._dialog_manager_for_user(invitation_to_game.invited_user.id),
         )
-        await manager.back()
+        await manager.done()
 
     async def user_is_not_invited_user_to_reject_invitation_to_game_view(
         self,
@@ -219,17 +325,14 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
             invitation_to_game.invited_user.id,
         )
 
-        if (
-            invitation_to_game.invited_user in users_in_game
-            and invitation_to_game.inviting_user in users_in_game
-        ):
-            hint = "Вы в игре и пользователь в игре чтобы начать игру"
+        if invitation_to_game.invited_user in users_in_game:
+            hint = "Закончите игру, прежде чем начинать новую"
+        elif invitation_to_game.inviting_user in users_in_game:
+            hint = "Пользователь в игре, подождите пока его игра закончится"
+        else:
+            raise ValueError
 
-        await manager.start(
-            MainDialogState.incoming_invitations_to_game,
-            {"hint": "Пользователь уже приглашён в игру 👎"},
-            StartMode.RESET_STACK,
-        )
+        await manager.update({"hint": hint})
 
     async def user_is_not_invited_user_to_accept_invitation_to_game_view(
         self,

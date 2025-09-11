@@ -5,7 +5,7 @@ from uuid import UUID
 
 from aiogram import Bot
 from aiogram_dialog import ShowMode, StartMode
-from sqlalchemy import exists, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.user.change_other_user_account.ports.user_views import (
@@ -137,38 +137,29 @@ class AiogramCommonUserViews(CommonUserViews):
             game_location = UserGameLocation(user_id, game_location_game_id)
 
         incoming_invitations_to_game_stmt = (
-            select(
-                TableInvitationToGame.id,
-                TableInvitationToGame.inviting_user_id,
-            )
+            select(func.count(1))
             .where(
                 (TableInvitationToGame.invited_user_id == user_id)
                 & (
                     TableInvitationToGame.state
-                    == TableInvitationToGameState.active.value,
+                    == TableInvitationToGameState.active.value
                 ),
             )
             .limit(2)
         )
-        incoming_invitations_to_game_result = await self._session.execute(
+        incoming_invitations_to_game = await self._session.scalar(
             incoming_invitations_to_game_stmt,
         )
-        incoming_invitations_to_game = incoming_invitations_to_game_result.all()
 
-        if len(incoming_invitations_to_game) == 0:
+        if (
+            incoming_invitations_to_game == 0
+            or incoming_invitations_to_game is None
+        ):
             amout_of_incoming_invitations_to_game = "no"
-            one_incoming_invitation_to_game = None
-        elif len(incoming_invitations_to_game) == 1:
+        elif incoming_invitations_to_game == 1:
             amout_of_incoming_invitations_to_game = "one"
-
-            invitation_to_game = incoming_invitations_to_game[0]
-            one_incoming_invitation_to_game = IncomingInvitationToGameData(
-                id_hex=invitation_to_game.id.hex,
-                inviting_user_id=invitation_to_game.inviting_user_id,
-            )
         else:
             amout_of_incoming_invitations_to_game = "many"
-            one_incoming_invitation_to_game = None
 
         view = MainMenuView(
             is_user_in_game=is_user_in_game(game_location),
@@ -178,7 +169,6 @@ class AiogramCommonUserViews(CommonUserViews):
             amout_of_incoming_invitations_to_game=(
                 amout_of_incoming_invitations_to_game
             ),
-            one_incoming_invitation_to_game=one_incoming_invitation_to_game,
         )
         self._result_buffer.result = view
 

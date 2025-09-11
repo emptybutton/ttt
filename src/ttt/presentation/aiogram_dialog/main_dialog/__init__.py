@@ -21,6 +21,7 @@ from ttt.presentation.aiogram_dialog.main_dialog.incoming_invitations_to_game_wi
 )
 from ttt.presentation.aiogram_dialog.main_dialog.main_window import main_window
 from ttt.presentation.aiogram_dialog.main_dialog.notification_window import notification_window
+from ttt.presentation.aiogram_dialog.main_dialog.outcoming_invitations_to_game_window import outcoming_invitations_to_game_window
 from ttt.presentation.aiogram_dialog.main_dialog.profile_window import (
     profile_window,
 )
@@ -35,10 +36,11 @@ __all__ = ["main_dialog"]
 main_dialog = Dialog(
     main_window,
     game_start_window,
-    incoming_invitations_to_game_window,
-    incoming_invitation_to_game_window,
+    outcoming_invitations_to_game_window,
     ai_type_to_start_game_window,
     game_window,
+    incoming_invitations_to_game_window,
+    incoming_invitation_to_game_window,
     profile_window,
     emoji_window,
     shop_window,

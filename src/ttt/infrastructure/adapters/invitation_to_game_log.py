@@ -37,17 +37,15 @@ def invitation_to_game_state_in_log(state: InvitationToGameState) -> str:
 class StructlogInvitationToGameLog(InvitationToGameLog):
     _logger: FilteringBoundLogger
 
-    async def invited_user_is_not_registered_to_invite_to_game(
+    async def invitation_self_to_game(
         self,
         user: User,
-        invited_user_id: int,
         /,
     ) -> None:
         await self._logger.ainfo(
-            "invited_user_is_not_registered_to_invite_to_game",
+            "invitation_self_to_game",
             chat_id=user.id,
             user_id=user.id,
-            invited_user_id=invited_user_id,
         )
 
     async def user_invited_other_user_to_game(

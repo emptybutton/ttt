@@ -11,10 +11,9 @@ from ttt.entities.core.user.user import User
 
 class InvitationToGameLog(ABC):
     @abstractmethod
-    async def invited_user_is_not_registered_to_invite_to_game(
+    async def invitation_self_to_game(
         self,
         user: User,
-        invited_user_id: int,
         /,
     ) -> None: ...
 

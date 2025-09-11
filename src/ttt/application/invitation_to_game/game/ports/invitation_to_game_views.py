@@ -11,6 +11,13 @@ from ttt.entities.core.user.user import User
 
 class InvitationToGameViews(ABC):
     @abstractmethod
+    async def invitation_self_to_game_view(
+        self,
+        user: User,
+        /,
+    ) -> None: ...
+
+    @abstractmethod
     async def incoming_user_invitations_to_game_view(
         self,
         user_id: int,
@@ -21,14 +28,6 @@ class InvitationToGameViews(ABC):
     async def outcoming_user_invitations_to_game_view(
         self,
         user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def invited_user_is_not_registered_to_invite_to_game_view(
-        self,
-        user: User,
-        invited_user_id: int,
         /,
     ) -> None: ...
 
@@ -137,4 +136,14 @@ class InvitationToGameViews(ABC):
     @abstractmethod
     async def no_invitation_to_game_to_cancel_view(
         self, user_id: int, invitation_to_game_id: UUID, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def incoming_invitation_to_game_view(
+        self, user_id: int, invitation_to_game_id: UUID, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def one_incoming_invitation_to_game_view(
+        self, user_id: int, /,
     ) -> None: ...

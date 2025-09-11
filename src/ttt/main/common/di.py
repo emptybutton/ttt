@@ -235,8 +235,8 @@ class InfrastructureProvider(Provider):
     )
 
     provide_invitations_to_game = provide(
-        InvitationsToGame,
-        provides=InPostgresInvitationsToGame,
+        InPostgresInvitationsToGame,
+        provides=InvitationsToGame,
         scope=Scope.REQUEST,
     )
 

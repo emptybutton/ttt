@@ -33,21 +33,21 @@ game_start_window = Window(
     hint(key="hint"),
     Row(
         Button(
-            Const("🗡 Подбор матчей"),
+            Const("🗡 Подбор игр"),
             id="matchmaking",
             on_click=on_matchmaking_clicked,
         ),
         SwitchTo(
-            Const("👤 Пригласить в игру"),
-            id="outcoming_invitations_to_game",
-            state=MainDialogState.outcoming_invitations_to_game,
+            Const("🤖 Играть с ИИ"),
+            id="single_game",
+            state=MainDialogState.ai_type_to_start_game,
         ),
     ),
     Row(
         SwitchTo(
-            Const("🤖 Однопользовательская игра"),
-            id="single_game",
-            state=MainDialogState.ai_type_to_start_game,
+            Const("👤 Пригласить"),
+            id="outcoming_invitations_to_game",
+            state=MainDialogState.outcoming_invitations_to_game,
         ),
         SwitchTo(Const("Назад"), id="back", state=MainDialogState.main),
     ),

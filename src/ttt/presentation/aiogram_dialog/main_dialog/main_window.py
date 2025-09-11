@@ -5,6 +5,7 @@ from aiogram.types import CallbackQuery, User
 from aiogram_dialog import DialogManager, StartMode, Window
 from aiogram_dialog.widgets.kbd import (
     Button,
+    Select,
     SwitchTo,
 )
 from aiogram_dialog.widgets.text import Const, Format, Multi
@@ -14,6 +15,10 @@ from magic_filter import F
 
 from ttt.application.game.game.cancel_game import CancelGame
 from ttt.application.game.game.view_game import ViewGame
+from ttt.application.invitation_to_game.game.view_incoming_invitation_to_game import (
+    ViewIncomingInvitationToGame,
+)
+from ttt.application.invitation_to_game.game.view_one_incoming_invitation_to_game import ViewOneIncomingInvitationToGame
 from ttt.application.user.view_main_menu import ViewMainMenu
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.rank import rank_for_rating
@@ -40,7 +45,6 @@ type AmoutOfIncomingInvitationsToGame = Literal["no", "one", "many"]
 @dataclass(frozen=True)
 class IncomingInvitationToGameData:
     id_hex: str
-    inviting_user_id: int
 
 
 @dataclass(frozen=True)
@@ -50,7 +54,6 @@ class MainMenuView(EncodableToWindowData):
     rating: EloRating
     stars: Stars
     amout_of_incoming_invitations_to_game: AmoutOfIncomingInvitationsToGame
-    one_incoming_invitation_to_game: IncomingInvitationToGameData | None
 
 
 async def rank_text(  # noqa: RUF029
@@ -102,31 +105,56 @@ async def on_back_to_game_clicked(
     await manager.start(MainDialogState.game, data, StartMode.RESET_STACK)
 
 
+@inject
 async def on_incoming_invitation_to_game_clicked(
-    _: CallbackQuery,
-    __: Button,
+    callback_query: CallbackQuery,
+    _: Button,
     manager: DialogManager,
+    view_invitation_to_game: FromDishka[ViewOneIncomingInvitationToGame],
+    result_buffer: FromDishka[ResultBuffer],
 ) -> None:
-    invitation = manager.dialog_data["one_incoming_invitation_to_game"]
-    view = IncomingInvitationToGameView(
-        id_hex=invitation["id_hex"],
-        inviting_user_id=invitation["inviting_user_id"],
-    )
-    data = view.window_data()
+    await view_invitation_to_game(callback_query.from_user.id)
+    view = result_buffer.result
 
-    await manager.start(MainDialogState.game, data)
+    if not isinstance(view, IncomingInvitationToGameView | None):
+        raise TypeError
+
+    if view is None:
+        await manager.start(
+            MainDialogState.main,
+            {"hint": "😭 Предложение отклонено"},
+            StartMode.RESET_STACK,
+        )
+        return
+
+    start_data = view.window_data()
+    await manager.start(MainDialogState.incoming_invitation_to_game, start_data)
 
 
 main_window = Window(
     FuncText(rank_text),
     Format("Звёзд: {main[stars]} 🌟"),
-
     Multi(
         Const(" "),
         Format("{start_data[hint]}"),
-        when="start_data[hint]",
+        when=F["start_data"]["hint"],
     ),
 
+    Button(
+        Const("Предложение к игре"),
+        id="incoming_invitation_to_game",
+        when=(
+            ~F["main"]["is_user_in_game"]
+            & (F["main"]["amout_of_incoming_invitations_to_game"] == "one")
+        ),
+        on_click=on_incoming_invitation_to_game_clicked,
+    ),
+    SwitchTo(
+        Const("Предложения к игре"),
+        id="incoming_invitations_to_game",
+        when=F["main"]["amout_of_incoming_invitations_to_game"] == "many",
+        state=MainDialogState.incoming_invitations_to_game,
+    ),
     SwitchTo(
         Const("Начать игру"),
         id="start_game",
@@ -144,18 +172,6 @@ main_window = Window(
         id="cancel_game",
         when=F["main"]["is_user_in_game"],
         on_click=on_cancel_game_clicked,
-    ),
-    Button(
-        Const("Предложение к игре"),
-        id="incoming_invitation_to_game",
-        when=F["main"]["amout_of_incoming_invitations_to_game"] == "one",
-        on_click=on_incoming_invitation_to_game_clicked,
-    ),
-    SwitchTo(
-        Const("Предложения к игре"),
-        id="incoming_invitations_to_game",
-        when=F["main"]["amout_of_incoming_invitations_to_game"] == "many",
-        state=MainDialogState.incoming_invitations_to_game,
     ),
     SwitchTo(
         Const("Профиль"),

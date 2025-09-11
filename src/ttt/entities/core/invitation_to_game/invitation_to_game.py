@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum, auto
 from uuid import UUID
 
 from ttt.entities.core.game.game import Game, start_game
-from ttt.entities.core.user.user import User
+from ttt.entities.core.user.user import User, register_user
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.math.random import Random
 from ttt.entities.text.emoji import Emoji
@@ -20,6 +20,9 @@ class InvitationToGameState(Enum):
     accepted = auto()
 
 
+class InvitationSelfToGameError(Exception): ...
+
+
 class InvitationToGameStateIsNotActiveError(Exception): ...
 
 
@@ -29,13 +32,35 @@ class UserIsNotInvitingUserError(Exception): ...
 class UserIsNotInvitedUserError(Exception): ...
 
 
+class ExpiredInvitationToGameError(Exception): ...
+
+
+class NotExpiredInvitationToGameError(Exception): ...
+
+
 @dataclass
 class InvitationToGame:
+    """
+    :raises ttt.entities.core.invitation_to_game.InvitationSelfToGameError:
+    """
+
     id_: UUID
     inviting_user: User
     invited_user: User
     invitation_datetime: datetime
     state: InvitationToGameState
+
+    def __post_init__(self) -> None:
+        assert_(
+            self.inviting_user.id != self.invited_user.id,
+            else_=InvitationSelfToGameError,
+        )
+
+    def expiration_datetime(self) -> datetime:
+        return self.invitation_datetime + timedelta(hours=4)
+
+    def is_expired(self, current_datetime: datetime) -> bool:
+        return current_datetime >= self.expiration_datetime()
 
     def cancel(self, user_id: int, tracking: Tracking) -> None:
         """
@@ -131,13 +156,21 @@ class InvitationToGame:
 InvitationToGameAtomic = InvitationToGame
 
 
-def invite_to_game(
+def invite_to_game(  # noqa: PLR0913, PLR0917
     user: User,
-    invited_user: User,
+    invited_user: User | None,
+    invited_user_id: int,
     invitation_to_game_id: UUID,
     current_datetime: datetime,
     tracking: Tracking,
 ) -> "InvitationToGame":
+    """
+    :raises ttt.entities.core.invitation_to_game.InvitationSelfToGameError:
+    """
+
+    if invited_user is None:
+        invited_user = register_user(invited_user_id, tracking)
+
     invitation_to_game = InvitationToGame(
         id_=invitation_to_game_id,
         inviting_user=user,

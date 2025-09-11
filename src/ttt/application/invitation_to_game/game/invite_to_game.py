@@ -30,6 +30,7 @@ from ttt.application.matchmaking_queue.common.shared_matchmaking_queue import (
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.invitation_to_game.invitation_to_game import (
+    InvitationSelfToGameError,
     invite_to_game,
 )
 from ttt.entities.core.matchmaking_queue.matchmaking_queue import (
@@ -60,31 +61,28 @@ class InviteToGame:
                 await self.user_views.user_is_not_registered_view(user_id)
                 return
 
-            if invited_user is None:
-                await self.log.invited_user_is_not_registered_to_invite_to_game(
-                    user, invited_user_id,
-                )
-                await (
-                    self.views
-                    .invited_user_is_not_registered_to_invite_to_game_view(
-                        user, invited_user_id,
-                    )
-                )
-                return
-
-            invitation_to_game_id, current_datetime = gather(
+            (
+                invitation_to_game_id,
+                current_datetime,
+            ) = await gather(
                 self.uuids.random_uuid(),
                 self.clock.current_datetime(),
             )
 
-            tracking = Tracking()
-            invitation_to_game = invite_to_game(
-                user,
-                invited_user,
-                invitation_to_game_id,
-                current_datetime,
-                tracking,
-            )
+            try:
+                tracking = Tracking()
+                invitation_to_game = invite_to_game(
+                    user,
+                    invited_user,
+                    invited_user_id,
+                    invitation_to_game_id,
+                    current_datetime,
+                    tracking,
+                )
+            except InvitationSelfToGameError:
+                await self.log.invitation_self_to_game(user)
+                await self.views.invitation_self_to_game_view(user)
+                return
 
             try:
                 await self.map_(tracking)

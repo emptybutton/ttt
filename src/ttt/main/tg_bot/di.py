@@ -35,7 +35,9 @@ from ttt.application.invitation_to_game.game.cancel_invitation_to_game import Ca
 from ttt.application.invitation_to_game.game.invite_to_game import InviteToGame
 from ttt.application.invitation_to_game.game.ports.invitation_to_game_views import InvitationToGameViews
 from ttt.application.invitation_to_game.game.reject_invitation_to_game import RejectInvitationToGame
+from ttt.application.invitation_to_game.game.view_incoming_invitation_to_game import ViewIncomingInvitationToGame
 from ttt.application.invitation_to_game.game.view_incoming_invitations_to_game import ViewIncomingInvitationsToGame
+from ttt.application.invitation_to_game.game.view_one_incoming_invitation_to_game import ViewOneIncomingInvitationToGame
 from ttt.application.invitation_to_game.game.view_outcoming_invitations_to_game import ViewOutcomingInvitationsToGame
 from ttt.application.matchmaking_queue.common.matchmaking_queue_views import (
     CommonMatchmakingQueueViews,
@@ -385,4 +387,10 @@ class ApplicationProvider(Provider):
     )
     provide_view_incoming_invitations_to_game = provide(
         ViewIncomingInvitationsToGame, scope=Scope.REQUEST,
+    )
+    provide_view_incoming_invitation_to_game = provide(
+        ViewIncomingInvitationToGame, scope=Scope.REQUEST,
+    )
+    provide_view_one_incoming_invitation_to_game = provide(
+        ViewOneIncomingInvitationToGame, scope=Scope.REQUEST,
     )

@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from typing import Any
+from uuid import UUID
 
 from aiogram.types import CallbackQuery, User
-from aiogram_dialog import DialogManager, Window
+from aiogram_dialog import DialogManager, StartMode, Window
 from aiogram_dialog.widgets.kbd import (
     ScrollingGroup,
     Select,
@@ -13,6 +14,9 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
+from ttt.application.invitation_to_game.game.view_incoming_invitation_to_game import (
+    ViewIncomingInvitationToGame,
+)
 from ttt.application.invitation_to_game.game.view_incoming_invitations_to_game import (  # noqa: E501
     ViewIncomingInvitationsToGame,
 )
@@ -60,23 +64,30 @@ async def getter(
     return view.window_data()
 
 
+@inject
 async def on_invitation_selected(
-    _: CallbackQuery,
-    __: Select[Any],
+    callback_query: CallbackQuery,
+    _: Select[Any],
     manager: DialogManager,
     invitation_id_hex: str,
+    view_invitation_to_game: FromDishka[ViewIncomingInvitationToGame],
+    result_buffer: FromDishka[ResultBuffer],
 ) -> None:
-    for invitation in manager.dialog_data["main"]["invitations"]:
-        if invitation["id_hex"] == invitation_id_hex:
-            inviting_user_id = invitation["inviting_user_id"]
-            break
-    else:
-        raise ValueError
+    invitation_id = UUID(hex=invitation_id_hex)
+    await view_invitation_to_game(callback_query.from_user.id, invitation_id)
+    view = result_buffer.result
 
-    view = IncomingInvitationToGameView(
-        id_hex=invitation_id_hex,
-        inviting_user_id=inviting_user_id,
-    )
+    if not isinstance(view, IncomingInvitationToGameView | None):
+        raise TypeError
+
+    if view is None:
+        await manager.start(
+            MainDialogState.main,
+            {"hint": "😭 Предложение отклонено"},
+            StartMode.RESET_STACK,
+        )
+        return
+
     start_data = view.window_data()
     await manager.start(MainDialogState.incoming_invitation_to_game, start_data)
 
@@ -89,14 +100,10 @@ async def incoming_invitations_to_game_html(  # noqa: RUF029
 
 
 incoming_invitations_to_game_window = Window(
-    Const("😭 Пусто", when=F["main"]["invitations"].len() == 0),
-    FuncText(
-        incoming_invitations_to_game_html,
-        when=F["main"]["invitations"].len() != 0,
-    ),
+    FuncText(incoming_invitations_to_game_html),
     Select(
         Format("{item[inviting_user_id]}"),
-        id="not_paginated_invitations",
+        id="n",
         items=F["main"]["invitations"],
         item_id_getter=lambda it: it["id_hex"],
         on_click=on_invitation_selected,
@@ -105,14 +112,14 @@ incoming_invitations_to_game_window = Window(
     ScrollingGroup(
         Select(
             Format("{item[inviting_user_id]}"),
-            id="paginated_invitations",
+            id="n",
             items=F["main"]["invitations"],
             item_id_getter=lambda it: it["id_hex"],
             on_click=on_invitation_selected,
         ),
         width=4,
         height=4,
-        id="paginated_invitations",
+        id="y",
         when=F["main"]["need_to_paginate"],
     ),
 
