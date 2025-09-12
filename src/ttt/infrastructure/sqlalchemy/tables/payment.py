@@ -44,7 +44,7 @@ class TablePaymentState(StrEnum):
 payment_state = postgresql.ENUM(TablePaymentState, name="payment_state")
 
 
-class TablePayment(Base):
+class TablePayment(Base[Payment]):
     __tablename__ = "payments"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -55,7 +55,7 @@ class TablePayment(Base):
     success_gateway_id: Mapped[str | None]
     state: Mapped[TablePaymentState] = mapped_column(payment_state)
 
-    def entity(self) -> Payment:
+    def __entity__(self) -> Payment:
         if self.success_id is None or self.success_gateway_id is None:
             success = None
         else:

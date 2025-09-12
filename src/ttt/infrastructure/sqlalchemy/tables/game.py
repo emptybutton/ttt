@@ -60,13 +60,13 @@ class TableAiType(StrEnum):
 ai_type = postgresql.ENUM(TableAiType, name="ai_type")
 
 
-class TableAi(Base):
+class TableAi(Base[Ai]):
     __tablename__ = "ais"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     type: Mapped[TableAiType] = mapped_column(ai_type)
 
-    def entity(self) -> Ai:
+    def __entity__(self) -> Ai:
         return Ai(self.id, self.type.entity())
 
     @classmethod
@@ -74,7 +74,7 @@ class TableAi(Base):
         return TableAi(id=it.id, type=TableAiType.of(it.type))
 
 
-class TableCell(Base):
+class TableCell(Base[Cell]):
     __tablename__ = "cells"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -94,7 +94,7 @@ class TableCell(Base):
         index=True,
     )
 
-    def entity(self) -> Cell:
+    def __entity__(self) -> Cell:
         return Cell(
             self.id,
             self.game_id,
@@ -147,7 +147,7 @@ class TableGameState(StrEnum):
 game_state = postgresql.ENUM(TableGameState, name="game_state")
 
 
-class TableGame(Base):
+class TableGame(Base[Game]):
     __tablename__ = "games"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -274,7 +274,7 @@ class TableGame(Base):
         ),
     )
 
-    def entity(self) -> Game:
+    def __entity__(self) -> Game:
         board = self._board(it.entity() for it in self.cells)
 
         return Game(

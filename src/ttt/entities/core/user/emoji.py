@@ -5,7 +5,7 @@ from uuid import UUID
 from ttt.entities.text.emoji import Emoji
 
 
-@dataclass(frozen=True)
+@dataclass
 class UserEmoji:
     id: UUID
     user_id: int

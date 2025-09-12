@@ -15,7 +15,7 @@ from ttt.entities.tools.tracking import Tracking
 class InvalidStarsForStarsPurchaseError(Exception): ...
 
 
-@dataclass(frozen=True)
+@dataclass
 class StarsPurchaseAlreadyCompletedError(Exception):
     is_cancelled: bool
 

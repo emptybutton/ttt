@@ -11,6 +11,7 @@ class Secrets(BaseSettings):
     payments_token: str = Field(repr=False)
     gemini_api_key: str = Field(repr=False)
     sentry_dsn: str = Field(repr=False)
+    admin_token: str = Field(repr=False)
 
     @classmethod
     def settings_customise_sources(

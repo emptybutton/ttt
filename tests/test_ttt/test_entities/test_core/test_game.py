@@ -443,6 +443,7 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             number_of_draws=0,
             number_of_defeats=0,
             game_location=None,
+            admin_right=None,
         )
 
     if object_ == "user2":
@@ -460,6 +461,7 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             number_of_draws=0,
             number_of_defeats=1,
             game_location=None,
+            admin_right=None,
         )
 
     if object_ == "extra_move":
@@ -544,6 +546,7 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             number_of_draws=1,
             number_of_defeats=0,
             game_location=None,
+            admin_right=None,
         )
 
     if object_ == "user2":
@@ -561,6 +564,7 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             number_of_draws=1,
             number_of_defeats=0,
             game_location=None,
+            admin_right=None,
         )
 
     if object_ == "extra_move":
@@ -645,6 +649,7 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             number_of_draws=0,
             number_of_defeats=0,
             game_location=None,
+            admin_right=None,
         )
 
     if object_ == "user2":
@@ -662,6 +667,7 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             number_of_draws=0,
             number_of_defeats=1,
             game_location=None,
+            admin_right=None,
         )
 
     if object_ == "extra_move":

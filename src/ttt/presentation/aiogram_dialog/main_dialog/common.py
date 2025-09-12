@@ -1,4 +1,3 @@
-
 from aiogram.fsm.state import State, StatesGroup
 
 
@@ -8,8 +7,12 @@ class MainDialogState(StatesGroup):
     profile = State()
     game_mode_to_start_game = State()
     ai_type_to_start_game = State()
+    outcoming_invitations_to_game = State()
+    incoming_invitations_to_game = State()
+    incoming_invitation_to_game = State()
     game = State()
     completed_game = State()
     shop = State()
     emoji_shop = State()
     stars_shop = State()
+    notification = State()

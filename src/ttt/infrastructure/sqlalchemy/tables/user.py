@@ -1,21 +1,29 @@
 from datetime import datetime
+from enum import StrEnum
 from uuid import UUID
 
 from sqlalchemy import CHAR, BigInteger, ForeignKey, Index
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ttt.entities.core.user.account import Account
+from ttt.entities.core.user.admin_right import (
+    AdminRight,
+    AdminRightViaAdminToken,
+    AdminRightViaOtherAdmin,
+)
 from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.last_game import LastGame
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.user import User, UserAtomic
 from ttt.entities.text.emoji import Emoji
+from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.sqlalchemy.tables.common import Base
 from ttt.infrastructure.sqlalchemy.tables.payment import TablePayment
 
 
-class TableUserEmoji(Base):
+class TableUserEmoji(Base[UserEmoji]):
     __tablename__ = "user_emojis"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -26,7 +34,7 @@ class TableUserEmoji(Base):
     emoji_str: Mapped[str] = mapped_column(CHAR(1))
     datetime_of_purchase: Mapped[datetime]
 
-    def entity(self) -> UserEmoji:
+    def __entity__(self) -> UserEmoji:
         return UserEmoji(
             self.id,
             self.user_id,
@@ -44,7 +52,7 @@ class TableUserEmoji(Base):
         )
 
 
-class TableStarsPurchase(Base):
+class TableStarsPurchase(Base[StarsPurchase]):
     __tablename__ = "stars_purchases"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -70,7 +78,7 @@ class TableStarsPurchase(Base):
         ),
     )
 
-    def entity(self) -> StarsPurchase:
+    def __entity__(self) -> StarsPurchase:
         return StarsPurchase(
             id_=self.id,
             user_id=self.user_id,
@@ -88,7 +96,7 @@ class TableStarsPurchase(Base):
         )
 
 
-class TableLastGame(Base):
+class TableLastGame(Base[LastGame]):
     __tablename__ = "last_games"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
@@ -99,7 +107,7 @@ class TableLastGame(Base):
         ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
     )
 
-    def entity(self) -> LastGame:
+    def __entity__(self) -> LastGame:
         return LastGame(
             id=self.id,
             user_id=self.user_id,
@@ -115,7 +123,26 @@ class TableLastGame(Base):
         )
 
 
-class TableUser(Base):
+class TableAdminRight(StrEnum):
+    via_admin_token = "via_admin_token"  # noqa: S105
+    via_other_admin = "via_other_admin"
+
+    def entity(
+        self, admin_right_via_other_admin_admin_id: int | None,
+    ) -> AdminRight:
+        match self:
+            case TableAdminRight.via_admin_token:
+                return AdminRightViaAdminToken()
+            case TableAdminRight.via_other_admin:
+                return AdminRightViaOtherAdmin(
+                    admin_id=not_none(admin_right_via_other_admin_admin_id),
+                )
+
+
+admin_right = postgresql.ENUM(TableAdminRight, name="admin_right")
+
+
+class TableUser(Base[User]):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(
@@ -136,6 +163,10 @@ class TableUser(Base):
         ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
+    admin_right: Mapped[TableAdminRight | None] = mapped_column(admin_right)
+    admin_right_via_other_admin_admin_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
+    )
 
     emojis: Mapped[list[TableUserEmoji]] = relationship(
         lazy="selectin",
@@ -150,7 +181,20 @@ class TableUser(Base):
         foreign_keys=[TableLastGame.user_id],
     )
 
-    def entity(self) -> User:
+    __table_args__ = (
+        Index(
+            "ix_users_admin_right_via_other_admin_admin_id",
+            admin_right_via_other_admin_admin_id,
+            postgresql_where=(admin_right_via_other_admin_admin_id.is_not(None)),
+        ),
+        Index(
+            "ix_users_admin_right",
+            admin_right,
+            postgresql_where=(admin_right.is_not(None)),
+        ),
+    )
+
+    def __entity__(self) -> User:
         if self.game_location_game_id is not None:
             location = UserGameLocation(
                 self.id,
@@ -158,6 +202,13 @@ class TableUser(Base):
             )
         else:
             location = None
+
+        if self.admin_right is not None:
+            admin_right = self.admin_right.entity(
+                self.admin_right_via_other_admin_admin_id,
+            )
+        else:
+            admin_right = None
 
         return User(
             id=self.id,
@@ -171,6 +222,7 @@ class TableUser(Base):
             number_of_draws=self.number_of_draws,
             number_of_defeats=self.number_of_defeats,
             game_location=location,
+            admin_right=admin_right,
         )
 
     @classmethod
@@ -179,6 +231,17 @@ class TableUser(Base):
             game_location_game_id = None
         else:
             game_location_game_id = it.game_location.game_id
+
+        match it.admin_right:
+            case None:
+                admin_right = None
+                admin_right_via_other_admin_admin_id = None
+            case AdminRightViaAdminToken():
+                admin_right = TableAdminRight.via_admin_token
+                admin_right_via_other_admin_admin_id = None
+            case AdminRightViaOtherAdmin(admin_id):
+                admin_right = TableAdminRight.via_other_admin
+                admin_right_via_other_admin_admin_id = admin_id
 
         return TableUser(
             id=it.id,
@@ -189,6 +252,10 @@ class TableUser(Base):
             number_of_draws=it.number_of_draws,
             number_of_defeats=it.number_of_defeats,
             game_location_game_id=game_location_game_id,
+            admin_right=admin_right,
+            admin_right_via_other_admin_admin_id=(
+                admin_right_via_other_admin_admin_id
+            ),
         )
 
 

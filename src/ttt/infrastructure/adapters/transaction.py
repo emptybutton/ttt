@@ -15,9 +15,20 @@ class InPostgresTransaction(Transaction):
         init=False,
         default=None,
     )
+    _nesting_counter: int = field(
+        init=False,
+        default=0,
+    )
 
     async def __aenter__(self) -> Self:
-        self._transaction = await self._session.begin()
+        self._nesting_counter += 1
+
+        if self._transaction is None:
+            self._transaction = await self._session.begin()
+        elif not self._transaction.is_active:
+            await self._session.rollback()
+            self._transaction = await self._session.begin()
+
         return self
 
     async def __aexit__(
@@ -26,5 +37,10 @@ class InPostgresTransaction(Transaction):
         error: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        transaction = not_none(self._transaction)
-        return await transaction.__aexit__(error_type, error, traceback)
+        self._nesting_counter -= 1
+
+        if self._nesting_counter == 0:
+            transaction = not_none(self._transaction)
+            await transaction.__aexit__(error_type, error, traceback)
+            self._transaction = None
+            return
