@@ -28,6 +28,7 @@ from ttt.entities.core.game.player_result import (
     PlayerLoss,
     PlayerWin,
 )
+from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.user import (
     User,
     UserAlreadyInGameError,
@@ -403,6 +404,9 @@ class Game:
             case _:
                 raise ValueError(self.state, player_id)
 
+    def locations(self) -> tuple[UserGameLocation, ...]:
+        return tuple(not_none(user.game_location) for user in self._users())
+
     def _make_random_ai_move(
         self,
         current_player: Ai,
@@ -532,7 +536,7 @@ class Game:
 GameAtomic = Game | Cell | Ai
 
 
-@dataclass(frozen=True)
+@dataclass
 class UsersAlreadyInGameError(Exception):
     users: Sequence[User]
 

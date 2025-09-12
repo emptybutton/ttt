@@ -4,7 +4,7 @@ from uuid import UUID
 from ttt.entities.tools.tracking import Tracking
 
 
-@dataclass(frozen=True)
+@dataclass
 class LastGame:
     id: UUID
     user_id: int

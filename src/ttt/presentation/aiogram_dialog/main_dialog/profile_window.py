@@ -11,10 +11,12 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from ttt.application.user.view_user import ViewUser
+from ttt.entities.core.user.rank import rank_for_rating
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.result_buffer import ResultBuffer
 from ttt.presentation.texts import (
+    rank_title,
     short_float_text,
 )
 
@@ -26,6 +28,7 @@ class UserProfileView(EncodableToWindowData):
     number_of_defeats: int
     account_stars: int
     rating_text: str
+    rank_text: str
 
     @classmethod
     def of(
@@ -42,6 +45,7 @@ class UserProfileView(EncodableToWindowData):
             number_of_defeats=number_of_defeats,
             account_stars=account_stars,
             rating_text=short_float_text(rating),
+            rank_text=rank_title(rank_for_rating(rating)),
         )
 
 
@@ -65,6 +69,7 @@ profile_window = Window(
         Const(" "),
         Format("🌟 Звёзд: {main[account_stars]}"),
         Format("🏅 Рейтинг: {main[rating_text]}"),
+        Format("⚔️ Ранг: {main[rank_text]}"),
         Format("🏆 Побед: {main[number_of_wins]}"),
         Format("💀 Поражений: {main[number_of_defeats]}"),
         Format("🕊️ Ничьих: {main[number_of_draws]}"),

@@ -22,6 +22,7 @@ def test_create_user(tracking: Tracking, object_: str) -> None:
             number_of_draws=0,
             number_of_defeats=0,
             game_location=None,
+            admin_right=None,
         )
 
     if object_ == "tracking":

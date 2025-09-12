@@ -5,11 +5,17 @@ from uuid import UUID
 
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.account import Account
+from ttt.entities.core.user.admin_right import (
+    AdminRight,
+    AdminRightViaAdminToken,
+    AdminRightViaOtherAdmin,
+)
 from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.last_game import LastGame, last_game
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.loss import UserLoss
+from ttt.entities.core.user.rank import Rank, rank_for_rating
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.elo.rating import (
@@ -25,21 +31,22 @@ from ttt.entities.finance.payment.payment import (
 from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.math.random import Random, deviated_int
 from ttt.entities.text.emoji import Emoji
-from ttt.entities.tools.assertion import assert_
+from ttt.entities.text.token import Token
+from ttt.entities.tools.assertion import assert_, not_none
 from ttt.entities.tools.tracking import Tracking
 
 
-@dataclass(frozen=True)
+@dataclass
 class UserAlreadyInGameError(Exception):
     user: "User"
 
 
-@dataclass(frozen=True)
+@dataclass
 class UserNotInGameError(Exception):
     user: "User"
 
 
-@dataclass(frozen=True)
+@dataclass
 class NotEnoughStarsError(Exception):
     stars_to_become_enough: Stars
 
@@ -56,7 +63,28 @@ class NoPurchaseError(Exception): ...
 class UserAlreadyLeftGameError(Exception): ...
 
 
-@dataclass
+class UserAlreadyAdminError(Exception): ...
+
+
+class OtherUserAlreadyAdminError(Exception): ...
+
+
+class OtherUserIsNotAuthorizedAsAdminViaOtherAdminError(Exception): ...
+
+
+class AdminTokenMismatchError(Exception): ...
+
+
+class NotAdminError(Exception): ...
+
+
+class NotAuthorizedAsAdminViaAdminTokenError(Exception): ...
+
+
+class UserAlredyAdminToAuthorizeAsAdminError(Exception): ...
+
+
+@dataclass  # noqa: PLR0904
 class User:
     id: int
     account: Account
@@ -65,6 +93,7 @@ class User:
     last_games: list[LastGame]
     selected_emoji_id: UUID | None
     rating: EloRating
+    admin_right: AdminRight | None
 
     number_of_wins: int
     number_of_draws: int
@@ -72,6 +101,139 @@ class User:
     game_location: UserGameLocation | None
 
     emoji_cost: ClassVar[Stars] = 1000
+
+    def rank(self) -> Rank:
+        return rank_for_rating(self.rating)
+
+    def is_admin(self) -> bool:
+        return is_user_admin(self.admin_right)
+
+    def authorize_as_admin(
+        self,
+        user_admin_token: Token,
+        original_admin_token: Token,
+        tracking: Tracking,
+    ) -> None:
+        """
+        :raises ttt.entities.core.user.user.UserAlreadyAdminError:
+        :raises ttt.entities.core.user.user.AdminTokenMismatchError:
+        """
+
+        assert_(not self.is_admin(), else_=UserAlreadyAdminError)
+        assert_(
+            user_admin_token == original_admin_token,
+            else_=AdminTokenMismatchError,
+        )
+
+        self.admin_right = AdminRightViaAdminToken()
+        tracking.register_mutated(self)
+
+    def relinquish_admin_right(
+        self,
+        tracking: Tracking,
+    ) -> None:
+        """
+        :raises ttt.entities.core.user.user.NotAdminError:
+        """
+
+        assert_(self.is_admin(), else_=NotAdminError)
+
+        self.admin_right = None
+        tracking.register_mutated(self)
+
+    def authorize_user_as_admin(
+        self,
+        user: "User | None",
+        user_id: int,
+        tracking: Tracking,
+    ) -> None:
+        """
+        :raises ttt.entities.core.user.user.NotAuthorizedAsAdminViaAdminTokenError:
+        :raises ttt.entities.core.user.user.OtherUserAlreadyAdminError:
+        """  # noqa: E501
+
+        assert_(
+            isinstance(self.admin_right, AdminRightViaAdminToken),
+            else_=NotAuthorizedAsAdminViaAdminTokenError,
+        )
+
+        if user is None:
+            user = register_user(user_id, tracking)
+        else:
+            assert_(not user.is_admin(), else_=OtherUserAlreadyAdminError)
+
+        user.admin_right = AdminRightViaOtherAdmin(admin_id=self.id)
+        tracking.register_mutated(user)
+
+    def deauthorize_user_as_admin(
+        self, user: "User | None", tracking: Tracking,
+    ) -> None:
+        """
+        :raises ttt.entities.core.user.user.NotAuthorizedAsAdminViaAdminTokenError:
+        :raises ttt.entities.core.user.user.OtherUserIsNotAuthorizedAsAdminViaOtherAdminError:
+        """  # noqa: E501
+
+        assert_(
+            isinstance(self.admin_right, AdminRightViaAdminToken),
+            else_=NotAuthorizedAsAdminViaAdminTokenError,
+        )
+
+        user = not_none(
+            user, else_=OtherUserIsNotAuthorizedAsAdminViaOtherAdminError,
+        )
+        assert_(
+            isinstance(user.admin_right, AdminRightViaOtherAdmin),
+            else_=OtherUserIsNotAuthorizedAsAdminViaOtherAdminError,
+        )
+
+        user.admin_right = None
+        tracking.register_mutated(user)
+
+    def change_user_account(
+        self,
+        user: "User | None",
+        user_id: int,
+        user_account_stars_vector: Stars,
+        tracking: Tracking,
+    ) -> "User":
+        """
+        :raises ttt.entities.core.user.user.NotAdminError:
+        :raises ttt.entities.user.account.NegativeAccountError:
+        """
+
+        assert_(self.is_admin(), else_=NotAdminError)
+
+        if user is None:
+            user = register_user(user_id, tracking)
+
+        user.account = user.account.map(
+            lambda stars: stars + user_account_stars_vector,
+        )
+        tracking.register_mutated(user)
+
+        return user
+
+    def set_user_account(
+        self,
+        user: "User | None",
+        user_id: int,
+        user_account_stars: Stars,
+        tracking: Tracking,
+    ) -> "User":
+        """
+        :raises ttt.entities.core.user.user.NotAdminError:
+        :raises ttt.entities.user.account.NegativeAccountError:
+        """
+
+        assert_(self.is_admin(), else_=NotAdminError)
+
+        if user is None:
+            user = register_user(user_id, tracking)
+
+        user.account = user.account.map(lambda _: user_account_stars)
+        tracking.register_mutated(user)
+
+        return user
 
     def games_played(self) -> int:
         return len(self.last_games)
@@ -435,6 +597,7 @@ def register_user(user_id: int, tracking: Tracking) -> User:
         number_of_draws=0,
         number_of_defeats=0,
         game_location=None,
+        admin_right=None,
     )
     tracking.register_new(user)
 
@@ -443,3 +606,11 @@ def register_user(user_id: int, tracking: Tracking) -> User:
 
 def is_user_in_game(game_location: UserGameLocation | None) -> bool:
     return game_location is not None
+
+
+def is_user_admin(admin_right: AdminRight | None) -> bool:
+    return admin_right is not None
+
+
+def user_stars(stars: Stars | None) -> Stars:
+    return 0 if stars is None else stars

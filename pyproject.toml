@@ -1,6 +1,6 @@
 [project]
 name = "ttt"
-version = "0.3.0"
+version = "0.4.0"
 description = "Tic-Tac-Toe Telegram Bot"
 authors = [
     {name = "Alexander Smolin", email = "88573504+emptybutton@users.noreply.github.com"}
@@ -74,6 +74,9 @@ indent-width = 4
 
 [tool.ruff.lint.isort]
 lines-after-imports = 2
+
+[tool.ruff.lint.pylint]
+allow-dunder-method-names = ["__entity__"]
 
 [tool.ruff.lint]
 select = ["ALL"]

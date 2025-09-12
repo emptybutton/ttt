@@ -4,7 +4,7 @@ from uuid import UUID
 
 from aiogram import Bot
 from aiogram.types import PreCheckoutQuery
-from aiogram_dialog import BgManagerFactory, ShowMode, StartMode
+from aiogram_dialog import ShowMode, StartMode
 
 from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.stars_purchase.ports.stars_purchase_payment_gateway import (  # noqa: E501
@@ -14,26 +14,25 @@ from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.buffer import Buffer
 from ttt.presentation.aiogram.user.invoices import stars_invoce
+from ttt.presentation.aiogram_dialog.common.dialog_manager_for_user import (
+    DialogManagerForUser,
+)
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 
 
 @dataclass
-class AiogramInAndBufferOutStarsPurchasePaymentGateway(
-    StarsPurchasePaymentGateway,
-):
+class AiogramPaymentGateway(StarsPurchasePaymentGateway):
     _pre_checkout_query: PreCheckoutQuery | None
     _buffer: Buffer[PaidStarsPurchasePayment]
     _bot: Bot
     _payments_token: str = field(repr=False)
-    _bg_dialog_manager_factory: BgManagerFactory
+    _dialog_manager_for_user: DialogManagerForUser
 
     async def send_invoice(
         self,
         purchase: StarsPurchase,
     ) -> None:
-        manager = self._bg_dialog_manager_factory.bg(
-            self._bot, purchase.user_id, purchase.user_id,
-        )
+        manager = self._dialog_manager_for_user(purchase.user_id)
 
         await stars_invoce(self._bot, purchase, self._payments_token)
         await manager.start(

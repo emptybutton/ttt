@@ -7,7 +7,7 @@ from aiogram_dialog.widgets.kbd import (
     Row,
     SwitchTo,
 )
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
@@ -15,7 +15,10 @@ from magic_filter import F
 from ttt.application.user.stars_purchase.start_stars_purchase import (
     StartStarsPurchase,
 )
-from ttt.presentation.aiogram_dialog.common.wigets.hint import Hint
+from ttt.presentation.aiogram_dialog.common.wigets.hint import hint
+from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
+    OneTimekey,
+)
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 
 
@@ -84,9 +87,10 @@ stars_shop_window = Window(
         when=~F["has_start_hint"],
     ),
 
-    Hint(Format("{start_data[hint]}")),
+    hint(key="hint"),
 
     SwitchTo(Const("Назад"), id="back", state=MainDialogState.shop),
+    OneTimekey("hint"),
     state=MainDialogState.stars_shop,
     getter=stars_shop_getter,
 )

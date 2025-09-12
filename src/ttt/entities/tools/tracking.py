@@ -35,6 +35,7 @@ class Tracking[T = Any]:
     def register_unused(self, it: T) -> None:
         if it in self.new:
             self.new.remove(it)
+            return
 
         if it in self.mutated:
             self.mutated.remove(it)
