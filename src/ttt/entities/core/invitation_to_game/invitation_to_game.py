@@ -45,7 +45,7 @@ class InvitationToGame:
     invitation_datetime: datetime
     state: InvitationToGameState
 
-    lifetime: ClassVar = timedelta(hours=4)
+    lifetime: ClassVar[timedelta] = timedelta(hours=4)
 
     def __post_init__(self) -> None:
         assert_(
@@ -54,7 +54,7 @@ class InvitationToGame:
         )
 
     def expiration_datetime(self) -> datetime:
-        return self.invitation_datetime + self.lifetime
+        return self.invitation_datetime + InvitationToGame.lifetime
 
     def is_expired(self, current_datetime: datetime) -> bool:
         return current_datetime >= self.expiration_datetime()

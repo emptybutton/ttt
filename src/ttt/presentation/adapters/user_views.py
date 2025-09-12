@@ -62,6 +62,7 @@ from ttt.presentation.aiogram_dialog.main_dialog.emojis_window import (
     EmojiMenuView,
 )
 from ttt.presentation.aiogram_dialog.main_dialog.main_window import (
+    AmoutOfIncomingInvitationsToGame,
     MainMenuView,
 )
 from ttt.presentation.aiogram_dialog.main_dialog.profile_window import (
@@ -149,6 +150,8 @@ class AiogramCommonUserViews(CommonUserViews):
         incoming_invitations_to_game = await self._session.scalar(
             incoming_invitations_to_game_stmt,
         )
+
+        amout_of_incoming_invitations_to_game: AmoutOfIncomingInvitationsToGame
 
         if (
             incoming_invitations_to_game == 0

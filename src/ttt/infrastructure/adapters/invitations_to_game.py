@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from sqlalchemy.dialects.postgresql.base import select
+from sqlalchemy.dialects.postgresql.base import (  # type: ignore[attr-defined]
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.invitation_to_game.game.ports.invitations_to_game import (
