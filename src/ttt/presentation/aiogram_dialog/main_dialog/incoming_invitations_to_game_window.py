@@ -102,7 +102,7 @@ async def incoming_invitations_to_game_html(  # noqa: RUF029
 incoming_invitations_to_game_window = Window(
     FuncText(incoming_invitations_to_game_html),
     Select(
-        Format("{item[inviting_user_id]}"),
+        Format("От {item[inviting_user_id]}"),
         id="n",
         items=F["main"]["invitations"],
         item_id_getter=lambda it: it["id_hex"],
@@ -111,7 +111,7 @@ incoming_invitations_to_game_window = Window(
     ),
     ScrollingGroup(
         Select(
-            Format("{item[inviting_user_id]}"),
+            Format("От {item[inviting_user_id]}"),
             id="n",
             items=F["main"]["invitations"],
             item_id_getter=lambda it: it["id_hex"],

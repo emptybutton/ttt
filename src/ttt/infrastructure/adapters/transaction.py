@@ -25,6 +25,9 @@ class InPostgresTransaction(Transaction):
 
         if self._transaction is None:
             self._transaction = await self._session.begin()
+        elif not self._transaction.is_active:
+            await self._session.rollback()
+            self._transaction = await self._session.begin()
 
         return self
 

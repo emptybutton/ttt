@@ -83,7 +83,7 @@ class TableInvitationToGame(Base[InvitationToGame]):
         ),
         index=True,
     )
-    invitation_datetime: Mapped[datetime]
+    invitation_datetime: Mapped[datetime] = mapped_column()
     state: Mapped[TableInvitationToGameState] = mapped_column(
         invitation_to_game_state,
     )
@@ -102,6 +102,11 @@ class TableInvitationToGame(Base[InvitationToGame]):
             invited_user_id,
             postgresql_where=(state == TableInvitationToGameState.active.value),
             unique=True,
+        ),
+        Index(
+            "ix_invitations_to_game_invitation_datetime",
+            invitation_datetime,
+            postgresql_where=(state == TableInvitationToGameState.active.value),
         ),
     )
 

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum, auto
+from typing import ClassVar
 from uuid import UUID
 
 from ttt.entities.core.game.game import Game, start_game
@@ -32,12 +33,6 @@ class UserIsNotInvitingUserError(Exception): ...
 class UserIsNotInvitedUserError(Exception): ...
 
 
-class ExpiredInvitationToGameError(Exception): ...
-
-
-class NotExpiredInvitationToGameError(Exception): ...
-
-
 @dataclass
 class InvitationToGame:
     """
@@ -50,6 +45,8 @@ class InvitationToGame:
     invitation_datetime: datetime
     state: InvitationToGameState
 
+    lifetime: ClassVar = timedelta(hours=4)
+
     def __post_init__(self) -> None:
         assert_(
             self.inviting_user.id != self.invited_user.id,
@@ -57,7 +54,7 @@ class InvitationToGame:
         )
 
     def expiration_datetime(self) -> datetime:
-        return self.invitation_datetime + timedelta(hours=4)
+        return self.invitation_datetime + self.lifetime
 
     def is_expired(self, current_datetime: datetime) -> bool:
         return current_datetime >= self.expiration_datetime()
@@ -77,10 +74,6 @@ class InvitationToGame:
         )
 
         self.state = InvitationToGameState.cancelled_by_user
-        tracking.register_mutated(self)
-
-    def auto_cancel(self, tracking: Tracking) -> None:
-        self.state = InvitationToGameState.auto_cancelled
         tracking.register_mutated(self)
 
     def reject(self, user_id: int, tracking: Tracking) -> None:
@@ -151,6 +144,10 @@ class InvitationToGame:
             player2_random_emoji,
             tracking,
         )
+
+
+def invitation_to_game_datetime(expiration_datetime: datetime) -> datetime:
+    return expiration_datetime - InvitationToGame.lifetime
 
 
 InvitationToGameAtomic = InvitationToGame

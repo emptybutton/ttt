@@ -1,3 +1,4 @@
+from asyncio import gather
 from collections.abc import Sequence
 from dataclasses import dataclass
 from uuid import UUID
@@ -245,4 +246,41 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
             chat_id=user_id,
             user_id=user_id,
             invitation_to_game_id=invitation_to_game_id,
+        )
+
+    async def invitations_to_game_auto_cancelled(
+        self,
+        ids: Sequence[UUID],
+        /,
+    ) -> None:
+        await gather(*(
+            self._logger.ainfo(
+                "invitation_to_game_auto_cancelled",
+                invitation_to_game_id=invitation_to_game_id,
+            )
+            for invitation_to_game_id in ids
+        ))
+
+    async def no_invitation_to_game_to_auto_cancel(
+        self, invitation_to_game_id: UUID, /,
+    ) -> None:
+        await self._logger.awarning(
+            "no_invitation_to_game_to_auto_cancel",
+            invitation_to_game_id=invitation_to_game_id,
+        )
+
+    async def not_expired_invitation_to_game_to_auto_cancel(
+        self, invitation_to_game: InvitationToGame, /,
+    ) -> None:
+        await self._logger.aerror(
+            "not_expired_invitation_to_game_to_auto_cancel",
+            invitation_to_game_id=invitation_to_game.id_,
+        )
+
+    async def invitation_to_game_state_is_not_active_to_game_to_auto_cancel(
+        self, invitation_to_game: InvitationToGame, /,
+    ) -> None:
+        await self._logger.ainfo(
+            "invitation_to_game_state_is_not_active_to_game_to_auto_cancel",
+            invitation_to_game_id=invitation_to_game.id_,
         )

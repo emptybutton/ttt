@@ -33,6 +33,7 @@ from ttt.application.game.game.view_game import ViewGame
 from ttt.application.invitation_to_game.game.accpet_invitation_to_game import (
     AcceptInvitationToGame,
 )
+from ttt.application.invitation_to_game.game.auto_cancel_invitations_to_game import AutoCancelInvitationsToGame
 from ttt.application.invitation_to_game.game.cancel_invitation_to_game import (
     CancelInvitationToGame,
 )
@@ -302,6 +303,17 @@ class PresentationProvider(Provider):
                 return None
 
     @provide(scope=Scope.REQUEST)
+    def provide_callback_query(
+        self,
+        event: TelegramObject | None,
+    ) -> CallbackQuery | None:
+        match event:
+            case CallbackQuery():
+                return event
+            case _:
+                return None
+
+    @provide(scope=Scope.REQUEST)
     def provide_fsm_context(
         self,
         middleware_data: AiogramMiddlewareData,
@@ -393,6 +405,9 @@ class ApplicationProvider(Provider):
     )
     provide_cancel_invitation_to_game = provide(
         CancelInvitationToGame, scope=Scope.REQUEST,
+    )
+    provide_auto_cancel_invitations_to_game = provide(
+        AutoCancelInvitationsToGame, scope=Scope.REQUEST,
     )
     provide_invite_to_game = provide(
         InviteToGame, scope=Scope.REQUEST,
