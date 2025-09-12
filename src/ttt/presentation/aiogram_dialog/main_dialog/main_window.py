@@ -14,7 +14,7 @@ from magic_filter import F
 
 from ttt.application.game.game.cancel_game import CancelGame
 from ttt.application.game.game.view_game import ViewGame
-from ttt.application.invitation_to_game.game.view_one_incoming_invitation_to_game import (
+from ttt.application.invitation_to_game.game.view_one_incoming_invitation_to_game import (  # noqa: E501
     ViewOneIncomingInvitationToGame,
 )
 from ttt.application.user.view_main_menu import ViewMainMenu
@@ -30,7 +30,7 @@ from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.aiogram_dialog.main_dialog.game_window import (
     ActiveGameView,
 )
-from ttt.presentation.aiogram_dialog.main_dialog.incoming_invitation_to_game_window import (
+from ttt.presentation.aiogram_dialog.main_dialog.incoming_invitation_to_game_window import (  # noqa: E501
     IncomingInvitationToGameView,
 )
 from ttt.presentation.result_buffer import ResultBuffer

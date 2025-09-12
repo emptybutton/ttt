@@ -5,7 +5,7 @@ from uuid import UUID
 
 from structlog.types import FilteringBoundLogger
 
-from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import (
+from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import (  # noqa: E501
     InvitationToGameLog,
 )
 from ttt.entities.core.game.game import Game

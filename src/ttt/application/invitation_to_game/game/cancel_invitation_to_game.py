@@ -3,10 +3,10 @@ from uuid import UUID
 
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.transaction import Transaction
-from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import (
+from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import (  # noqa: E501
     InvitationToGameLog,
 )
-from ttt.application.invitation_to_game.game.ports.invitation_to_game_views import (
+from ttt.application.invitation_to_game.game.ports.invitation_to_game_views import (  # noqa: E501
     InvitationToGameViews,
 )
 from ttt.application.invitation_to_game.game.ports.invitations_to_game import (

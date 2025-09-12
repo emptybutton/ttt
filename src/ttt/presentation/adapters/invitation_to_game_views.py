@@ -207,7 +207,9 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
         invitation_to_game: InvitationToGame,
         /,
     ) -> None:
-        manager = self._dialog_manager_for_user(invitation_to_game.inviting_user.id)
+        manager = self._dialog_manager_for_user(
+            invitation_to_game.inviting_user.id,
+        )
         await manager.start(
             MainDialogState.outcoming_invitations_to_game,
             {},

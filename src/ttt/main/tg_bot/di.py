@@ -33,27 +33,29 @@ from ttt.application.game.game.view_game import ViewGame
 from ttt.application.invitation_to_game.game.accpet_invitation_to_game import (
     AcceptInvitationToGame,
 )
-from ttt.application.invitation_to_game.game.auto_cancel_invitations_to_game import AutoCancelInvitationsToGame
+from ttt.application.invitation_to_game.game.auto_cancel_invitations_to_game import (  # noqa: E501
+    AutoCancelInvitationsToGame,
+)
 from ttt.application.invitation_to_game.game.cancel_invitation_to_game import (
     CancelInvitationToGame,
 )
 from ttt.application.invitation_to_game.game.invite_to_game import InviteToGame
-from ttt.application.invitation_to_game.game.ports.invitation_to_game_views import (
+from ttt.application.invitation_to_game.game.ports.invitation_to_game_views import (  # noqa: E501
     InvitationToGameViews,
 )
 from ttt.application.invitation_to_game.game.reject_invitation_to_game import (
     RejectInvitationToGame,
 )
-from ttt.application.invitation_to_game.game.view_incoming_invitation_to_game import (
+from ttt.application.invitation_to_game.game.view_incoming_invitation_to_game import (  # noqa: E501
     ViewIncomingInvitationToGame,
 )
-from ttt.application.invitation_to_game.game.view_incoming_invitations_to_game import (
+from ttt.application.invitation_to_game.game.view_incoming_invitations_to_game import (  # noqa: E501
     ViewIncomingInvitationsToGame,
 )
-from ttt.application.invitation_to_game.game.view_one_incoming_invitation_to_game import (
+from ttt.application.invitation_to_game.game.view_one_incoming_invitation_to_game import (  # noqa: E501
     ViewOneIncomingInvitationToGame,
 )
-from ttt.application.invitation_to_game.game.view_outcoming_invitations_to_game import (
+from ttt.application.invitation_to_game.game.view_outcoming_invitations_to_game import (  # noqa: E501
     ViewOutcomingInvitationsToGame,
 )
 from ttt.application.matchmaking_queue.common.matchmaking_queue_views import (

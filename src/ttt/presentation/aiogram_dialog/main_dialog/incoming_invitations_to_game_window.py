@@ -14,7 +14,7 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
-from ttt.application.invitation_to_game.game.view_incoming_invitation_to_game import (
+from ttt.application.invitation_to_game.game.view_incoming_invitation_to_game import (  # noqa: E501
     ViewIncomingInvitationToGame,
 )
 from ttt.application.invitation_to_game.game.view_incoming_invitations_to_game import (  # noqa: E501

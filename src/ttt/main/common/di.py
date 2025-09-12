@@ -20,7 +20,9 @@ from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.game.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.game.game.ports.games import Games
-from ttt.application.invitation_to_game.game.ports.invitation_to_game_dao import InvitationToGameDao
+from ttt.application.invitation_to_game.game.ports.invitation_to_game_dao import (  # noqa: E501
+    InvitationToGameDao,
+)
 from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import (  # noqa: E501
     InvitationToGameLog,
 )
@@ -57,7 +59,9 @@ from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.game_ai_gateway import GeminiGameAiGateway
 from ttt.infrastructure.adapters.game_log import StructlogGameLog
 from ttt.infrastructure.adapters.games import InPostgresGames
-from ttt.infrastructure.adapters.invitation_to_game_dao import PostgresInvitationToGameDao
+from ttt.infrastructure.adapters.invitation_to_game_dao import (
+    PostgresInvitationToGameDao,
+)
 from ttt.infrastructure.adapters.invitation_to_game_log import (
     StructlogInvitationToGameLog,
 )

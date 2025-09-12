@@ -8,10 +8,10 @@ from ttt.application.common.ports.map import (
 )
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
-from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import (
+from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import (  # noqa: E501
     InvitationToGameLog,
 )
-from ttt.application.invitation_to_game.game.ports.invitation_to_game_views import (
+from ttt.application.invitation_to_game.game.ports.invitation_to_game_views import (  # noqa: E501
     InvitationToGameViews,
 )
 from ttt.application.user.common.ports.user_views import CommonUserViews
