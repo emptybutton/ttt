@@ -23,9 +23,6 @@ class Envs(BaseSettings):
 
     gemini_url: str
 
-    game_waiting_queue_pulling_timeout_min_ms: int
-    game_waiting_queue_pulling_timeout_salt_ms: int
-
     @classmethod
     def settings_customise_sources(
         cls,

@@ -18,6 +18,7 @@ jobs:
           echo "payments_token: ${{ secrets.PAYMENTS_TOKEN }}" >> deploy/prod/ttt/secrets.yaml
           echo "gemini_api_key: ${{ secrets.GEMINI_API_KEY }}" >> deploy/prod/ttt/secrets.yaml
           echo "sentry_dsn: ${{ secrets.SENTRY_DSN }}" >> deploy/prod/ttt/secrets.yaml
+          echo "admin_token: ${{ secrets.ADMIN_TOKEN }}" >> deploy/prod/ttt/secrets.yaml
 
       - name: deploy
         run: bash ./deploy/prod/deploy.sh
@@ -30,5 +31,3 @@ jobs:
             NATS_TOKEN: ${{ secrets.NATS_TOKEN }}
 
             GEMINI_URL: ${{ secrets.GEMINI_URL }}
-
-            GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
