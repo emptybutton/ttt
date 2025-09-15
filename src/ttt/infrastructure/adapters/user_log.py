@@ -28,7 +28,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_registered",
-            chat_id=user.id,
             user_id=user.id,
         )
 
@@ -39,14 +38,12 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_double_registration",
-            chat_id=user.id,
             user_id=user.id,
         )
 
     async def user_viewed(self, user_id: int, /) -> None:
         await self._logger.ainfo(
             "user_viewed",
-            chat_id=user_id,
             user_id=user_id,
         )
 
@@ -57,21 +54,18 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_removed_emoji",
-            chat_id=user.id,
             user_id=user.id,
         )
 
     async def menu_viewed(self, user_id: int) -> None:
         await self._logger.ainfo(
             "menu_viewed",
-            chat_id=user_id,
             user_id=user_id,
         )
 
     async def emoji_menu_viewed(self, user_id: int) -> None:
         await self._logger.ainfo(
             "emoji_menu_viewed",
-            chat_id=user_id,
             user_id=user_id,
         )
 
@@ -82,7 +76,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_authorized_as_admin",
-            chat_id=user.id,
             user_id=user.id,
         )
 
@@ -93,7 +86,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_already_admin_to_get_admin_rights",
-            chat_id=user.id,
             user_id=user.id,
         )
 
@@ -104,7 +96,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "admin_token_mismatch_to_get_admin_rights",
-            chat_id=user.id,
             user_id=user.id,
         )
 
@@ -115,14 +106,12 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "not_admin_to_relinquish_admin_right",
-            chat_id=user.id,
             user_id=user.id,
         )
 
     async def user_relinquished_admin_rights(self, user: User, /) -> None:
         await self._logger.ainfo(
             "user_relinquished_admin_rights",
-            chat_id=user.id,
             user_id=user.id,
         )
 
@@ -131,7 +120,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "not_authorized_as_admin_via_admin_token_to_authorize_other_user_as_admin",
-            chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,
         )
@@ -141,7 +129,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "other_user_already_admin_to_authorize_other_user_as_admin",
-            chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,
         )
@@ -151,7 +138,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_authorized_other_user_as_admin",
-            chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,
         )
@@ -161,7 +147,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "not_authorized_as_admin_via_admin_token_to_deauthorize_other_user_as_admin",
-            chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,
         )
@@ -171,7 +156,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "other_user_is_not_authorized_as_admin_via_other_admin_to_deauthorize",
-            chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,
         )
@@ -181,7 +165,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_deauthorized_other_user_as_admin",
-            chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,
         )
@@ -199,7 +182,6 @@ class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_bought_emoji",
-            chat_id=user.id,
             user_id=user.id,
             emoji=emoji.str_,
         )
@@ -211,7 +193,6 @@ class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_intends_to_buy_emoji",
-            chat_id=user_id,
             user_id=user_id,
         )
 
@@ -222,7 +203,6 @@ class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):
     ) -> None:
         await self._logger.ainfo(
             "emoji_already_purchased_to_buy",
-            chat_id=user.id,
             user_id=user.id,
             emoji=emoji.str_,
         )
@@ -240,7 +220,6 @@ class StructlogEmojiSelectionUserLog(EmojiSelectionUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_selected_emoji",
-            chat_id=user.id,
             user_id=user.id,
             emoji=emoji.str_,
         )
@@ -252,7 +231,6 @@ class StructlogEmojiSelectionUserLog(EmojiSelectionUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_intends_to_select_emoji",
-            chat_id=user_id,
             user_id=user_id,
         )
 
@@ -263,7 +241,6 @@ class StructlogEmojiSelectionUserLog(EmojiSelectionUserLog):
     ) -> None:
         await self._logger.ainfo(
             "emoji_not_purchased_to_select",
-            chat_id=user.id,
             user_id=user.id,
         )
 

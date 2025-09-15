@@ -45,7 +45,6 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "invitation_self_to_game",
-            chat_id=user.id,
             user_id=user.id,
         )
 
@@ -56,10 +55,9 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "user_invited_other_user_to_game",
-            chat_id=invitation_to_game.inviting_user.id,
             user_id=invitation_to_game.inviting_user.id,
             invited_user_id=invitation_to_game.invited_user.id,
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
         )
 
     async def double_invitation_to_game(
@@ -69,9 +67,9 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "double_invitation_to_game",
-            chat_id=invitation_to_game.inviting_user.id,
             user_id=invitation_to_game.inviting_user.id,
             invited_user_id=invitation_to_game.invited_user.id,
+            invitation_to_game_id=invitation_to_game.id_.hex,
         )
 
     async def invitation_to_game_is_not_active_to_cancel(
@@ -82,9 +80,8 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "invitation_to_game_is_not_active_to_cancel",
-            chat_id=user_id,
             user_id=user_id,
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
             invitation_to_game_state=invitation_to_game_state_in_log(
                 invitation_to_game.state,
             ),
@@ -98,9 +95,8 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "user_is_not_inviting_user_to_cancel_invitation_to_game",
-            chat_id=user_id,
             user_id=user_id,
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
         )
 
     async def invitation_to_game_is_not_active_to_reject(
@@ -111,9 +107,8 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "invitation_to_game_is_not_active_to_reject",
-            chat_id=user_id,
             user_id=user_id,
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
             invitation_to_game_state=invitation_to_game_state_in_log(
                 invitation_to_game.state,
             ),
@@ -127,9 +122,8 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "user_is_not_invited_user_to_reject_invitation_to_game",
-            chat_id=user_id,
             user_id=user_id,
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
         )
 
     async def invitation_to_game_is_not_active_to_accept(
@@ -140,9 +134,8 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "invitation_to_game_is_not_active_to_accept",
-            chat_id=user_id,
             user_id=user_id,
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
             invitation_to_game_state=invitation_to_game_state_in_log(
                 invitation_to_game.state,
             ),
@@ -156,10 +149,9 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "user_is_not_invited_user_to_accept_invitation_to_game",
-            chat_id=user_id,
             user_id=user_id,
             invited_user_id=invitation_to_game.invited_user.id,
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
         )
 
     async def users_already_in_game_to_accept_invitation_to_game(
@@ -170,9 +162,8 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "users_already_in_game_to_accept_invitation_to_game",
-            chat_id=invitation_to_game.invited_user.id,
             user_id=invitation_to_game.invited_user.id,
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
             is_invited_user_in_game=(
                 invitation_to_game.invited_user in users_in_game
             ),
@@ -188,9 +179,8 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "user_cancelled_invitation_to_game",
-            chat_id=invitation_to_game.inviting_user.id,
             user_id=invitation_to_game.inviting_user.id,
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
         )
 
     async def user_rejected_invitation_to_game(
@@ -200,9 +190,8 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "user_rejected_invitation_to_game",
-            chat_id=invitation_to_game.invited_user.id,
             user_id=invitation_to_game.invited_user.id,
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
         )
 
     async def user_accepted_invitation_to_game(
@@ -213,9 +202,8 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "user_accepted_invitation_to_game",
-            chat_id=invitation_to_game.invited_user.id,
             user_id=invitation_to_game.invited_user.id,
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
         )
 
     async def no_invitation_to_game_to_accept(
@@ -223,9 +211,8 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "no_invitation_to_game_to_accept",
-            chat_id=user_id,
             user_id=user_id,
-            invitation_to_game_id=invitation_to_game_id,
+            invitation_to_game_id=invitation_to_game_id.hex,
         )
 
     async def no_invitation_to_game_to_reject(
@@ -233,9 +220,8 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "no_invitation_to_game_to_reject",
-            chat_id=user_id,
             user_id=user_id,
-            invitation_to_game_id=invitation_to_game_id,
+            invitation_to_game_id=invitation_to_game_id.hex,
         )
 
     async def no_invitation_to_game_to_cancel(
@@ -243,9 +229,8 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "no_invitation_to_game_to_cancel",
-            chat_id=user_id,
             user_id=user_id,
-            invitation_to_game_id=invitation_to_game_id,
+            invitation_to_game_id=invitation_to_game_id.hex,
         )
 
     async def invitations_to_game_auto_cancelled(
@@ -256,7 +241,7 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
         await gather(*(
             self._logger.ainfo(
                 "invitation_to_game_auto_cancelled",
-                invitation_to_game_id=invitation_to_game_id,
+                invitation_to_game_id=invitation_to_game_id.hex,
             )
             for invitation_to_game_id in ids
         ))
@@ -266,7 +251,7 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.awarning(
             "no_invitation_to_game_to_auto_cancel",
-            invitation_to_game_id=invitation_to_game_id,
+            invitation_to_game_id=invitation_to_game_id.hex,
         )
 
     async def not_expired_invitation_to_game_to_auto_cancel(
@@ -274,7 +259,7 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.aerror(
             "not_expired_invitation_to_game_to_auto_cancel",
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
         )
 
     async def invitation_to_game_state_is_not_active_to_game_to_auto_cancel(
@@ -282,5 +267,5 @@ class StructlogInvitationToGameLog(InvitationToGameLog):
     ) -> None:
         await self._logger.ainfo(
             "invitation_to_game_state_is_not_active_to_game_to_auto_cancel",
-            invitation_to_game_id=invitation_to_game.id_,
+            invitation_to_game_id=invitation_to_game.id_.hex,
         )

@@ -46,7 +46,6 @@ class StructlogStarsPurchaseLog(StarsPurchaseLog):
         await self._logger.ainfo(
             "stars_purchase_payment_completion_started",
             user_id=payment.user_id,
-            chat_id=payment.user_id,
             purchase_id=payment.purchase_id.hex,
         )
 
@@ -59,7 +58,6 @@ class StructlogStarsPurchaseLog(StarsPurchaseLog):
         await self._logger.ainfo(
             "stars_purchase_payment_completed",
             user_id=stars_purchase.user.id,
-            chat_id=stars_purchase.user.id,
             purchase_id=stars_purchase.id_.hex,
         )
 
@@ -71,7 +69,6 @@ class StructlogStarsPurchaseLog(StarsPurchaseLog):
         await self._logger.awarning(
             "double_stars_purchase_payment_completion",
             user_id=stars_purchase.user.id,
-            chat_id=stars_purchase.user.id,
             purchase_id=stars_purchase.id_.hex,
         )
 
@@ -83,7 +80,6 @@ class StructlogStarsPurchaseLog(StarsPurchaseLog):
         await self._logger.aerror(
             "invalid_stars_for_stars_purchase",
             user_id=user.id,
-            chat_id=user.id,
             stars=stars,
         )
 
@@ -94,7 +90,6 @@ class StructlogStarsPurchaseLog(StarsPurchaseLog):
         await self._logger.ainfo(
             "double_stars_purchase_payment_start",
             user_id=stars_purchase.user.id,
-            chat_id=stars_purchase.user.id,
             purchase_id=stars_purchase.id_.hex,
         )
 
