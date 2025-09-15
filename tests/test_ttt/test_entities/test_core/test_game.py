@@ -19,7 +19,6 @@ from ttt.entities.core.game.game import (
 from ttt.entities.core.game.game_result import DecidedGameResult, DrawGameResult
 from ttt.entities.core.user.account import Account
 from ttt.entities.core.user.draw import UserDraw
-from ttt.entities.core.user.last_game import LastGame
 from ttt.entities.core.user.loss import UserLoss
 from ttt.entities.core.user.user import User
 from ttt.entities.core.user.win import UserWin
@@ -293,8 +292,7 @@ def test_make_move_with_completed_game(  # noqa: PLR0913, PLR0917
         game.make_user_move(
             1,
             1,
-            UUID(int=9),
-            UUID(int=10),
+            {1: "<=30", 2: "<=30"},
             middle_random,
             tracking,
         )
@@ -309,8 +307,7 @@ def test_make_move_with_not_user(
         game.make_user_move(
             100,
             9,
-            UUID(int=8),
-            UUID(int=9),
+            {1: "<=30", 2: "<=30"},
             middle_random,
             tracking,
         )
@@ -325,8 +322,7 @@ def test_make_move_with_not_current_user(
         game.make_user_move(
             2,
             9,
-            UUID(int=9),
-            UUID(int=10),
+            {1: "<=30", 2: "<=30"},
             middle_random,
             tracking,
         )
@@ -341,8 +337,7 @@ def test_make_move_with_no_cell(
         game.make_user_move(
             1,
             10,
-            UUID(int=9),
-            UUID(int=10),
+            {1: "<=30", 2: "<=30"},
             middle_random,
             tracking,
         )
@@ -354,15 +349,14 @@ def test_make_move_with_already_filled_cell(
     tracking: Tracking,
 ) -> None:
     game.make_user_move(
-        1, 1, UUID(int=9), UUID(int=10), middle_random, tracking,
+        1, 1, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
 
     with raises(AlreadyFilledCellError):
         game.make_user_move(
             2,
             1,
-            UUID(int=9),
-            UUID(int=10),
+            {1: "<=30", 2: "<=30"},
             middle_random,
             tracking,
         )
@@ -374,15 +368,14 @@ def test_make_move_with_double_move(
     tracking: Tracking,
 ) -> None:
     game.make_user_move(
-        1, 1, UUID(int=9), UUID(int=10), middle_random, tracking,
+        1, 1, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
 
     with raises(NotCurrentPlayerError):
         game.make_user_move(
             1,
             2,
-            UUID(int=9),
-            UUID(int=10),
+            {1: "<=30", 2: "<=30"},
             middle_random,
             tracking,
         )
@@ -404,21 +397,21 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
     """
 
     game.make_user_move(
-        1, 1, UUID(int=9), UUID(int=10), middle_random, tracking,
+        1, 1, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
     game.make_user_move(
-        2, 4, UUID(int=9), UUID(int=10), middle_random, tracking,
-    )
-
-    game.make_user_move(
-        1, 2, UUID(int=9), UUID(int=10), middle_random, tracking,
-    )
-    game.make_user_move(
-        2, 5, UUID(int=9), UUID(int=10), middle_random, tracking,
+        2, 4, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
 
     game.make_user_move(
-        1, 3, UUID(int=9), UUID(int=10), middle_random, tracking,
+        1, 2, {1: "<=30", 2: "<=30"}, middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 5, {1: "<=30", 2: "<=30"}, middle_random, tracking,
+    )
+
+    game.make_user_move(
+        1, 3, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
     result = game.result
 
@@ -433,9 +426,6 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             id=1,
             account=Account(50),
             emojis=[],
-            last_games=[
-                LastGame(id=UUID(int=9), user_id=1, game_id=UUID(int=0)),
-            ],
             rating=1020.0,
             stars_purchases=[],
             selected_emoji_id=None,
@@ -451,9 +441,6 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             id=2,
             account=Account(0),
             emojis=[],
-            last_games=[
-                LastGame(id=UUID(int=10), user_id=2, game_id=UUID(int=0)),
-            ],
             rating=981.1500225556907,
             stars_purchases=[],
             selected_emoji_id=None,
@@ -469,9 +456,7 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             game.make_user_move(
                 2,
                 6,
-
-                UUID(int=9),
-                UUID(int=10),
+                {1: "<=30", 2: "<=30"},
                 middle_random,
                 tracking,
             )
@@ -493,35 +478,35 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
     """
 
     game.make_user_move(
-        1, 1, UUID(int=9), UUID(int=10), middle_random, tracking,
+        1, 1, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
     game.make_user_move(
-        2, 2, UUID(int=9), UUID(int=10), middle_random, tracking,
-    )
-
-    game.make_user_move(
-        1, 3, UUID(int=9), UUID(int=10), middle_random, tracking,
-    )
-    game.make_user_move(
-        2, 5, UUID(int=9), UUID(int=10), middle_random, tracking,
+        2, 2, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
 
     game.make_user_move(
-        1, 4, UUID(int=9), UUID(int=10), middle_random, tracking,
+        1, 3, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
     game.make_user_move(
-        2, 7, UUID(int=9), UUID(int=10), middle_random, tracking,
-    )
-
-    game.make_user_move(
-        1, 6, UUID(int=9), UUID(int=10), middle_random, tracking,
-    )
-    game.make_user_move(
-        2, 9, UUID(int=9), UUID(int=10), middle_random, tracking,
+        2, 5, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
 
     game.make_user_move(
-        1, 8, UUID(int=9), UUID(int=10), middle_random, tracking,
+        1, 4, {1: "<=30", 2: "<=30"}, middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 7, {1: "<=30", 2: "<=30"}, middle_random, tracking,
+    )
+
+    game.make_user_move(
+        1, 6, {1: "<=30", 2: "<=30"}, middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 9, {1: "<=30", 2: "<=30"}, middle_random, tracking,
+    )
+
+    game.make_user_move(
+        1, 8, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
     result = game.result
 
@@ -537,9 +522,6 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             account=Account(0),
             emojis=[],
             rating=1020.0,
-            last_games=[
-                LastGame(id=UUID(int=9), user_id=1, game_id=UUID(int=0)),
-            ],
             stars_purchases=[],
             selected_emoji_id=None,
             number_of_wins=0,
@@ -555,9 +537,6 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             account=Account(0),
             emojis=[],
             stars_purchases=[],
-            last_games=[
-                LastGame(id=UUID(int=10), user_id=2, game_id=UUID(int=0)),
-            ],
             rating=1020.0,
             selected_emoji_id=None,
             number_of_wins=0,
@@ -572,9 +551,7 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             game.make_user_move(
                 2,
                 5,
-
-                UUID(int=9),
-                UUID(int=10),
+                {1: "<=30", 2: "<=30"},
                 middle_random,
                 tracking,
             )
@@ -596,35 +573,35 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
     """
 
     game.make_user_move(
-        1, 1, UUID(int=9), UUID(int=10), middle_random, tracking,
+        1, 1, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
     game.make_user_move(
-        2, 2, UUID(int=9), UUID(int=10), middle_random, tracking,
-    )
-
-    game.make_user_move(
-        1, 3, UUID(int=9), UUID(int=10), middle_random, tracking,
-    )
-    game.make_user_move(
-        2, 4, UUID(int=9), UUID(int=10), middle_random, tracking,
+        2, 2, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
 
     game.make_user_move(
-        1, 5, UUID(int=9), UUID(int=10), middle_random, tracking,
+        1, 3, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
     game.make_user_move(
-        2, 6, UUID(int=9), UUID(int=10), middle_random, tracking,
-    )
-
-    game.make_user_move(
-        1, 8, UUID(int=9), UUID(int=10), middle_random, tracking,
-    )
-    game.make_user_move(
-        2, 9, UUID(int=9), UUID(int=10), middle_random, tracking,
+        2, 4, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
 
     game.make_user_move(
-        1, 7, UUID(int=9), UUID(int=10), middle_random, tracking,
+        1, 5, {1: "<=30", 2: "<=30"}, middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 6, {1: "<=30", 2: "<=30"}, middle_random, tracking,
+    )
+
+    game.make_user_move(
+        1, 8, {1: "<=30", 2: "<=30"}, middle_random, tracking,
+    )
+    game.make_user_move(
+        2, 9, {1: "<=30", 2: "<=30"}, middle_random, tracking,
+    )
+
+    game.make_user_move(
+        1, 7, {1: "<=30", 2: "<=30"}, middle_random, tracking,
     )
     result = game.result
 
@@ -641,9 +618,6 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             emojis=[],
             rating=1020.0,
             stars_purchases=[],
-            last_games=[
-                LastGame(id=UUID(int=9), user_id=1, game_id=UUID(int=0)),
-            ],
             selected_emoji_id=None,
             number_of_wins=1,
             number_of_draws=0,
@@ -659,9 +633,6 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             emojis=[],
             rating=981.1500225556907,
             stars_purchases=[],
-            last_games=[
-                LastGame(id=UUID(int=10), user_id=2, game_id=UUID(int=0)),
-            ],
             selected_emoji_id=None,
             number_of_wins=0,
             number_of_draws=0,
@@ -675,9 +646,7 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             game.make_user_move(
                 2,
                 5,
-
-                UUID(int=9),
-                UUID(int=10),
+                {1: "<=30", 2: "<=30"},
                 middle_random,
                 tracking,
             )

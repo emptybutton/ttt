@@ -13,7 +13,6 @@ from ttt.entities.core.user.admin_right import (
     AdminRightViaOtherAdmin,
 )
 from ttt.entities.core.user.emoji import UserEmoji
-from ttt.entities.core.user.last_game import LastGame
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.user import User, UserAtomic
@@ -96,33 +95,6 @@ class TableStarsPurchase(Base[StarsPurchase]):
         )
 
 
-class TableLastGame(Base[LastGame]):
-    __tablename__ = "last_games"
-
-    id: Mapped[UUID] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
-    )
-    game_id: Mapped[UUID] = mapped_column(
-        ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
-    )
-
-    def __entity__(self) -> LastGame:
-        return LastGame(
-            id=self.id,
-            user_id=self.user_id,
-            game_id=self.game_id,
-        )
-
-    @classmethod
-    def of(cls, it: LastGame) -> "TableLastGame":
-        return TableLastGame(
-            id=it.id,
-            user_id=it.user_id,
-            game_id=it.game_id,
-        )
-
-
 class TableAdminRight(StrEnum):
     via_admin_token = "via_admin_token"  # noqa: S105
     via_other_admin = "via_other_admin"
@@ -176,10 +148,6 @@ class TableUser(Base[User]):
         lazy="selectin",
         foreign_keys=[TableStarsPurchase.user_id],
     )
-    last_games: Mapped[list[TableLastGame]] = relationship(
-        lazy="selectin",
-        foreign_keys=[TableLastGame.user_id],
-    )
 
     __table_args__ = (
         Index(
@@ -215,7 +183,6 @@ class TableUser(Base[User]):
             account=Account(self.account_stars),
             emojis=[it.entity() for it in self.emojis],
             stars_purchases=[it.entity() for it in self.stars_purchases],
-            last_games=[it.entity() for it in self.last_games],
             selected_emoji_id=self.selected_emoji_id,
             rating=self.rating,
             number_of_wins=self.number_of_wins,
@@ -259,9 +226,7 @@ class TableUser(Base[User]):
         )
 
 
-type TableUserAtomic = (
-    TableUser | TableUserEmoji | TableStarsPurchase | TableLastGame
-)
+type TableUserAtomic = TableUser | TableUserEmoji | TableStarsPurchase
 
 
 def table_user_atomic(entity: UserAtomic) -> TableUserAtomic:
@@ -272,5 +237,3 @@ def table_user_atomic(entity: UserAtomic) -> TableUserAtomic:
             return TableUserEmoji.of(entity)
         case StarsPurchase():
             return TableStarsPurchase.of(entity)
-        case LastGame():
-            return TableLastGame.of(entity)

@@ -24,15 +24,8 @@ class CancelGame:
 
     async def __call__(self, user_id: int) -> None:
         async with self.transaction:
-            (
-                game,
-                user1_last_game_id,
-                user2_last_game_id,
-            ) = await gather(
-                self.games.game_with_game_location(user_id),
-                self.uuids.random_uuid(),
-                self.uuids.random_uuid(),
-            )
+            game = await self.games.game_with_game_location(user_id)
+
             if game is None:
                 await self.game_views.no_game_view(user_id)
                 return
@@ -45,12 +38,7 @@ class CancelGame:
 
             try:
                 tracking = Tracking()
-                game.cancel(
-                    user_id,
-                    user1_last_game_id,
-                    user2_last_game_id,
-                    tracking,
-                )
+                game.cancel(user_id, tracking)
             except AlreadyCompletedGameError:
                 await self.log.already_completed_game_to_cancel(game, user_id)
                 await self.game_views.game_already_complteted_view(

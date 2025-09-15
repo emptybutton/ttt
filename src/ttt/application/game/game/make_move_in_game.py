@@ -6,6 +6,7 @@ from ttt.application.common.ports.randoms import Randoms
 from ttt.application.common.ports.transaction import Transaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.game.ports.game_ai_gateway import GameAiGateway
+from ttt.application.game.game.ports.game_dao import GameDao
 from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.ports.games import Games
@@ -32,6 +33,7 @@ class MakeMoveInGame:
     ai_gateway: GameAiGateway
     transaction: Transaction
     log: GameLog
+    dao: GameDao
 
     async def __call__(
         self,
@@ -52,12 +54,10 @@ class MakeMoveInGame:
             )
             (
                 random,
-                current_user_last_game_id,
-                not_current_user_last_game_id,
+                games_played_by_player_id,
             ) = await gather(
                 self.randoms.random(),
-                self.uuids.random_uuid(),
-                self.uuids.random_uuid(),
+                self.dao.games_played_by_player_id(game),
             )
 
             try:
@@ -65,8 +65,7 @@ class MakeMoveInGame:
                 user_move = game.make_user_move(
                     user_id,
                     cell_number_int,
-                    current_user_last_game_id,
-                    not_current_user_last_game_id,
+                    games_played_by_player_id,
                     random,
                     tracking,
                 )
@@ -119,19 +118,16 @@ class MakeMoveInGame:
                     (
                         free_cell_random,
                         ai_move_cell_number_int,
-                        not_current_user_last_game_id,
                     ) = await gather(
                         self.randoms.random(),
                         self.ai_gateway.next_move_cell_number_int(
                             game,
                             user_move.next_move_ai_id,
                         ),
-                        self.uuids.random_uuid(),
                     )
                     ai_move = game.make_ai_move(
                         user_move.next_move_ai_id,
                         ai_move_cell_number_int,
-                        not_current_user_last_game_id,
                         free_cell_random,
                         tracking,
                     )

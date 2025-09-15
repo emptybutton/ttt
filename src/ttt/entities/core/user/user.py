@@ -12,7 +12,6 @@ from ttt.entities.core.user.admin_right import (
 )
 from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.emoji import UserEmoji
-from ttt.entities.core.user.last_game import LastGame, last_game
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.loss import UserLoss
 from ttt.entities.core.user.rank import Rank, rank_for_rating
@@ -20,6 +19,7 @@ from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.elo.rating import (
     EloRating,
+    GamesPlayed,
     initial_elo_rating,
     new_elo_rating,
 )
@@ -60,9 +60,6 @@ class EmojiNotPurchasedError(Exception): ...
 class NoPurchaseError(Exception): ...
 
 
-class UserAlreadyLeftGameError(Exception): ...
-
-
 class UserAlreadyAdminError(Exception): ...
 
 
@@ -90,7 +87,6 @@ class User:
     account: Account
     emojis: list[UserEmoji]
     stars_purchases: list[StarsPurchase]
-    last_games: list[LastGame]
     selected_emoji_id: UUID | None
     rating: EloRating
     admin_right: AdminRight | None
@@ -235,9 +231,6 @@ class User:
 
         return user
 
-    def games_played(self) -> int:
-        return len(self.last_games)
-
     def is_in_game(self) -> bool:
         return self.game_location is not None
 
@@ -258,23 +251,21 @@ class User:
     def lose_to_user(
         self,
         enemy_rating: EloRating,
-        last_game_id: UUID,
-        game_id: UUID,
+        games_played: GamesPlayed,
         tracking: Tracking,
     ) -> UserLoss:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
-        :raises ttt.entities.core.user.user.UserAlreadyLeftGameError:
         """
 
-        self.leave_game(last_game_id, game_id, tracking)
+        self.leave_game(tracking)
 
         self.number_of_defeats += 1
         new_rating = new_elo_rating(
             self.rating,
             enemy_rating,
             WinningScore.when_losing,
-            self.games_played(),
+            games_played,
         )
         rating_vector = new_rating - self.rating
         self.rating = new_rating
@@ -282,18 +273,12 @@ class User:
 
         return UserLoss(user_id=self.id, rating_vector=rating_vector)
 
-    def lose_to_ai(
-        self,
-        last_game_id: UUID,
-        game_id: UUID,
-        tracking: Tracking,
-    ) -> UserLoss:
+    def lose_to_ai(self, tracking: Tracking) -> UserLoss:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
-        :raises ttt.entities.core.user.user.UserAlreadyLeftGameError:
         """
 
-        self.leave_game(last_game_id, game_id, tracking)
+        self.leave_game(tracking)
 
         self.number_of_defeats += 1
         tracking.register_mutated(self)
@@ -303,17 +288,15 @@ class User:
     def win_against_user(
         self,
         enemy_rating: EloRating,
+        games_played: GamesPlayed,
         random: Random,
-        last_game_id: UUID,
-        game_id: UUID,
         tracking: Tracking,
     ) -> UserWin:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
-        :raises ttt.entities.core.user.user.UserAlreadyLeftGameError:
         """
 
-        self.leave_game(last_game_id, game_id, tracking)
+        self.leave_game(tracking)
 
         self.number_of_wins += 1
 
@@ -321,7 +304,7 @@ class User:
             self.rating,
             enemy_rating,
             WinningScore.when_winning,
-            self.games_played(),
+            games_played,
         )
         rating_vector = new_rating - self.rating
         self.rating = new_rating
@@ -332,33 +315,25 @@ class User:
         tracking.register_mutated(self)
         return UserWin(self.id, new_stars, rating_vector)
 
-    def win_against_ai(
-        self,
-        last_game_id: UUID,
-        game_id: UUID,
-        tracking: Tracking,
-    ) -> UserWin:
+    def win_against_ai(self, tracking: Tracking) -> UserWin:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
-        :raises ttt.entities.core.user.user.UserAlreadyLeftGameError:
         """
 
-        self.leave_game(last_game_id, game_id, tracking)
-
+        self.leave_game(tracking)
         return UserWin(self.id, new_stars=None, rating_vector=None)
 
     def be_draw_against_user(
         self,
         enemy_rating: EloRating,
-        last_game_id: UUID,
-        game_id: UUID,
+        games_played: GamesPlayed,
         tracking: Tracking,
     ) -> UserDraw:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
         """
 
-        self.leave_game(last_game_id, game_id, tracking)
+        self.leave_game(tracking)
 
         self.number_of_draws += 1
 
@@ -366,7 +341,7 @@ class User:
             self.rating,
             enemy_rating,
             WinningScore.when_winning,
-            self.games_played(),
+            games_played,
         )
         rating_vector = new_rating - self.rating
         self.rating = new_rating
@@ -374,46 +349,27 @@ class User:
 
         return UserDraw(self.id, rating_vector)
 
-    def be_draw_against_ai(
-        self,
-        last_game_id: UUID,
-        game_id: UUID,
-        tracking: Tracking,
-    ) -> UserDraw:
+    def be_draw_against_ai(self, tracking: Tracking) -> UserDraw:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
         """
 
-        self.leave_game(last_game_id, game_id, tracking)
+        self.leave_game(tracking)
 
         self.number_of_draws += 1
         tracking.register_mutated(self)
 
         return UserDraw(self.id, rating_vector=None)
 
-    def leave_game(
-        self, last_game_id: UUID, game_id: UUID, tracking: Tracking,
-    ) -> None:
+    def leave_game(self, tracking: Tracking) -> None:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
-        :raises ttt.entities.core.user.user.UserAlreadyLeftGameError:
         """
 
         assert_(self.is_in_game(), else_=UserNotInGameError(self))
 
         self.game_location = None
         tracking.register_mutated(self)
-
-        assert_(
-            (
-                self._last_game_with_id(last_game_id) is None
-                and self._last_game_with_game_id(game_id) is None
-            ),
-            else_=UserAlreadyLeftGameError,
-        )
-
-        last_game_ = last_game(last_game_id, self.id, game_id, tracking)
-        self.last_games.append(last_game_)
 
     def buy_emoji(
         self,
@@ -566,22 +522,8 @@ class User:
 
         raise NoPurchaseError
 
-    def _last_game_with_id(self, last_game_id: UUID) -> LastGame | None:
-        for last_game_ in self.last_games:
-            if last_game_.id == last_game_id:
-                return last_game_
 
-        return None
-
-    def _last_game_with_game_id(self, game_id: UUID) -> LastGame | None:
-        for last_game_ in self.last_games:
-            if last_game_.game_id == game_id:
-                return last_game_
-
-        return None
-
-
-UserAtomic = User | UserEmoji | StarsPurchase | LastGame
+UserAtomic = User | UserEmoji | StarsPurchase
 
 
 def register_user(user_id: int, tracking: Tracking) -> User:
@@ -589,7 +531,6 @@ def register_user(user_id: int, tracking: Tracking) -> User:
         id=user_id,
         account=Account(0),
         stars_purchases=[],
-        last_games=[],
         emojis=[],
         selected_emoji_id=None,
         rating=initial_elo_rating,

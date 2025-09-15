@@ -1,3 +1,5 @@
+from typing import Literal
+
 from ttt.entities.elo.score import ExpectedScore, WinningScore
 
 
@@ -7,11 +9,14 @@ type EloRating = float
 initial_elo_rating: EloRating = 1000
 
 
+type GamesPlayed = Literal["<=30", ">30"]
+
+
 def new_elo_rating(
     rating: EloRating,
     other_rating: EloRating,
     winning_score: WinningScore,
-    games_played: int,
+    games_played: GamesPlayed,
 ) -> EloRating:
     expected_score = _expected_score(rating, other_rating)
 
@@ -25,8 +30,8 @@ def new_elo_rating(
     return rating + k * (winning_score.value - expected_score)
 
 
-def _is_player_newbie(games_played: int) -> bool:
-    return games_played <= 30  # noqa: PLR2004
+def _is_player_newbie(games_played: GamesPlayed) -> bool:
+    return games_played == "<=30"
 
 
 def _expected_score(rating_a: EloRating, rating_b: EloRating) -> ExpectedScore:

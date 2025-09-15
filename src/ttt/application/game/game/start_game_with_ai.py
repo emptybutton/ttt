@@ -84,19 +84,16 @@ class StartGameWithAi:
                     (
                         free_cell_random,
                         ai_move_cell_number_int,
-                        not_current_user_last_game_id,
                     ) = await gather(
                         self.randoms.random(),
                         self.ai_gateway.next_move_cell_number_int(
                             started_game.game,
                             started_game.next_move_ai_id,
                         ),
-                        self.uuids.random_uuid(),
                     )
                     ai_move = started_game.game.make_ai_move(
                         started_game.next_move_ai_id,
                         ai_move_cell_number_int,
-                        not_current_user_last_game_id,
                         free_cell_random,
                         tracking,
                     )
