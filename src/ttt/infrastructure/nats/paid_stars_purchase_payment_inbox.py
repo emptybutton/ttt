@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from types import TracebackType
-from typing import ClassVar, Self, cast
+from typing import ClassVar, Self
 
 from nats.js import JetStreamContext
 from pydantic import TypeAdapter
@@ -39,7 +39,4 @@ class InNatsPaidStarsPurchasePaymentInbox:
 
     async def __aiter__(self) -> AsyncIterator[PaidStarsPurchasePayment]:
         async for message in at_least_once_messages(self._subscription):
-            yield cast(
-                PaidStarsPurchasePayment,
-                self._adapter.validate_json(message.data),
-            )
+            yield self._adapter.validate_json(message.data)

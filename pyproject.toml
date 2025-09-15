@@ -29,8 +29,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "mypy[faster-cache]==1.16.0",
-    "ruff==0.11.13",
+    "mypy[faster-cache]==1.18.1",
+    "ruff==0.13.0",
     "pytest==8.4.0",
     "pytest-cov==6.1.1",
     "pytest-asyncio==1.0.0",
