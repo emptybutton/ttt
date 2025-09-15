@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterable
 from uuid import UUID
 
-from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
-from ttt.entities.core.user.stars_purchase import StarsPurchase
+from ttt.application.stars_purchase.dto.common import PaidStarsPurchasePayment
+from ttt.entities.core.stars_purchase.stars_purchase import StarsPurchase
 
 
 class StarsPurchasePaymentGateway(ABC):

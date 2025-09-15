@@ -3,7 +3,7 @@ from aiogram.types import ContentType, Message
 from dishka import AsyncContainer
 from dishka.integrations.aiogram import inject
 
-from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
+from ttt.application.stars_purchase.dto.common import PaidStarsPurchasePayment
 from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.buffer import Buffer

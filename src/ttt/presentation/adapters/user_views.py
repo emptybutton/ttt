@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from dataclasses import dataclass
 from typing import cast
-from uuid import UUID
 
 from aiogram import Bot
 from aiogram_dialog import ShowMode, StartMode
@@ -17,9 +16,6 @@ from ttt.application.user.emoji_purchase.ports.user_views import (
 )
 from ttt.application.user.emoji_selection.ports.user_views import (
     EmojiSelectionUserViews,
-)
-from ttt.application.user.stars_purchase.ports.user_views import (
-    StarsPurchaseUserViews,
 )
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.location import UserGameLocation
@@ -444,45 +440,6 @@ class AiogramCommonUserViews(CommonUserViews):
         await manager.start(
             AdminDialogState.deauthorize_other_user_as_admin,
             {"hint": "🧿 Пользователь больше не админ"},
-            StartMode.RESET_STACK,
-            ShowMode.DELETE_AND_SEND,
-        )
-
-
-@dataclass(frozen=True, unsafe_hash=False)
-class AiogramStarsPurchaseUserViews(StarsPurchaseUserViews):
-    _dialog_manager_for_user: DialogManagerForUser
-
-    async def invalid_stars_for_stars_purchase_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        raise NotImplementedError
-
-    async def stars_purchase_will_be_completed_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        manager = self._dialog_manager_for_user(user_id)
-        await manager.start(
-            MainDialogState.stars_shop,
-            {"hint": "🌟 Звёзды скоро начислятся!"},
-            StartMode.RESET_STACK,
-            ShowMode.DELETE_AND_SEND,
-        )
-
-    async def completed_stars_purchase_view(
-        self,
-        user: User,
-        purchase_id: UUID,
-        /,
-    ) -> None:
-        manager = self._dialog_manager_for_user(user.id)
-        await manager.start(
-            MainDialogState.stars_shop,
-            {"hint": "🌟 Звезды начислились!"},
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,
         )

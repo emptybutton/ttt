@@ -62,6 +62,25 @@ from ttt.application.matchmaking_queue.common.matchmaking_queue_views import (
     CommonMatchmakingQueueViews,
 )
 from ttt.application.matchmaking_queue.game.wait_game import WaitGame
+from ttt.application.stars_purchase.complete_stars_purchase_payment import (
+    CompleteStarsPurchasePayment,
+)
+from ttt.application.stars_purchase.dto.common import PaidStarsPurchasePayment
+from ttt.application.stars_purchase.ports.stars_purchase_payment_gateway import (  # noqa: E501
+    StarsPurchasePaymentGateway,
+)
+from ttt.application.stars_purchase.ports.stars_purchase_views import (
+    StarsPurchaseViews,
+)
+from ttt.application.stars_purchase.start_stars_purchase import (
+    StartStarsPurchase,
+)
+from ttt.application.stars_purchase.start_stars_purchase_payment import (
+    StartStarsPurchasePayment,
+)
+from ttt.application.stars_purchase.start_stars_purchase_payment_completion import (  # noqa: E501
+    StartStarsPurchasePaymentCompletion,
+)
 from ttt.application.user.authorize_as_admin import AuthorizeAsAdmin
 from ttt.application.user.authorize_other_user_as_admin import (
     AuthorizeOtherUserAsAdmin,
@@ -78,7 +97,6 @@ from ttt.application.user.change_other_user_account.set_other_user_account impor
 from ttt.application.user.change_other_user_account.view_user_account_to_change import (  # noqa: E501
     ViewUserAccountToChange,
 )
-from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.deauthorize_other_user_as_admin import (
     DeauthorizeOtherUserAsAdmin,
@@ -93,24 +111,6 @@ from ttt.application.user.emoji_selection.ports.user_views import (
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
 from ttt.application.user.register_user import RegisterUser
 from ttt.application.user.relinquish_admin_right import RelinquishAdminRight
-from ttt.application.user.stars_purchase.complete_stars_purchase_payment import (  # noqa: E501
-    CompleteStarsPurchasePayment,
-)
-from ttt.application.user.stars_purchase.ports.stars_purchase_payment_gateway import (  # noqa: E501
-    StarsPurchasePaymentGateway,
-)
-from ttt.application.user.stars_purchase.ports.user_views import (
-    StarsPurchaseUserViews,
-)
-from ttt.application.user.stars_purchase.start_stars_purchase import (
-    StartStarsPurchase,
-)
-from ttt.application.user.stars_purchase.start_stars_purchase_payment import (
-    StartStarsPurchasePayment,
-)
-from ttt.application.user.stars_purchase.start_stars_purchase_payment_completion import (  # noqa: E501
-    StartStarsPurchasePaymentCompletion,
-)
 from ttt.application.user.view_admin_menu import ViewAdminMenu
 from ttt.application.user.view_main_menu import ViewMainMenu
 from ttt.application.user.view_other_user import ViewOtherUser
@@ -131,12 +131,14 @@ from ttt.presentation.adapters.matchmaking_queue_views import (
 from ttt.presentation.adapters.stars_purchase_payment_gateway import (
     AiogramPaymentGateway,
 )
+from ttt.presentation.adapters.stars_purchase_views import (
+    AiogramStarsPurchaseViews,
+)
 from ttt.presentation.adapters.user_views import (
     AiogramChangeOtherUserAccountViews,
     AiogramCommonUserViews,
     AiogramEmojiPurchaseUserViews,
     AiogramEmojiSelectionUserViews,
-    AiogramStarsPurchaseUserViews,
 )
 from ttt.presentation.aiogram.common.bots import ttt_bot
 from ttt.presentation.aiogram.common.routes.all import common_routers
@@ -181,7 +183,7 @@ class PresentationProvider(Provider):
         if middleware_data is None:
             return None
 
-        return cast(ManagerImpl, middleware_data["dialog_manager"])
+        return cast(ManagerImpl, middleware_data.get("dialog_manager"))
 
     @provide(scope=Scope.APP)
     async def provide_bot(self, secrets: Secrets) -> AsyncIterator[Bot]:
@@ -213,8 +215,8 @@ class PresentationProvider(Provider):
         scope=Scope.REQUEST,
     )
     provide_stars_purchase_user_views = provide(
-        AiogramStarsPurchaseUserViews,
-        provides=StarsPurchaseUserViews,
+        AiogramStarsPurchaseViews,
+        provides=StarsPurchaseViews,
         scope=Scope.REQUEST,
     )
     provide_emoji_selection_user_views = provide(
@@ -343,14 +345,6 @@ class PresentationProvider(Provider):
 class ApplicationProvider(Provider):
     provide_buy_emoji = provide(BuyEmoji, scope=Scope.REQUEST)
     provide_select_emoji = provide(SelectEmoji, scope=Scope.REQUEST)
-    provide_start_stars_purchase = provide(
-        StartStarsPurchase,
-        scope=Scope.REQUEST,
-    )
-    provide_start_stars_purchase_payment = provide(
-        StartStarsPurchasePayment,
-        scope=Scope.REQUEST,
-    )
     provide_view_user_emojis = provide(
         ViewUserEmojis,
         scope=Scope.REQUEST,
@@ -361,14 +355,6 @@ class ApplicationProvider(Provider):
     )
     provide_view_user = provide(ViewUser, scope=Scope.REQUEST)
     provide_register_user = provide(RegisterUser, scope=Scope.REQUEST)
-    probide_complete_stars_purchase_payment = provide(
-        CompleteStarsPurchasePayment,
-        scope=Scope.REQUEST,
-    )
-    probide_start_stars_purchase_payment_completion = provide(
-        StartStarsPurchasePaymentCompletion,
-        scope=Scope.REQUEST,
-    )
     provide_authorize_as_admin = provide(AuthorizeAsAdmin, scope=Scope.REQUEST)
     provide_relinquish_admin_right = provide(
         RelinquishAdminRight,
@@ -390,6 +376,23 @@ class ApplicationProvider(Provider):
     )
     provide_view_user_account_to_change = provide(
         ViewUserAccountToChange, scope=Scope.REQUEST,
+    )
+
+    provide_start_stars_purchase = provide(
+        StartStarsPurchase,
+        scope=Scope.REQUEST,
+    )
+    provide_start_stars_purchase_payment = provide(
+        StartStarsPurchasePayment,
+        scope=Scope.REQUEST,
+    )
+    probide_complete_stars_purchase_payment = provide(
+        CompleteStarsPurchasePayment,
+        scope=Scope.REQUEST,
+    )
+    probide_start_stars_purchase_payment_completion = provide(
+        StartStarsPurchasePaymentCompletion,
+        scope=Scope.REQUEST,
     )
 
     provide_start_game_with_ai = provide(

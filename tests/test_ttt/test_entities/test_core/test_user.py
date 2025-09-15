@@ -15,7 +15,6 @@ def test_create_user(tracking: Tracking, object_: str) -> None:
             account=Account(0),
             emojis=[],
             rating=1000.,
-            stars_purchases=[],
             selected_emoji_id=None,
             number_of_wins=0,
             number_of_draws=0,

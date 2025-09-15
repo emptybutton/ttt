@@ -15,7 +15,6 @@ from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.loss import UserLoss
 from ttt.entities.core.user.rank import Rank, rank_for_rating
-from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.elo.rating import (
     EloRating,
@@ -24,11 +23,6 @@ from ttt.entities.elo.rating import (
     new_elo_rating,
 )
 from ttt.entities.elo.score import WinningScore
-from ttt.entities.finance.payment.payment import (
-    cancel_payment,
-    complete_payment,
-)
-from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.math.random import Random, deviated_int
 from ttt.entities.text.emoji import Emoji
 from ttt.entities.text.token import Token
@@ -81,12 +75,11 @@ class NotAuthorizedAsAdminViaAdminTokenError(Exception): ...
 class UserAlredyAdminToAuthorizeAsAdminError(Exception): ...
 
 
-@dataclass  # noqa: PLR0904
+@dataclass
 class User:
     id: int
     account: Account
     emojis: list[UserEmoji]
-    stars_purchases: list[StarsPurchase]
     selected_emoji_id: UUID | None
     rating: EloRating
     admin_right: AdminRight | None
@@ -439,98 +432,14 @@ class User:
 
         tracking.register_mutated(self)
 
-    def start_stars_purchase(
-        self,
-        purchase_id: UUID,
-        purchase_stars: Stars,
-        tracking: Tracking,
-    ) -> None:
-        """
-        :raises ttt.entities.core.stars.InvalidStarsForStarsPurchaseError:
-        """
 
-        stars_purchase = StarsPurchase.start(
-            purchase_id,
-            self.id,
-            purchase_stars,
-            tracking,
-        )
-        self.stars_purchases.append(stars_purchase)
-
-    def start_stars_purchase_payment(
-        self,
-        purchase_id: UUID,
-        payment_id: UUID,
-        current_datetime: datetime,
-        tracking: Tracking,
-    ) -> None:
-        """
-        :raises ttt.entities.user.user.NoPurchaseError:
-        :raises ttt.entities.finance.payment.payment.PaymentIsAlreadyBeingMadeError:
-        """  # noqa: E501
-
-        purchase = self._stars_purchase(purchase_id)
-        purchase.start_payment(payment_id, current_datetime, tracking)
-
-    def complete_stars_purchase_payment(
-        self,
-        purchase_id: UUID,
-        payment_success: PaymentSuccess,
-        current_datetime: datetime,
-        tracking: Tracking,
-    ) -> None:
-        """
-        :raises ttt.entities.user.user.NoPurchaseError:
-        :raises ttt.entities.finance.payment.payment.NoPaymentError:
-        :raises ttt.entities.finance.payment.payment.PaymentIsNotInProcessError:
-        """
-
-        purchase = self._stars_purchase(purchase_id)
-
-        self.account = self.account.map(lambda stars: stars + purchase.stars)
-        tracking.register_mutated(self)
-        complete_payment(
-            purchase.payment,
-            payment_success,
-            current_datetime,
-            tracking,
-        )
-
-    def cancel_stars_purchase(
-        self,
-        purchase_id: UUID,
-        current_datetime: datetime,
-        tracking: Tracking,
-    ) -> None:
-        """
-        :raises ttt.entities.user.user.NoPurchaseError:
-        :raises ttt.entities.finance.payment.payment.NoPaymentError:
-        :raises ttt.entities.finance.payment.payment.PaymentIsNotInProcessError:
-        """
-
-        purchase = self._stars_purchase(purchase_id)
-        cancel_payment(purchase.payment, current_datetime, tracking)
-
-    def _stars_purchase(self, purchase_id: UUID) -> StarsPurchase:
-        """
-        :raises ttt.entities.user.user.NoPurchaseError:
-        """
-
-        for purchase in self.stars_purchases:
-            if purchase.id_ == purchase_id:
-                return purchase
-
-        raise NoPurchaseError
-
-
-UserAtomic = User | UserEmoji | StarsPurchase
+UserAtomic = User | UserEmoji
 
 
 def register_user(user_id: int, tracking: Tracking) -> User:
     user = User(
         id=user_id,
         account=Account(0),
-        stars_purchases=[],
         emojis=[],
         selected_emoji_id=None,
         rating=initial_elo_rating,

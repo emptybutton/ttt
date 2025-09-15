@@ -6,7 +6,7 @@ from typing import ClassVar, Self
 from nats.js import JetStreamContext
 from pydantic import TypeAdapter
 
-from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
+from ttt.application.stars_purchase.dto.common import PaidStarsPurchasePayment
 from ttt.infrastructure.nats.messages import at_least_once_messages
 
 

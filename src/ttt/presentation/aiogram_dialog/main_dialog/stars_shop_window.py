@@ -12,7 +12,7 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
-from ttt.application.user.stars_purchase.start_stars_purchase import (
+from ttt.application.stars_purchase.start_stars_purchase import (
     StartStarsPurchase,
 )
 from ttt.presentation.aiogram_dialog.common.wigets.hint import hint

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterable
 
-from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
+from ttt.application.stars_purchase.dto.common import PaidStarsPurchasePayment
 
 
 class PaidStarsPurchasePaymentInbox(ABC):

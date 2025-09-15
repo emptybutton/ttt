@@ -1,30 +1,24 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
+from ttt.application.stars_purchase.dto.common import PaidStarsPurchasePayment
 from ttt.entities.core.stars import Stars
+from ttt.entities.core.stars_purchase.stars_purchase import StarsPurchase
 from ttt.entities.core.user.user import User
 
 
-class StarsPurchaseUserLog(ABC):
+class StarsPurchaseLog(ABC):
     @abstractmethod
-    async def user_intends_to_buy_stars(
+    async def stars_puchase_started(
         self,
-        user_id: int,
+        stars_purchase: StarsPurchase,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def user_started_stars_puchase(
+    async def stars_puchase_payment_started(
         self,
-        user: User,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def user_started_stars_puchase_payment(
-        self,
-        user: User,
+        stars_purchase: StarsPurchase,
         /,
     ) -> None: ...
 
@@ -38,7 +32,7 @@ class StarsPurchaseUserLog(ABC):
     @abstractmethod
     async def stars_purchase_payment_completed(
         self,
-        user: User,
+        stars_purchase: StarsPurchase,
         payment: PaidStarsPurchasePayment,
         /,
     ) -> None: ...
@@ -46,7 +40,7 @@ class StarsPurchaseUserLog(ABC):
     @abstractmethod
     async def double_stars_purchase_payment_completion(
         self,
-        user: User,
+        stars_purchase: StarsPurchase,
         paid_payment: PaidStarsPurchasePayment,
     ) -> None: ...
 
@@ -61,15 +55,20 @@ class StarsPurchaseUserLog(ABC):
     @abstractmethod
     async def double_stars_purchase_payment_start(
         self,
-        user: User,
+        stars_purchase: StarsPurchase,
+        /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def no_stars_purchase_to_start_payment(
+        self,
         purchase_id: UUID,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def no_purchase_to_start_stars_purchase_payment(
+    async def no_stars_purchase_to_complete_payment(
         self,
-        user: User,
         purchase_id: UUID,
         /,
     ) -> None: ...

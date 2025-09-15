@@ -3,17 +3,18 @@ from dataclasses import dataclass
 from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.transaction import Transaction
-from ttt.application.user.common.ports.user_views import CommonUserViews
-from ttt.application.user.common.ports.users import Users
-from ttt.application.user.stars_purchase.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
+from ttt.application.stars_purchase.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
     PaidStarsPurchasePaymentInbox,
 )
-from ttt.application.user.stars_purchase.ports.user_log import (
-    StarsPurchaseUserLog,
+from ttt.application.stars_purchase.ports.stars_purchase_log import (
+    StarsPurchaseLog,
 )
-from ttt.application.user.stars_purchase.ports.user_views import (
-    StarsPurchaseUserViews,
+from ttt.application.stars_purchase.ports.stars_purchase_views import (
+    StarsPurchaseViews,
 )
+from ttt.application.stars_purchase.ports.stars_purchases import StarsPurchases
+from ttt.application.user.common.ports.user_views import CommonUserViews
+from ttt.application.user.common.ports.users import Users
 from ttt.entities.finance.payment.payment import PaymentIsNotInProcessError
 from ttt.entities.tools.tracking import Tracking
 
@@ -26,47 +27,48 @@ class CompleteStarsPurchasePayment:
     transaction: Transaction
     map_: Map
     common_views: CommonUserViews
-    stars_purchase_views: StarsPurchaseUserViews
-    log: StarsPurchaseUserLog
+    stars_purchase_views: StarsPurchaseViews
+    log: StarsPurchaseLog
+    stars_purchases: StarsPurchases
 
     async def __call__(self) -> None:
         async for paid_payment in self.inbox.stream():
             current_datetime = await self.clock.current_datetime()
 
             async with self.transaction:
-                user = await self.users.user_with_id(
-                    paid_payment.user_id,
+                stars_purchase = (
+                    await self.stars_purchases.stars_purchase_with_id(
+                        paid_payment.purchase_id,
+                    )
                 )
 
-                if user is None:
-                    await self.common_views.user_is_not_registered_view(
-                        paid_payment.user_id,
-                    )
-                    continue
-
-                tracking = Tracking()
-                try:
-                    user.complete_stars_purchase_payment(
+                if stars_purchase is None:
+                    await self.log.no_stars_purchase_to_complete_payment(
                         paid_payment.purchase_id,
+                    )
+                    return
+
+                try:
+                    tracking = Tracking()
+                    stars_purchase.complete_payment(
                         paid_payment.success,
                         current_datetime,
                         tracking,
                     )
                 except PaymentIsNotInProcessError:
                     await self.log.double_stars_purchase_payment_completion(
-                        user,
+                        stars_purchase,
                         paid_payment,
                     )
                 else:
                     await self.log.stars_purchase_payment_completed(
-                        user,
+                        stars_purchase,
                         paid_payment,
                     )
 
                     await self.map_(tracking)
                     await (
                         self.stars_purchase_views.completed_stars_purchase_view(
-                            user,
-                            paid_payment.purchase_id,
+                            stars_purchase,
                         )
                     )

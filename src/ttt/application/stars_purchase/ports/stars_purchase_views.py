@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
-from uuid import UUID
 
-from ttt.entities.core.user.user import User
+from ttt.entities.core.stars_purchase.stars_purchase import StarsPurchase
 
 
-class StarsPurchaseUserViews(ABC):
+class StarsPurchaseViews(ABC):
     @abstractmethod
     async def invalid_stars_for_stars_purchase_view(
         self,
@@ -22,7 +21,6 @@ class StarsPurchaseUserViews(ABC):
     @abstractmethod
     async def completed_stars_purchase_view(
         self,
-        user: User,
-        purchase_id: UUID,
+        stars_purchase: StarsPurchase,
         /,
     ) -> None: ...

@@ -7,4 +7,7 @@ from ttt.infrastructure.sqlalchemy.tables.matchmaking_queue import (
     TableMatchmakingQueue,
 )
 from ttt.infrastructure.sqlalchemy.tables.payment import TablePayment
+from ttt.infrastructure.sqlalchemy.tables.stars_purchase import (
+    TableStarsPurchase,
+)
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser

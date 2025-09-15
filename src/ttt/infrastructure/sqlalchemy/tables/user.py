@@ -14,12 +14,10 @@ from ttt.entities.core.user.admin_right import (
 )
 from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.location import UserGameLocation
-from ttt.entities.core.user.stars_purchase import StarsPurchase
 from ttt.entities.core.user.user import User, UserAtomic
 from ttt.entities.text.emoji import Emoji
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.sqlalchemy.tables.common import Base
-from ttt.infrastructure.sqlalchemy.tables.payment import TablePayment
 
 
 class TableUserEmoji(Base[UserEmoji]):
@@ -48,50 +46,6 @@ class TableUserEmoji(Base[UserEmoji]):
             user_id=it.user_id,
             emoji_str=it.emoji.str_,
             datetime_of_purchase=it.datetime_of_purchase,
-        )
-
-
-class TableStarsPurchase(Base[StarsPurchase]):
-    __tablename__ = "stars_purchases"
-
-    id: Mapped[UUID] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
-        index=True,
-    )
-    stars: Mapped[int]
-    payment_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("payments.id", deferrable=True, initially="DEFERRED"),
-    )
-
-    payment: Mapped[TablePayment | None] = relationship(
-        TablePayment,
-        lazy="joined",
-    )
-
-    __table_args__ = (
-        Index(
-            "ix_stars_purchases_payment_id",
-            payment_id,
-            postgresql_where=(payment_id.is_not(None)),
-        ),
-    )
-
-    def __entity__(self) -> StarsPurchase:
-        return StarsPurchase(
-            id_=self.id,
-            user_id=self.user_id,
-            stars=self.stars,
-            payment=None if self.payment is None else self.payment.entity(),
-        )
-
-    @classmethod
-    def of(cls, it: StarsPurchase) -> "TableStarsPurchase":
-        return TableStarsPurchase(
-            id=it.id_,
-            user_id=it.user_id,
-            stars=it.stars,
-            payment_id=None if it.payment is None else it.payment.id_,
         )
 
 
@@ -144,10 +98,6 @@ class TableUser(Base[User]):
         lazy="selectin",
         foreign_keys=[TableUserEmoji.user_id],
     )
-    stars_purchases: Mapped[list[TableStarsPurchase]] = relationship(
-        lazy="selectin",
-        foreign_keys=[TableStarsPurchase.user_id],
-    )
 
     __table_args__ = (
         Index(
@@ -182,7 +132,6 @@ class TableUser(Base[User]):
             id=self.id,
             account=Account(self.account_stars),
             emojis=[it.entity() for it in self.emojis],
-            stars_purchases=[it.entity() for it in self.stars_purchases],
             selected_emoji_id=self.selected_emoji_id,
             rating=self.rating,
             number_of_wins=self.number_of_wins,
@@ -226,7 +175,7 @@ class TableUser(Base[User]):
         )
 
 
-type TableUserAtomic = TableUser | TableUserEmoji | TableStarsPurchase
+type TableUserAtomic = TableUser | TableUserEmoji
 
 
 def table_user_atomic(entity: UserAtomic) -> TableUserAtomic:
@@ -235,5 +184,3 @@ def table_user_atomic(entity: UserAtomic) -> TableUserAtomic:
             return TableUser.of(entity)
         case UserEmoji():
             return TableUserEmoji.of(entity)
-        case StarsPurchase():
-            return TableStarsPurchase.of(entity)

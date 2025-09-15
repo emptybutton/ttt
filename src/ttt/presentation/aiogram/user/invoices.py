@@ -7,7 +7,7 @@ from aiogram.types import LabeledPrice
 from pydantic import BaseModel, Field, TypeAdapter
 
 from ttt.entities.core.stars import price_of_stars
-from ttt.entities.core.user.stars_purchase import StarsPurchase
+from ttt.entities.core.stars_purchase.stars_purchase import StarsPurchase
 
 
 class StarsPurchaseInvoicePayload(BaseModel):
@@ -42,7 +42,7 @@ async def stars_invoce(
     )
 
     payload_model = StarsPurchaseInvoicePayload.of(
-        purchase.id_, purchase.user_id,
+        purchase.id_, purchase.user.id,
     )
     payload = payload_model.model_dump_json(by_alias=True)
 
@@ -63,7 +63,7 @@ async def stars_invoce(
     })
 
     await bot.send_invoice(
-        purchase.user_id,
+        purchase.user.id,
         title="Звёзды",
         description="Покупка звёзд",
         payload=payload,

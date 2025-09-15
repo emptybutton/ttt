@@ -36,6 +36,13 @@ from ttt.application.matchmaking_queue.common.matchmaking_queue_log import (
 from ttt.application.matchmaking_queue.common.shared_matchmaking_queue import (
     SharedMatchmakingQueue,
 )
+from ttt.application.stars_purchase.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
+    PaidStarsPurchasePaymentInbox,
+)
+from ttt.application.stars_purchase.ports.stars_purchase_log import (
+    StarsPurchaseLog,
+)
+from ttt.application.stars_purchase.ports.stars_purchases import StarsPurchases
 from ttt.application.user.change_other_user_account.ports.user_log import (
     ChangeOtherUserAccountLog,
 )
@@ -49,12 +56,6 @@ from ttt.application.user.emoji_purchase.ports.user_log import (
 )
 from ttt.application.user.emoji_selection.ports.user_log import (
     EmojiSelectionUserLog,
-)
-from ttt.application.user.stars_purchase.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
-    PaidStarsPurchasePaymentInbox,
-)
-from ttt.application.user.stars_purchase.ports.user_log import (
-    StarsPurchaseUserLog,
 )
 from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.game_ai_gateway import GeminiGameAiGateway
@@ -84,13 +85,16 @@ from ttt.infrastructure.adapters.randoms import MersenneTwisterRandoms
 from ttt.infrastructure.adapters.shared_matchmaking_queue import (
     InPostgresSharedMatchmakingQueue,
 )
+from ttt.infrastructure.adapters.stars_purchase_log import (
+    StructlogStarsPurchaseLog,
+)
+from ttt.infrastructure.adapters.stars_purchases import PostgresStarsPurchases
 from ttt.infrastructure.adapters.transaction import InPostgresTransaction
 from ttt.infrastructure.adapters.user_log import (
     StructlogChangeOtherUserAccountLog,
     StructlogCommonUserLog,
     StructlogEmojiPurchaseUserLog,
     StructlogEmojiSelectionUserLog,
-    StructlogStarsPurchaseUserLog,
 )
 from ttt.infrastructure.adapters.users import InPostgresUsers
 from ttt.infrastructure.adapters.uuids import UUIDv4s
@@ -236,6 +240,12 @@ class InfrastructureProvider(Provider):
         scope=Scope.REQUEST,
     )
 
+    provide_stars_purchases = provide(
+        PostgresStarsPurchases,
+        provides=StarsPurchases,
+        scope=Scope.REQUEST,
+    )
+
     provide_shared_matchmaking_queue = provide(
         InPostgresSharedMatchmakingQueue,
         provides=SharedMatchmakingQueue,
@@ -313,8 +323,8 @@ class InfrastructureProvider(Provider):
     )
 
     provide_stars_purchase_user_log = provide(
-        StructlogStarsPurchaseUserLog,
-        provides=StarsPurchaseUserLog,
+        StructlogStarsPurchaseLog,
+        provides=StarsPurchaseLog,
         scope=Scope.REQUEST,
     )
 

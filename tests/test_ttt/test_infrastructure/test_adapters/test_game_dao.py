@@ -29,7 +29,6 @@ def player1() -> User:
         id=1,
         account=Account(0),
         emojis=[],
-        stars_purchases=[],
         selected_emoji_id=None,
         rating=1000.,
         number_of_wins=0,

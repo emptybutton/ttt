@@ -1,21 +1,16 @@
 from dataclasses import dataclass
-from uuid import UUID
 
 from structlog.types import FilteringBoundLogger
 
 from ttt.application.user.change_other_user_account.ports.user_log import (
     ChangeOtherUserAccountLog,
 )
-from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.emoji_purchase.ports.user_log import (
     EmojiPurchaseUserLog,
 )
 from ttt.application.user.emoji_selection.ports.user_log import (
     EmojiSelectionUserLog,
-)
-from ttt.application.user.stars_purchase.ports.user_log import (
-    StarsPurchaseUserLog,
 )
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.user import User
@@ -270,114 +265,6 @@ class StructlogEmojiSelectionUserLog(EmojiSelectionUserLog):
             "emoji_not_purchased_to_select",
             chat_id=user.id,
             user_id=user.id,
-        )
-
-
-@dataclass(frozen=True, unsafe_hash=False)
-class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
-    _logger: FilteringBoundLogger
-
-    async def user_intends_to_buy_stars(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "user_intends_to_buy_stars",
-            chat_id=user_id,
-            user_id=user_id,
-        )
-
-    async def user_started_stars_puchase(
-        self,
-        user: User,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "user_started_stars_puchase",
-            chat_id=user.id,
-            user_id=user.id,
-        )
-
-    async def user_started_stars_puchase_payment(
-        self,
-        user: User,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "user_started_stars_puchase_payment",
-            user_id=user.id,
-        )
-
-    async def stars_purchase_payment_completion_started(
-        self,
-        payment: PaidStarsPurchasePayment,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "stars_purchase_payment_completion_started",
-            user_id=payment.user_id,
-            chat_id=payment.user_id,
-            purchase_id=payment.purchase_id.hex,
-        )
-
-    async def stars_purchase_payment_completed(
-        self,
-        user: User,
-        payment: PaidStarsPurchasePayment,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "stars_purchase_payment_completed",
-            user_id=payment.user_id,
-            chat_id=payment.user_id,
-            purchase_id=payment.purchase_id.hex,
-        )
-
-    async def double_stars_purchase_payment_completion(
-        self,
-        user: User,
-        paid_payment: PaidStarsPurchasePayment,
-    ) -> None:
-        await self._logger.awarning(
-            "double_stars_purchase_payment_completion",
-            user_id=paid_payment.user_id,
-            chat_id=paid_payment.user_id,
-            purchase_id=paid_payment.purchase_id.hex,
-        )
-
-    async def invalid_stars_for_stars_purchase(
-        self,
-        user: User,
-        stars: Stars,
-    ) -> None:
-        await self._logger.aerror(
-            "invalid_stars_for_stars_purchase",
-            user_id=user.id,
-            chat_id=user.id,
-            stars=stars,
-        )
-
-    async def double_stars_purchase_payment_start(
-        self,
-        user: User,
-        purchase_id: UUID,
-    ) -> None:
-        await self._logger.ainfo(
-            "double_stars_purchase_payment_start",
-            user_id=user.id,
-            purchase_id=purchase_id.hex,
-        )
-
-    async def no_purchase_to_start_stars_purchase_payment(
-        self,
-        user: User,
-        purchase_id: UUID,
-    ) -> None:
-        await self._logger.aerror(
-            "no_purchase_to_start_stars_purchase_payment",
-            user_id=user.id,
-            purchase_id=purchase_id.hex,
         )
 
 
