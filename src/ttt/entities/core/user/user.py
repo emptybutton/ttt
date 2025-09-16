@@ -12,7 +12,6 @@ from ttt.entities.core.user.admin_right import (
 )
 from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.emoji import UserEmoji
-from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.loss import UserLoss
 from ttt.entities.core.user.rank import Rank, rank_for_rating
 from ttt.entities.core.user.win import UserWin
@@ -83,7 +82,7 @@ class User:
     selected_emoji_id: UUID | None
     rating: EloRating
     admin_right: AdminRight | None
-    game_location: UserGameLocation | None
+    current_game_id: UUID | None
 
     emoji_cost: ClassVar[Stars] = 1000
 
@@ -221,7 +220,7 @@ class User:
         return user
 
     def is_in_game(self) -> bool:
-        return self.game_location is not None
+        return self.current_game_id is not None
 
     def be_in_game(
         self,
@@ -234,7 +233,7 @@ class User:
 
         assert_(not self.is_in_game(), else_=UserAlreadyInGameError(self))
 
-        self.game_location = UserGameLocation(self.id, game_id)
+        self.current_game_id = game_id
         tracking.register_mutated(self)
 
     def lose_to_user(
@@ -346,7 +345,7 @@ class User:
 
         assert_(self.is_in_game(), else_=UserNotInGameError(self))
 
-        self.game_location = None
+        self.current_game_id = None
         tracking.register_mutated(self)
 
     def buy_emoji(
@@ -428,7 +427,7 @@ def register_user(user_id: int, tracking: Tracking) -> User:
         emojis=[],
         selected_emoji_id=None,
         rating=initial_elo_rating,
-        game_location=None,
+        current_game_id=None,
         admin_right=None,
     )
     tracking.register_new(user)
@@ -436,8 +435,8 @@ def register_user(user_id: int, tracking: Tracking) -> User:
     return user
 
 
-def is_user_in_game(game_location: UserGameLocation | None) -> bool:
-    return game_location is not None
+def is_user_in_game(current_game_id: UUID | None) -> bool:
+    return current_game_id is not None
 
 
 def is_user_admin(admin_right: AdminRight | None) -> bool:

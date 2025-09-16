@@ -13,21 +13,17 @@ from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 class InPostgresGames(Games):
     _session: AsyncSession
 
-    async def game_with_game_location(
-        self,
-        game_location_user_id: int,
-        /,
-    ) -> Game | None:
+    async def current_user_game(self, user_id: int, /) -> Game | None:
         lock_stmt = (
             select(TableGame.id)
-            .where(TableUser.game_location_game_id == TableGame.id)
+            .where(TableUser.current_game_id == TableGame.id)
             .with_for_update()
         )
         await self._session.execute(lock_stmt)
 
         join_condition = (
-            (TableUser.id == game_location_user_id)
-            & (TableUser.game_location_game_id == TableGame.id)
+            (TableUser.id == user_id)
+            & (TableUser.current_game_id == TableGame.id)
         )
         stmt = select(TableGame).join(TableUser, join_condition)
         table_game = await self._session.scalar(stmt)

@@ -18,7 +18,6 @@ from ttt.application.user.emoji_selection.ports.user_views import (
     EmojiSelectionUserViews,
 )
 from ttt.entities.core.stars import Stars
-from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.user import User, is_user_in_game, user_stars
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.sqlalchemy.stmts import (
@@ -129,7 +128,7 @@ class AiogramCommonUserViews(CommonUserViews):
         )
         stmt = (
             select(
-                TableUser.game_location_game_id,
+                TableUser.current_game_id,
                 TableUser.account_stars,
                 TableUser.rating,
                 has_user_emojis_stmt,
@@ -141,13 +140,6 @@ class AiogramCommonUserViews(CommonUserViews):
 
         if row is None:
             raise ValueError
-
-        game_location_game_id = row.game_location_game_id
-
-        if game_location_game_id is None:
-            game_location = None
-        else:
-            game_location = UserGameLocation(user_id, game_location_game_id)
 
         incoming_invitations_to_game_stmt = (
             select(func.count(1))
@@ -177,7 +169,7 @@ class AiogramCommonUserViews(CommonUserViews):
             amout_of_incoming_invitations_to_game = "many"
 
         view = MainMenuView(
-            is_user_in_game=is_user_in_game(game_location),
+            is_user_in_game=is_user_in_game(row.current_game_id),
             has_user_emojis=row.has_user_emojis,
             stars=row.account_stars,
             rating=row.rating,

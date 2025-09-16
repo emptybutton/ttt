@@ -28,7 +28,6 @@ from ttt.entities.core.game.player_result import (
     PlayerLoss,
     PlayerWin,
 )
-from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.user import (
     User,
     UserAlreadyInGameError,
@@ -111,7 +110,7 @@ class Game:
 
     def __post_init__(self) -> None:
         assert_(
-            not all(isinstance(player, Ai) for player in self._players()),
+            not all(isinstance(player, Ai) for player in self.players()),
             else_=OnlyAiGameError,
         )
 
@@ -141,7 +140,7 @@ class Game:
         return not self.is_against_ai()
 
     def user(self, user_id: int) -> User | None:
-        for user in self._users():
+        for user in self.users():
             if user.id == user_id:
                 return user
 
@@ -195,10 +194,10 @@ class Game:
         if not isinstance(current_player, User):
             raise TypeError
 
-        not_current_player = not_none(self._not_current_player())
+        not_current_player = not_none(self.not_current_player())
 
         assert_(
-            user_id in {user.id for user in self._users()},
+            user_id in {user.id for user in self.users()},
             else_=NotPlayerError(),
         )
         assert_(current_player.id == user_id, else_=NotCurrentPlayerError())
@@ -296,7 +295,7 @@ class Game:
         if not isinstance(current_player, Ai):
             raise NotAiCurrentMoveError
 
-        not_current_player = self._not_current_player()
+        not_current_player = self.not_current_player()
         if not isinstance(not_current_player, User):
             raise TypeError
 
@@ -384,9 +383,6 @@ class Game:
             case _:
                 raise ValueError(self.state, player_id)
 
-    def locations(self) -> tuple[UserGameLocation, ...]:
-        return tuple(not_none(user.game_location) for user in self._users())
-
     def _make_random_ai_move(
         self,
         current_player: Ai,
@@ -459,15 +455,15 @@ class Game:
             case GameState.completed:
                 return None
 
-    def _players(self) -> tuple[Player, ...]:
+    def players(self) -> tuple[Player, ...]:
         return self.player1, self.player2
 
-    def _users(self) -> tuple[User, ...]:
+    def users(self) -> tuple[User, ...]:
         return tuple(
-            player for player in self._players() if isinstance(player, User)
+            player for player in self.players() if isinstance(player, User)
         )
 
-    def _not_current_player(self) -> Player | None:
+    def not_current_player(self) -> Player | None:
         match self.state:
             case GameState.wait_player1:
                 return self.player2

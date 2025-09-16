@@ -14,7 +14,6 @@ from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.ai import AiType
 from ttt.entities.core.game.game import start_game_with_ai
-from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.user import UserAlreadyInGameError
 from ttt.entities.tools.tracking import Tracking
 
@@ -71,15 +70,9 @@ class StartGameWithAi:
 
                 if started_game.next_move_ai_id is None:
                     await self.map_(tracking)
-                    await self.game_views.started_game_view_with_locations(
-                        [UserGameLocation(user_id, started_game.game.id)],
-                        started_game.game,
-                    )
+                    await self.game_views.started_game_view(started_game.game)
                 else:
-                    await self.game_views.started_game_view_with_locations(
-                        [UserGameLocation(user_id, started_game.game.id)],
-                        started_game.game,
-                    )
+                    await self.game_views.started_game_view(started_game.game)
 
                     (
                         free_cell_random,
@@ -104,7 +97,4 @@ class StartGameWithAi:
                     )
 
                     await self.map_(tracking)
-                    await self.game_views.game_view_with_locations(
-                        [UserGameLocation(user_id, started_game.game.id)],
-                        started_game.game,
-                    )
+                    await self.game_views.game_view(started_game.game)

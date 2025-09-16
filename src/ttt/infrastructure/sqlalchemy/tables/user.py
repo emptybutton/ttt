@@ -13,7 +13,6 @@ from ttt.entities.core.user.admin_right import (
     AdminRightViaOtherAdmin,
 )
 from ttt.entities.core.user.emoji import UserEmoji
-from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.user import User, UserAtomic
 from ttt.entities.text.emoji import Emoji
 from ttt.entities.tools.assertion import not_none
@@ -82,7 +81,7 @@ class TableUser(Base[User]):
         index=True,
     )
     rating: Mapped[float]
-    game_location_game_id: Mapped[UUID | None] = mapped_column(
+    current_game_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
         index=True,
     )
@@ -110,14 +109,6 @@ class TableUser(Base[User]):
     )
 
     def __entity__(self) -> User:
-        if self.game_location_game_id is not None:
-            location = UserGameLocation(
-                self.id,
-                self.game_location_game_id,
-            )
-        else:
-            location = None
-
         if self.admin_right is not None:
             admin_right = self.admin_right.entity(
                 self.admin_right_via_other_admin_admin_id,
@@ -131,17 +122,12 @@ class TableUser(Base[User]):
             emojis=[it.entity() for it in self.emojis],
             selected_emoji_id=self.selected_emoji_id,
             rating=self.rating,
-            game_location=location,
+            current_game_id=self.current_game_id,
             admin_right=admin_right,
         )
 
     @classmethod
     def of(cls, it: User) -> "TableUser":
-        if it.game_location is None:
-            game_location_game_id = None
-        else:
-            game_location_game_id = it.game_location.game_id
-
         match it.admin_right:
             case None:
                 admin_right = None
@@ -158,7 +144,7 @@ class TableUser(Base[User]):
             account_stars=it.account.stars,
             selected_emoji_id=it.selected_emoji_id,
             rating=it.rating,
-            game_location_game_id=game_location_game_id,
+            current_game_id=it.current_game_id,
             admin_right=admin_right,
             admin_right_via_other_admin_admin_id=(
                 admin_right_via_other_admin_admin_id

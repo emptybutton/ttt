@@ -8,8 +8,4 @@ class NoGameError(Exception): ...
 
 class Games(ABC):
     @abstractmethod
-    async def game_with_game_location(
-        self,
-        game_location_user_id: int,
-        /,
-    ) -> Game | None: ...
+    async def current_user_game(self, user_id: int, /) -> Game | None: ...

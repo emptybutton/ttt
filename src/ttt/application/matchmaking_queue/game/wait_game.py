@@ -97,7 +97,4 @@ class WaitGame:
                 await self.game_log.game_against_user_started(game)
                 await self.map_(tracking)
 
-                await self.game_views.started_game_view_with_locations(
-                    game.locations(),
-                    game,
-                )
+                await self.game_views.started_game_view(game)

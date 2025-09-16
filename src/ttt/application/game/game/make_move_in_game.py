@@ -17,8 +17,6 @@ from ttt.entities.core.game.game import (
     NoCellError,
     NotCurrentPlayerError,
 )
-from ttt.entities.core.user.user import User
-from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
 
 
@@ -41,17 +39,12 @@ class MakeMoveInGame:
         cell_number_int: int,
     ) -> None:
         async with self.transaction:
-            game = await self.games.game_with_game_location(user_id)
+            game = await self.games.current_user_game(user_id)
 
             if game is None:
                 await self.game_views.no_game_view(user_id)
                 return
 
-            locations = tuple(
-                not_none(user.game_location)
-                for user in (game.player1, game.player2)
-                if isinstance(user, User)
-            )
             (
                 random,
                 games_played_by_player_id,
@@ -110,10 +103,7 @@ class MakeMoveInGame:
                 await self.log.user_move_maked(user_id, game, user_move)
 
                 if user_move.next_move_ai_id is not None:
-                    await self.game_views.game_view_with_locations(
-                        locations,
-                        game,
-                    )
+                    await self.game_views.game_view(game)
 
                     (
                         free_cell_random,
@@ -142,7 +132,4 @@ class MakeMoveInGame:
                     await self.log.game_completed(user_id, game)
 
                 await self.map_(tracking)
-                await self.game_views.game_view_with_locations(
-                    locations,
-                    game,
-                )
+                await self.game_views.game_view(game)
