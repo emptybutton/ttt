@@ -15,7 +15,6 @@ from ttt.entities.core.game.game import (
     Game,
     GameAtomic,
     GameState,
-    number_of_unfilled_cells,
 )
 from ttt.entities.core.game.game_result import (
     CancelledGameResult,
@@ -284,7 +283,6 @@ class TableGame(Base[Game]):
             self._player2(),
             Emoji(self.player2_emoji_str),
             board,
-            number_of_unfilled_cells(board),
             self._result(),
             self.state.entity(),
         )

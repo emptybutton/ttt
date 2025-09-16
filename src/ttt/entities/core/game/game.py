@@ -83,10 +83,6 @@ class OnlyAiGameError(Exception): ...
 class NotAiCurrentMoveError(Exception): ...
 
 
-def number_of_unfilled_cells(board: Matrix[Cell]) -> int:
-    return sum(int(not cell.is_filled()) for cell in chain.from_iterable(board))
-
-
 @dataclass
 class Game:
     """
@@ -104,7 +100,6 @@ class Game:
     player2: Player
     player2_emoji: Emoji
     board: Board
-    number_of_unfilled_cells: int
     result: GameResult | None
     state: GameState
 
@@ -126,12 +121,6 @@ class Game:
             for y in range(self.board.height())
         )
         assert_(is_cell_order_ok, else_=InvalidCellOrderError)
-
-        board = self.board
-        assert_(
-            number_of_unfilled_cells(board) == self.number_of_unfilled_cells,
-            else_=InvalidNumberOfUnfilledCellsError,
-        )
 
     def is_against_ai(self) -> bool:
         return isinstance(self.player1, Ai) or isinstance(self.player2, Ai)
@@ -215,7 +204,6 @@ class Game:
             raise NoCellError from error
 
         cell.fill_as_user(user_id, tracking)
-        self.number_of_unfilled_cells -= 1
         tracking.register_mutated(self)
 
         if self._is_player_winner(current_player, cell.board_position):
@@ -339,7 +327,6 @@ class Game:
                 tracking,
             )
 
-        self.number_of_unfilled_cells -= 1
         tracking.register_mutated(self)
 
         if self._is_player_winner(current_player, cell_position):
@@ -392,7 +379,6 @@ class Game:
     ) -> AiMove:
         cell = choice(self._free_cells(), random=free_cell_random)
         cell.fill_as_ai(current_player.id, tracking)
-        self.number_of_unfilled_cells -= 1
         tracking.register_mutated(self)
 
         if self._is_player_winner(current_player, cell.board_position):
@@ -419,7 +405,7 @@ class Game:
         return not self._is_board_filled()
 
     def _is_board_filled(self) -> bool:
-        return self.number_of_unfilled_cells <= 0
+        return all(cell.is_filled() for cell in chain.from_iterable(self.board))
 
     def _is_player_winner(self, player: Player, cell_position: Vector) -> bool:
         cell_x, cell_y = cell_position
@@ -545,7 +531,6 @@ def start_game(  # noqa: PLR0913, PLR0917
         player2,
         player2_emoji,
         board,
-        number_of_unfilled_cells(board),
         None,
         GameState.wait_player1,
     )
@@ -622,7 +607,6 @@ def start_game_with_ai(  # noqa: PLR0913, PLR0917
         player2,
         player2_emoji,
         board,
-        number_of_unfilled_cells(board),
         None,
         GameState.wait_player1,
     )
