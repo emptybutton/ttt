@@ -8,7 +8,6 @@ from ttt.entities.core.game.ai import Ai, AiType
 from ttt.entities.core.game.cell import Cell
 from ttt.entities.core.game.game import Game, GameState
 from ttt.entities.core.user.account import Account
-from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.user import User
 from ttt.entities.elo.rating import GamesPlayed
 from ttt.entities.math.matrix import Matrix
@@ -31,7 +30,7 @@ def player1() -> User:
         emojis=[],
         selected_emoji_id=None,
         rating=1000.,
-        game_location=UserGameLocation(1, UUID(int=0)),
+        current_game_id=UUID(int=0),
         admin_right=None,
     )
 
@@ -69,7 +68,6 @@ def game(player1: User, player2: Ai) -> Game:
                 Cell(UUID(int=0), UUID(int=0), (2, 2), None, None),
             ],
         ]),
-        number_of_unfilled_cells=9,
         result=None,
         state=GameState.wait_player1,
     )

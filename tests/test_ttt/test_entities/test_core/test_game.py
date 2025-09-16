@@ -120,7 +120,6 @@ def game(
         user2,
         emoji2,
         standard_board,
-        9,
         None,
         GameState.wait_player1,
     )
@@ -162,7 +161,6 @@ def test_not_standard_board(
             user2,
             emoji2,
             not_standard_board,
-            9,
             None,
             GameState.wait_player1,
         )
@@ -182,7 +180,6 @@ def test_one_user(
             user1,
             emoji2,
             standard_board,
-            9,
             None,
             GameState.wait_player1,
         )
@@ -202,7 +199,6 @@ def test_one_emoji(
             user2,
             emoji1,
             standard_board,
-            9,
             None,
             GameState.wait_player1,
         )
@@ -223,7 +219,6 @@ def test_game_with_invalid_cell_order(
             user2,
             emoji2,
             board_with_invalid_cell_order,
-            9,
             None,
             GameState.wait_player1,
         )
@@ -280,7 +275,6 @@ def test_make_move_with_completed_game(  # noqa: PLR0913, PLR0917
         user2,
         emoji2,
         standard_board,
-        9,
         DecidedGameResult(
             win=UserWin(user_id=1, new_stars=20, rating_vector=20.),
             loss=UserLoss(user_id=2, rating_vector=-20.),
@@ -428,7 +422,7 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             emojis=[],
             rating=1020.0,
             selected_emoji_id=None,
-            game_location=None,
+            current_game_id=None,
             admin_right=None,
         )
 
@@ -439,7 +433,7 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             emojis=[],
             rating=981.1500225556907,
             selected_emoji_id=None,
-            game_location=None,
+            current_game_id=None,
             admin_right=None,
         )
 
@@ -515,7 +509,7 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             emojis=[],
             rating=1020.0,
             selected_emoji_id=None,
-            game_location=None,
+            current_game_id=None,
             admin_right=None,
         )
 
@@ -526,7 +520,7 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             emojis=[],
             rating=1020.0,
             selected_emoji_id=None,
-            game_location=None,
+            current_game_id=None,
             admin_right=None,
         )
 
@@ -602,7 +596,7 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             emojis=[],
             rating=1020.0,
             selected_emoji_id=None,
-            game_location=None,
+            current_game_id=None,
             admin_right=None,
         )
 
@@ -613,7 +607,7 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             emojis=[],
             rating=981.1500225556907,
             selected_emoji_id=None,
-            game_location=None,
+            current_game_id=None,
             admin_right=None,
         )
 
