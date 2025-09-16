@@ -31,9 +31,6 @@ def player1() -> User:
         emojis=[],
         selected_emoji_id=None,
         rating=1000.,
-        number_of_wins=0,
-        number_of_draws=0,
-        number_of_defeats=0,
         game_location=UserGameLocation(1, UUID(int=0)),
         admin_right=None,
     )
@@ -97,13 +94,7 @@ async def test_games_played_by_player_id(
 ) -> None:
     async with session.begin():
         await session.execute(
-            insert(TableUser).values({
-                "id": 1,
-                "rating": 1000,
-                "number_of_wins": 0,
-                "number_of_draws": 0,
-                "number_of_defeats": 0,
-            }),
+            insert(TableUser).values({"id": 1, "rating": 1000}),
         )
         if games:
             await session.execute(

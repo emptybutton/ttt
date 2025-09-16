@@ -83,10 +83,6 @@ class User:
     selected_emoji_id: UUID | None
     rating: EloRating
     admin_right: AdminRight | None
-
-    number_of_wins: int
-    number_of_draws: int
-    number_of_defeats: int
     game_location: UserGameLocation | None
 
     emoji_cost: ClassVar[Stars] = 1000
@@ -253,7 +249,6 @@ class User:
 
         self.leave_game(tracking)
 
-        self.number_of_defeats += 1
         new_rating = new_elo_rating(
             self.rating,
             enemy_rating,
@@ -272,8 +267,6 @@ class User:
         """
 
         self.leave_game(tracking)
-
-        self.number_of_defeats += 1
         tracking.register_mutated(self)
 
         return UserLoss(user_id=self.id, rating_vector=None)
@@ -290,9 +283,6 @@ class User:
         """
 
         self.leave_game(tracking)
-
-        self.number_of_wins += 1
-
         new_rating = new_elo_rating(
             self.rating,
             enemy_rating,
@@ -327,9 +317,6 @@ class User:
         """
 
         self.leave_game(tracking)
-
-        self.number_of_draws += 1
-
         new_rating = new_elo_rating(
             self.rating,
             enemy_rating,
@@ -348,8 +335,6 @@ class User:
         """
 
         self.leave_game(tracking)
-
-        self.number_of_draws += 1
         tracking.register_mutated(self)
 
         return UserDraw(self.id, rating_vector=None)
@@ -443,9 +428,6 @@ def register_user(user_id: int, tracking: Tracking) -> User:
         emojis=[],
         selected_emoji_id=None,
         rating=initial_elo_rating,
-        number_of_wins=0,
-        number_of_draws=0,
-        number_of_defeats=0,
         game_location=None,
         admin_right=None,
     )

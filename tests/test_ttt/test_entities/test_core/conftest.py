@@ -28,9 +28,6 @@ def user1() -> User:
         emojis=[],
         selected_emoji_id=None,
         rating=1000.,
-        number_of_wins=0,
-        number_of_draws=0,
-        number_of_defeats=0,
         game_location=UserGameLocation(1, UUID(int=0)),
         admin_right=None,
     )
@@ -44,9 +41,6 @@ def user2() -> User:
         emojis=[],
         rating=1000.,
         selected_emoji_id=None,
-        number_of_wins=0,
-        number_of_draws=0,
-        number_of_defeats=0,
         game_location=UserGameLocation(2, UUID(int=0)),
         admin_right=None,
     )

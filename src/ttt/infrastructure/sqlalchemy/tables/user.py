@@ -82,9 +82,6 @@ class TableUser(Base[User]):
         index=True,
     )
     rating: Mapped[float]
-    number_of_wins: Mapped[int]
-    number_of_draws: Mapped[int]
-    number_of_defeats: Mapped[int]
     game_location_game_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
         index=True,
@@ -134,9 +131,6 @@ class TableUser(Base[User]):
             emojis=[it.entity() for it in self.emojis],
             selected_emoji_id=self.selected_emoji_id,
             rating=self.rating,
-            number_of_wins=self.number_of_wins,
-            number_of_draws=self.number_of_draws,
-            number_of_defeats=self.number_of_defeats,
             game_location=location,
             admin_right=admin_right,
         )
@@ -164,9 +158,6 @@ class TableUser(Base[User]):
             account_stars=it.account.stars,
             selected_emoji_id=it.selected_emoji_id,
             rating=it.rating,
-            number_of_wins=it.number_of_wins,
-            number_of_draws=it.number_of_draws,
-            number_of_defeats=it.number_of_defeats,
             game_location_game_id=game_location_game_id,
             admin_right=admin_right,
             admin_right_via_other_admin_admin_id=(

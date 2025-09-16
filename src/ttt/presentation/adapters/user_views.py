@@ -20,10 +20,12 @@ from ttt.application.user.emoji_selection.ports.user_views import (
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.user import User, is_user_in_game, user_stars
+from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.sqlalchemy.stmts import (
     selected_user_emoji_str_from_postgres,
     user_emojis_from_postgres,
 )
+from ttt.infrastructure.sqlalchemy.tables.game import TableGame
 from ttt.infrastructure.sqlalchemy.tables.invitation_to_game import (
     TableInvitationToGame,
     TableInvitationToGameState,
@@ -80,13 +82,7 @@ class AiogramCommonUserViews(CommonUserViews):
         /,
     ) -> None:
         user_stmt = (
-            select(
-                TableUser.number_of_wins,
-                TableUser.number_of_draws,
-                TableUser.number_of_defeats,
-                TableUser.account_stars,
-                TableUser.rating,
-            )
+            select(TableUser.account_stars, TableUser.rating)
             .where(TableUser.id == user_id)
         )
         result = await self._session.execute(user_stmt)
@@ -96,10 +92,31 @@ class AiogramCommonUserViews(CommonUserViews):
             await need_to_start_message(self._bot, user_id)
             return
 
+        wins_stmt = (
+            select(func.count(1))
+            .where(TableGame.result_decided_game_user_win_user_id == user_id)
+        )
+        wins = not_none(await self._session.scalar(wins_stmt))
+
+        draws_stmt = (
+            select(func.count(1))
+            .where(
+                (TableGame.result_draw_game_user_draw1_user_id == user_id)
+                | (TableGame.result_draw_game_user_draw2_user_id == user_id),
+            )
+        )
+        draws = not_none(await self._session.scalar(draws_stmt))
+
+        defeats_stmt = (
+            select(func.count(1))
+            .where(TableGame.result_decided_game_user_loss_user_id == user_id)
+        )
+        defeats = not_none(await self._session.scalar(defeats_stmt))
+
         view = UserProfileView.of(
-            user_row.number_of_wins,
-            user_row.number_of_draws,
-            user_row.number_of_defeats,
+            wins,
+            draws,
+            defeats,
             user_row.account_stars,
             user_row.rating,
         )
@@ -326,9 +343,6 @@ class AiogramCommonUserViews(CommonUserViews):
     async def other_user_view(self, user: User, other_user_id: int, /) -> None:
         stmt = (
             select(
-                TableUser.number_of_wins,
-                TableUser.number_of_draws,
-                TableUser.number_of_defeats,
                 TableUser.account_stars,
                 TableUser.rating,
                 TableUser.admin_right,
@@ -349,6 +363,22 @@ class AiogramCommonUserViews(CommonUserViews):
             )
             return
 
+        wins_stmt = select(func.count(1)).where(
+            TableGame.result_decided_game_user_win_user_id == other_user_id,
+        )
+        wins = not_none(await self._session.scalar(wins_stmt))
+
+        draws_stmt = select(func.count(1)).where(
+            (TableGame.result_draw_game_user_draw1_user_id == other_user_id)
+            | (TableGame.result_draw_game_user_draw2_user_id == other_user_id),
+        )
+        draws = not_none(await self._session.scalar(draws_stmt))
+
+        defeats_stmt = select(func.count(1)).where(
+            TableGame.result_decided_game_user_loss_user_id == other_user_id,
+        )
+        defeats = not_none(await self._session.scalar(defeats_stmt))
+
         if row.admin_right is None:
             admin_right = None
         else:
@@ -359,9 +389,9 @@ class AiogramCommonUserViews(CommonUserViews):
         view = OtherUserProfileView.of(
             other_user_id,
             admin_right,
-            row.number_of_wins,
-            row.number_of_draws,
-            row.number_of_defeats,
+            wins,
+            draws,
+            defeats,
             row.account_stars,
             row.rating,
         )
