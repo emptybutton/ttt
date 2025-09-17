@@ -4,7 +4,7 @@ from itertools import combinations
 from uuid import UUID
 
 from ttt.entities.core.game.game import Game, start_game
-from ttt.entities.core.matchmaking_queue.user_waiting import UserWaiting
+from ttt.entities.core.matchmaking.user_waiting import UserWaiting
 from ttt.entities.core.user.rank import are_ranks_adjacent
 from ttt.entities.core.user.user import User, UserAlreadyInGameError
 from ttt.entities.math.matrix import Matrix
@@ -17,14 +17,14 @@ class UserAlreadyWaitingForGameError(Exception): ...
 
 
 @dataclass
-class MatchmakingQueue:
+class Matchmaking:
     user_waitings: list[UserWaiting]
 
     def __contains__(self, user: User) -> bool:
         waiting_user_ids = (waiting.user.id for waiting in self.user_waitings)
         return user.id in waiting_user_ids
 
-    def add_user(  # noqa: PLR0913, PLR0917
+    def wait_game(  # noqa: PLR0913, PLR0917
         self,
         user: User,
         user_waiting_id: UUID,
@@ -36,7 +36,7 @@ class MatchmakingQueue:
         tracking: Tracking,
     ) -> Game | None:
         """
-        :raises ttt.entities.core.matchmaking_queue.matchmaking_queue.UserAlreadyWaitingForGameError:
+        :raises ttt.entities.core.matchmaking.matchmaking.UserAlreadyWaitingForGameError:
         :raises ttt.entities.core.game.game.UserAlreadyInGameError:
         :raises ttt.entities.core.game.game.SameRandomEmojiError:
         :raises ttt.entities.core.game.board.InvalidCellIDMatrixError:
@@ -85,4 +85,4 @@ class MatchmakingQueue:
         return rank1 == rank2 or are_ranks_adjacent(rank1, rank2)
 
 
-MatchmakingQueueAtomic = MatchmakingQueue | UserWaiting
+MatchmakingAtomic = Matchmaking | UserWaiting

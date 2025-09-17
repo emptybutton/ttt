@@ -30,11 +30,11 @@ from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import
 from ttt.application.invitation_to_game.game.ports.invitations_to_game import (
     InvitationsToGame,
 )
-from ttt.application.matchmaking_queue.common.matchmaking_queue_log import (
-    CommonMatchmakingQueueLog,
+from ttt.application.matchmaking.common.matchmaking_log import (
+    CommonMatchmakingLog,
 )
-from ttt.application.matchmaking_queue.common.shared_matchmaking_queue import (
-    SharedMatchmakingQueue,
+from ttt.application.matchmaking.common.shared_matchmaking import (
+    SharedMatchmaking,
 )
 from ttt.application.stars_purchase.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
     PaidStarsPurchasePaymentInbox,
@@ -72,8 +72,8 @@ from ttt.infrastructure.adapters.invitations_to_game import (
     InPostgresInvitationsToGame,
 )
 from ttt.infrastructure.adapters.map import MapToPostgres
-from ttt.infrastructure.adapters.matchmaking_queue_log import (
-    StructlogCommonMatchmakingQueueLog,
+from ttt.infrastructure.adapters.matchmaking_log import (
+    StructlogCommonMatchmakingLog,
 )
 from ttt.infrastructure.adapters.original_admin_token import (
     TokenAsOriginalAdminToken,
@@ -82,8 +82,8 @@ from ttt.infrastructure.adapters.paid_stars_purchase_payment_inbox import (
     InNatsPaidStarsPurchasePaymentInbox,
 )
 from ttt.infrastructure.adapters.randoms import MersenneTwisterRandoms
-from ttt.infrastructure.adapters.shared_matchmaking_queue import (
-    InPostgresSharedMatchmakingQueue,
+from ttt.infrastructure.adapters.shared_matchmaking import (
+    InPostgresSharedMatchmaking,
 )
 from ttt.infrastructure.adapters.stars_purchase_log import (
     StructlogStarsPurchaseLog,
@@ -246,9 +246,9 @@ class InfrastructureProvider(Provider):
         scope=Scope.REQUEST,
     )
 
-    provide_shared_matchmaking_queue = provide(
-        InPostgresSharedMatchmakingQueue,
-        provides=SharedMatchmakingQueue,
+    provide_shared_matchmaking = provide(
+        InPostgresSharedMatchmaking,
+        provides=SharedMatchmaking,
         scope=Scope.REQUEST,
     )
 
@@ -328,9 +328,9 @@ class InfrastructureProvider(Provider):
         scope=Scope.REQUEST,
     )
 
-    provide_common_matchmaking_queue_log = provide(
-        StructlogCommonMatchmakingQueueLog,
-        provides=CommonMatchmakingQueueLog,
+    provide_common_matchmaking_log = provide(
+        StructlogCommonMatchmakingLog,
+        provides=CommonMatchmakingLog,
         scope=Scope.REQUEST,
     )
 

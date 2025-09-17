@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from aiogram_dialog import StartMode
 
-from ttt.application.matchmaking_queue.common.matchmaking_queue_views import (
-    CommonMatchmakingQueueViews,
+from ttt.application.matchmaking.common.matchmaking_views import (
+    CommonMatchmakingViews,
 )
 from ttt.presentation.aiogram_dialog.common.dialog_manager_for_user import (
     DialogManagerForUser,
@@ -12,7 +12,7 @@ from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class AiogramCommonMatchmakingQueueViews(CommonMatchmakingQueueViews):
+class AiogramCommonMatchmakingViews(CommonMatchmakingViews):
     _dialog_manager_for_user: DialogManagerForUser
 
     async def waiting_for_game_view(self, user_id: int, /) -> None:

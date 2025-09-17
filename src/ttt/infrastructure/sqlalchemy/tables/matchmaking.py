@@ -4,17 +4,17 @@ from uuid import UUID
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from ttt.entities.core.matchmaking_queue.matchmaking_queue import (
-    MatchmakingQueue,
-    MatchmakingQueueAtomic,
+from ttt.entities.core.matchmaking.matchmaking import (
+    Matchmaking,
+    MatchmakingAtomic,
 )
-from ttt.entities.core.matchmaking_queue.user_waiting import UserWaiting
+from ttt.entities.core.matchmaking.user_waiting import UserWaiting
 from ttt.infrastructure.sqlalchemy.tables.common import Base
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 
 
 class TableUserWaiting(Base[UserWaiting]):
-    __tablename__ = "matchmaking_queue_user_waitings"
+    __tablename__ = "matchmaking_user_waitings"
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     start_datetime: Mapped[datetime]
@@ -45,15 +45,15 @@ class TableUserWaiting(Base[UserWaiting]):
         )
 
 
-type TableMatchmakingQueue = None
-type TableMatchmakingQueueAtomic = TableMatchmakingQueue | TableUserWaiting
+type TableMatchmaking = None
+type TableMatchmakingAtomic = TableMatchmaking | TableUserWaiting
 
 
-def table_matchmaking_queue_atomic(
-    entity: MatchmakingQueueAtomic,
-) -> TableMatchmakingQueueAtomic:
+def table_matchmaking_atomic(
+    entity: MatchmakingAtomic,
+) -> TableMatchmakingAtomic:
     match entity:
-        case MatchmakingQueue():
+        case Matchmaking():
             return None
 
         case UserWaiting():

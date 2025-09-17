@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class CommonMatchmakingQueueLog(ABC):
+class CommonMatchmakingLog(ABC):
     @abstractmethod
     async def waiting_for_game_start(
         self,
@@ -17,6 +17,6 @@ class CommonMatchmakingQueueLog(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def user_already_in_game_to_add_to_matchmaking_queue(
+    async def user_already_in_game_to_wait_game_in_matchmaking(
         self, user_id: int, /,
     ) -> None: ...

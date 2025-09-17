@@ -7,8 +7,8 @@ from ttt.entities.core.game.game import (
 from ttt.entities.core.invitation_to_game.invitation_to_game import (
     InvitationToGameAtomic,
 )
-from ttt.entities.core.matchmaking_queue.matchmaking_queue import (
-    MatchmakingQueueAtomic,
+from ttt.entities.core.matchmaking.matchmaking import (
+    MatchmakingAtomic,
 )
 from ttt.entities.core.stars_purchase.stars_purchase import StarsPurchaseAtomic
 from ttt.entities.core.user.user import UserAtomic
@@ -23,9 +23,9 @@ from ttt.infrastructure.sqlalchemy.tables.invitation_to_game import (
     TableInvitationToGameAtomic,
     table_invitation_to_game_atomic,
 )
-from ttt.infrastructure.sqlalchemy.tables.matchmaking_queue import (
-    TableMatchmakingQueueAtomic,
-    table_matchmaking_queue_atomic,
+from ttt.infrastructure.sqlalchemy.tables.matchmaking import (
+    TableMatchmakingAtomic,
+    table_matchmaking_atomic,
 )
 from ttt.infrastructure.sqlalchemy.tables.payment import (
     TablePaymentAtomic,
@@ -45,7 +45,7 @@ type TableAtomic = (
     TableUserAtomic
     | TableStarsPurchaseAtomic
     | TableGameAtomic
-    | TableMatchmakingQueueAtomic
+    | TableMatchmakingAtomic
     | TableInvitationToGameAtomic
     | TablePaymentAtomic
 )
@@ -61,8 +61,8 @@ def mapped_table_atomic(entity: Atomic) -> TableAtomic:  # noqa: RET503
     if isinstance(entity, PaymentAtomic):
         return table_payment_atomic(entity)
 
-    if isinstance(entity, MatchmakingQueueAtomic):
-        return table_matchmaking_queue_atomic(entity)
+    if isinstance(entity, MatchmakingAtomic):
+        return table_matchmaking_atomic(entity)
 
     if isinstance(entity, InvitationToGameAtomic):
         return table_invitation_to_game_atomic(entity)

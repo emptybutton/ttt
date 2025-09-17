@@ -8,18 +8,18 @@ from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.ports.games import Games
-from ttt.application.matchmaking_queue.common.matchmaking_queue_log import (
-    CommonMatchmakingQueueLog,
+from ttt.application.matchmaking.common.matchmaking_log import (
+    CommonMatchmakingLog,
 )
-from ttt.application.matchmaking_queue.common.matchmaking_queue_views import (
-    CommonMatchmakingQueueViews,
+from ttt.application.matchmaking.common.matchmaking_views import (
+    CommonMatchmakingViews,
 )
-from ttt.application.matchmaking_queue.common.shared_matchmaking_queue import (
-    SharedMatchmakingQueue,
+from ttt.application.matchmaking.common.shared_matchmaking import (
+    SharedMatchmaking,
 )
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
-from ttt.entities.core.matchmaking_queue.matchmaking_queue import (
+from ttt.entities.core.matchmaking.matchmaking import (
     UserAlreadyWaitingForGameError,
 )
 from ttt.entities.core.user.user import UserAlreadyInGameError
@@ -38,9 +38,9 @@ class WaitGame:
     games: Games
     game_views: GameViews
     game_log: GameLog
-    shared_matchmaking_queue: SharedMatchmakingQueue
-    matchmaking_queue_views: CommonMatchmakingQueueViews
-    matchmaking_queue_log: CommonMatchmakingQueueLog
+    shared_matchmaking: SharedMatchmaking
+    matchmaking_views: CommonMatchmakingViews
+    matchmaking_log: CommonMatchmakingLog
 
     async def __call__(self, user_id: int) -> None:
         async with self.transaction:
@@ -50,7 +50,7 @@ class WaitGame:
                 await self.user_views.user_is_not_registered_view(user_id)
                 return
 
-            matchmaking_queue = await self.shared_matchmaking_queue
+            matchmaking = await self.shared_matchmaking
             user_waiting_id = await self.uuids.random_uuid()
             game_id = await self.uuids.random_uuid()
             cell_id_matrix = await self.uuids.random_uuid_matrix((3, 3))
@@ -60,7 +60,7 @@ class WaitGame:
 
             try:
                 tracking = Tracking()
-                game = matchmaking_queue.add_user(
+                game = matchmaking.wait_game(
                     user,
                     user_waiting_id,
                     cell_id_matrix,
@@ -71,24 +71,24 @@ class WaitGame:
                     tracking,
                 )
             except UserAlreadyWaitingForGameError:
-                await self.matchmaking_queue_log.double_waiting_for_game_start(
+                await self.matchmaking_log.double_waiting_for_game_start(
                     user_id,
                 )
-                await self.matchmaking_queue_views.double_waiting_for_game_view(
+                await self.matchmaking_views.double_waiting_for_game_view(
                     user_id,
                 )
             except UserAlreadyInGameError:
                 await (
-                    self.matchmaking_queue_log
-                    .user_already_in_game_to_add_to_matchmaking_queue(user_id)
+                    self.matchmaking_log
+                    .user_already_in_game_to_wait_game_in_matchmaking(user_id)
                 )
                 await self.game_views.user_already_in_game_view(user_id)
             else:
                 if game is None:
-                    await self.matchmaking_queue_log.waiting_for_game_start(
+                    await self.matchmaking_log.waiting_for_game_start(
                         user_id,
                     )
-                    await self.matchmaking_queue_views.waiting_for_game_view(
+                    await self.matchmaking_views.waiting_for_game_view(
                         user_id,
                     )
                     await self.map_(tracking)

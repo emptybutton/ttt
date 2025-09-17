@@ -2,8 +2,8 @@ from ttt.entities.core.game.game import GameAtomic
 from ttt.entities.core.invitation_to_game.invitation_to_game import (
     InvitationToGameAtomic,
 )
-from ttt.entities.core.matchmaking_queue.matchmaking_queue import (
-    MatchmakingQueueAtomic,
+from ttt.entities.core.matchmaking.matchmaking import (
+    MatchmakingAtomic,
 )
 from ttt.entities.core.stars_purchase.stars_purchase import StarsPurchaseAtomic
 from ttt.entities.core.user.user import UserAtomic
@@ -14,7 +14,7 @@ type Atomic = (
     GameAtomic
     | UserAtomic
     | StarsPurchaseAtomic
-    | MatchmakingQueueAtomic
+    | MatchmakingAtomic
     | InvitationToGameAtomic
     | PaymentAtomic
 )

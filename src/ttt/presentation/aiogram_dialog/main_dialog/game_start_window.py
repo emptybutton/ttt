@@ -10,7 +10,7 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
-from ttt.application.matchmaking_queue.game.wait_game import WaitGame
+from ttt.application.matchmaking.game.wait_game import WaitGame
 from ttt.presentation.aiogram_dialog.common.wigets.hint import hint
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
     OneTimekey,
