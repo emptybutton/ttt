@@ -29,6 +29,7 @@ def user1() -> User:
         rating=1000.,
         current_game_id=UUID(int=0),
         admin_right=None,
+        matchmaking_waiting=None,
     )
 
 
@@ -42,6 +43,7 @@ def user2() -> User:
         selected_emoji_id=None,
         current_game_id=UUID(int=0),
         admin_right=None,
+        matchmaking_waiting=None,
     )
 
 

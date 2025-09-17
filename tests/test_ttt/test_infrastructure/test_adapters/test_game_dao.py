@@ -32,6 +32,7 @@ def player1() -> User:
         rating=1000.,
         current_game_id=UUID(int=0),
         admin_right=None,
+        matchmaking_waiting=None,
     )
 
 

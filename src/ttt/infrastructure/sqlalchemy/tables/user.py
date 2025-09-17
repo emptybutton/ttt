@@ -13,6 +13,7 @@ from ttt.entities.core.user.admin_right import (
     AdminRightViaOtherAdmin,
 )
 from ttt.entities.core.user.emoji import UserEmoji
+from ttt.entities.core.user.matchmaking_waiting import MatchmakingWaiting
 from ttt.entities.core.user.user import User, UserAtomic
 from ttt.entities.text.emoji import Emoji
 from ttt.entities.tools.assertion import not_none
@@ -89,6 +90,10 @@ class TableUser(Base[User]):
     admin_right_via_other_admin_admin_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
     )
+    has_matchmaking_waiting: Mapped[bool] = mapped_column(
+        server_default="false",
+    )
+    matchmaking_waiting_start_datetime: Mapped[datetime | None]
 
     emojis: Mapped[list[TableUserEmoji]] = relationship(
         lazy="selectin",
@@ -106,6 +111,11 @@ class TableUser(Base[User]):
             admin_right,
             postgresql_where=(admin_right.is_not(None)),
         ),
+        Index(
+            "ix_users_has_matchmaking_waiting",
+            has_matchmaking_waiting,
+            postgresql_where=(has_matchmaking_waiting.is_(True)),
+        ),
     )
 
     def __entity__(self) -> User:
@@ -116,6 +126,13 @@ class TableUser(Base[User]):
         else:
             admin_right = None
 
+        if self.has_matchmaking_waiting:
+            matchmaking_waiting = MatchmakingWaiting(
+                start_datetime=not_none(self.matchmaking_waiting_start_datetime),
+            )
+        else:
+            matchmaking_waiting = None
+
         return User(
             id=self.id,
             account=Account(self.account_stars),
@@ -124,6 +141,7 @@ class TableUser(Base[User]):
             rating=self.rating,
             current_game_id=self.current_game_id,
             admin_right=admin_right,
+            matchmaking_waiting=matchmaking_waiting,
         )
 
     @classmethod
@@ -139,6 +157,15 @@ class TableUser(Base[User]):
                 admin_right = TableAdminRight.via_other_admin
                 admin_right_via_other_admin_admin_id = admin_id
 
+        if it.matchmaking_waiting is not None:
+            has_matchmaking_waiting = True
+            matchmaking_waiting_start_datetime = (
+                it.matchmaking_waiting.start_datetime
+            )
+        else:
+            has_matchmaking_waiting = False
+            matchmaking_waiting_start_datetime = None
+
         return TableUser(
             id=it.id,
             account_stars=it.account.stars,
@@ -149,6 +176,8 @@ class TableUser(Base[User]):
             admin_right_via_other_admin_admin_id=(
                 admin_right_via_other_admin_admin_id
             ),
+            matchmaking_waiting_start_datetime=matchmaking_waiting_start_datetime,
+            has_matchmaking_waiting=has_matchmaking_waiting,
         )
 
 

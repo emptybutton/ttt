@@ -58,10 +58,6 @@ from ttt.application.invitation_to_game.game.view_one_incoming_invitation_to_gam
 from ttt.application.invitation_to_game.game.view_outcoming_invitations_to_game import (  # noqa: E501
     ViewOutcomingInvitationsToGame,
 )
-from ttt.application.matchmaking.common.matchmaking_views import (
-    CommonMatchmakingViews,
-)
-from ttt.application.matchmaking.game.wait_game import WaitGame
 from ttt.application.stars_purchase.complete_stars_purchase_payment import (
     CompleteStarsPurchasePayment,
 )
@@ -109,6 +105,9 @@ from ttt.application.user.emoji_selection.ports.user_views import (
     EmojiSelectionUserViews,
 )
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
+from ttt.application.user.game.matchmake import Matchmake
+from ttt.application.user.game.ports.user_views import GameUserViews
+from ttt.application.user.game.wait_for_matchmaking import WaitForMatchmaking
 from ttt.application.user.register_user import RegisterUser
 from ttt.application.user.relinquish_admin_right import RelinquishAdminRight
 from ttt.application.user.view_admin_menu import ViewAdminMenu
@@ -125,9 +124,6 @@ from ttt.presentation.adapters.game_views import (
 from ttt.presentation.adapters.invitation_to_game_views import (
     AiogramInvitationToGameViews,
 )
-from ttt.presentation.adapters.matchmaking_views import (
-    AiogramCommonMatchmakingViews,
-)
 from ttt.presentation.adapters.stars_purchase_payment_gateway import (
     AiogramPaymentGateway,
 )
@@ -139,6 +135,7 @@ from ttt.presentation.adapters.user_views import (
     AiogramCommonUserViews,
     AiogramEmojiPurchaseUserViews,
     AiogramEmojiSelectionUserViews,
+    AiogramGameUserViews,
 )
 from ttt.presentation.aiogram.common.bots import ttt_bot
 from ttt.presentation.aiogram.common.routes.all import common_routers
@@ -214,6 +211,11 @@ class PresentationProvider(Provider):
         provides=CommonUserViews,
         scope=Scope.REQUEST,
     )
+    provide_game_user_views = provide(
+        AiogramGameUserViews,
+        provides=GameUserViews,
+        scope=Scope.REQUEST,
+    )
     provide_stars_purchase_user_views = provide(
         AiogramStarsPurchaseViews,
         provides=StarsPurchaseViews,
@@ -227,11 +229,6 @@ class PresentationProvider(Provider):
     provide_emoji_purchase_user_views = provide(
         AiogramEmojiPurchaseUserViews,
         provides=EmojiPurchaseUserViews,
-        scope=Scope.REQUEST,
-    )
-    provide_common_matchmaking_views = provide(
-        AiogramCommonMatchmakingViews,
-        provides=CommonMatchmakingViews,
         scope=Scope.REQUEST,
     )
     provide_change_other_user_account_views = provide(
@@ -377,6 +374,10 @@ class ApplicationProvider(Provider):
     provide_view_user_account_to_change = provide(
         ViewUserAccountToChange, scope=Scope.REQUEST,
     )
+    provide_matchmake = provide(Matchmake, scope=Scope.REQUEST)
+    provide_wait_for_matchmaking = provide(
+        WaitForMatchmaking, scope=Scope.REQUEST,
+    )
 
     provide_start_stars_purchase = provide(
         StartStarsPurchase,
@@ -402,8 +403,6 @@ class ApplicationProvider(Provider):
     provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
     provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)
     provide_view_game = provide(ViewGame, scope=Scope.REQUEST)
-
-    provide_wait_game = provide(WaitGame, scope=Scope.REQUEST)
 
     provide_accept_invitation_to_game = provide(
         AcceptInvitationToGame, scope=Scope.REQUEST,

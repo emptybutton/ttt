@@ -13,6 +13,7 @@ from ttt.entities.core.user.admin_right import (
 from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.loss import UserLoss
+from ttt.entities.core.user.matchmaking_waiting import MatchmakingWaiting
 from ttt.entities.core.user.rank import Rank, rank_for_rating
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.elo.rating import (
@@ -74,11 +75,21 @@ class NotAuthorizedAsAdminViaAdminTokenError(Exception): ...
 class UserAlredyAdminToAuthorizeAsAdminError(Exception): ...
 
 
-@dataclass
+class UserAlreadyWaitingForMatchmakingError(Exception): ...
+
+
+class UserIsNotWaitingForMatchmakingError(Exception): ...
+
+
+class UserIsInGameError(Exception): ...
+
+
+@dataclass  # noqa: PLR0904
 class User:
     id: int
     account: Account
     emojis: list[UserEmoji]
+    matchmaking_waiting: MatchmakingWaiting | None
     selected_emoji_id: UUID | None
     rating: EloRating
     admin_right: AdminRight | None
@@ -416,6 +427,45 @@ class User:
 
         tracking.register_mutated(self)
 
+    def is_waiting_for_matchmaking(self) -> bool:
+        return self.matchmaking_waiting is not None
+
+    def wait_for_matchmaking(
+        self,
+        curreint_datetime: datetime,
+        tracking: Tracking,
+    ) -> "MatchmakingWaiting":
+        """
+        :raises ttt.entities.core.user.user.UserAlreadyWaitingForMatchmakingError:
+        :raises ttt.entities.core.user.user.UserIsInGameError:
+        """  # noqa: E501
+
+        assert_(
+            not self.is_waiting_for_matchmaking(),
+            else_=UserAlreadyWaitingForMatchmakingError,
+        )
+        assert_(not self.is_in_game(), else_=UserIsInGameError)
+
+        waiting = MatchmakingWaiting(start_datetime=curreint_datetime)
+
+        self.matchmaking_waiting = waiting
+        tracking.register_mutated(self)
+
+        return waiting
+
+    def dont_wait_for_matchmaking(self, tracking: Tracking) -> None:
+        """
+        :raises ttt.entities.core.user.user.UserIsNotWaitingForMatchmakingError:
+        """
+
+        assert_(
+            self.is_waiting_for_matchmaking(),
+            else_=UserIsNotWaitingForMatchmakingError,
+        )
+
+        tracking.register_unused(self.matchmaking_waiting)
+        self.matchmaking_waiting = None
+
 
 UserAtomic = User | UserEmoji
 
@@ -429,6 +479,7 @@ def register_user(user_id: int, tracking: Tracking) -> User:
         rating=initial_elo_rating,
         current_game_id=None,
         admin_right=None,
+        matchmaking_waiting=None,
     )
     tracking.register_new(user)
 

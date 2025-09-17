@@ -424,6 +424,7 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             selected_emoji_id=None,
             current_game_id=None,
             admin_right=None,
+            matchmaking_waiting=None,
         )
 
     if object_ == "user2":
@@ -435,6 +436,7 @@ def test_winning_game(  # noqa: PLR0913, PLR0917
             selected_emoji_id=None,
             current_game_id=None,
             admin_right=None,
+            matchmaking_waiting=None,
         )
 
     if object_ == "extra_move":
@@ -511,6 +513,7 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             selected_emoji_id=None,
             current_game_id=None,
             admin_right=None,
+            matchmaking_waiting=None,
         )
 
     if object_ == "user2":
@@ -522,6 +525,7 @@ def test_drawn_game(  # noqa: PLR0913, PLR0917
             selected_emoji_id=None,
             current_game_id=None,
             admin_right=None,
+            matchmaking_waiting=None,
         )
 
     if object_ == "extra_move":
@@ -598,6 +602,7 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             selected_emoji_id=None,
             current_game_id=None,
             admin_right=None,
+            matchmaking_waiting=None,
         )
 
     if object_ == "user2":
@@ -609,6 +614,7 @@ def test_winning_game_with_filled_board(  # noqa: PLR0913, PLR0917
             selected_emoji_id=None,
             current_game_id=None,
             admin_right=None,
+            matchmaking_waiting=None,
         )
 
     if object_ == "extra_move":

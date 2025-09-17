@@ -9,14 +9,17 @@ from dishka.integrations.aiogram import (
     ContainerMiddleware,
 )
 
+from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.presentation.tasks.auto_cancel_invitation_to_game_task import (
     auto_cancel_invitation_to_game_task,
 )
+from ttt.presentation.tasks.matchmake_tasks import matchmake_tasks
 from ttt.presentation.unkillable_tasks import UnkillableTasks
 
 
 async def start_aiogram(container: AsyncContainer) -> None:
     dp = await container.get(Dispatcher)
+    envs = await container.get(Envs)
 
     middleware = ContainerMiddleware(container)
 
@@ -27,6 +30,14 @@ async def start_aiogram(container: AsyncContainer) -> None:
     async with container(context) as request:
         tasks = await request.get(UnkillableTasks)
         tasks.add(partial(auto_cancel_invitation_to_game_task, container))
+        tasks.add(partial(
+            matchmake_tasks,
+            container,
+            max_workers=envs.matchmaking_max_workers,
+            worker_creation_interval_seconds=(
+                envs.matchmaking_worker_creation_interval_seconds
+            ),
+        ))
 
     logging.basicConfig(level=logging.INFO)
 

@@ -12,16 +12,6 @@ from ttt.entities.core.user.user import User
 class StructlogGameLog(GameLog):
     _logger: FilteringBoundLogger
 
-    async def game_against_user_started(
-        self,
-        game: Game,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "game_against_user_started",
-            game_id=game.id.hex,
-        )
-
     async def game_against_ai_started(
         self,
         game: Game,

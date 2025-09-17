@@ -38,3 +38,8 @@ class Users(ABC):
         ids: Sequence[int],
         /,
     ) -> tuple[User | None, ...]: ...
+
+    @abstractmethod
+    async def some_users_waiting_for_matchmaking_to_matchmake(
+        self,
+    ) -> list[User]: ...

@@ -1,3 +1,4 @@
+from asyncio import gather
 from collections import OrderedDict
 from dataclasses import dataclass
 from typing import cast
@@ -17,6 +18,8 @@ from ttt.application.user.emoji_purchase.ports.user_views import (
 from ttt.application.user.emoji_selection.ports.user_views import (
     EmojiSelectionUserViews,
 )
+from ttt.application.user.game.ports.user_views import GameUserViews
+from ttt.entities.core.game.game import Game
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.user import User, is_user_in_game, user_stars
 from ttt.entities.tools.assertion import not_none
@@ -57,6 +60,9 @@ from ttt.presentation.aiogram_dialog.common.dialog_manager_for_user import (
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.aiogram_dialog.main_dialog.emojis_window import (
     EmojiMenuView,
+)
+from ttt.presentation.aiogram_dialog.main_dialog.game_window import (
+    ActiveGameView,
 )
 from ttt.presentation.aiogram_dialog.main_dialog.main_window import (
     AmoutOfIncomingInvitationsToGame,
@@ -617,4 +623,63 @@ class AiogramChangeOtherUserAccountViews(ChangeOtherUserAccountViews):
             start_data,
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,
+        )
+
+
+@dataclass(frozen=True, unsafe_hash=False)
+class AiogramGameUserViews(GameUserViews):
+    _dialog_manager_for_user: DialogManagerForUser
+    _result_buffer: ResultBuffer
+
+    async def user_is_waiting_for_matchmaking_view(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        dialog_manager = self._dialog_manager_for_user(user.id)
+        await dialog_manager.start(
+            MainDialogState.game_mode_to_start_game,
+            {"hint": "⚔️ Подбор начат"},
+            StartMode.RESET_STACK,
+        )
+
+    async def user_is_already_waiting_for_matchmaking_view(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        dialog_manager = self._dialog_manager_for_user(user.id)
+        await dialog_manager.start(
+            MainDialogState.game_mode_to_start_game,
+            {"hint": "⚔️ Подбор начат"},
+            StartMode.RESET_STACK,
+        )
+
+    async def user_is_in_game_to_wait_for_matchmaking_view(
+        self, user: User, /,
+    ) -> None:
+        dialog_manager = self._dialog_manager_for_user(user.id)
+        await dialog_manager.start(
+            MainDialogState.game_mode_to_start_game,
+            {"hint": "⚔️ Вы уже в игре"},
+            StartMode.RESET_STACK,
+        )
+
+    async def matched_games_view(self, games: list[Game], /) -> None:
+        await gather(*map(self._started_game_view, games))
+
+    async def _started_game_view(self, game: Game, /) -> None:
+        await gather(*(
+            self._started_game_view_for_user(user.id, game)
+            for user in game.users()
+        ))
+
+    async def _started_game_view_for_user(
+        self, user_id: int, game: Game, /,
+    ) -> None:
+        dialog_manager = self._dialog_manager_for_user(user_id)
+        await dialog_manager.start(
+            MainDialogState.game,
+            ActiveGameView.of(game, user_id).window_data(),
+            StartMode.RESET_STACK,
         )

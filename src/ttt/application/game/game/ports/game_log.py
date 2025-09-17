@@ -7,13 +7,6 @@ from ttt.entities.core.user.user import User
 
 class GameLog(ABC):
     @abstractmethod
-    async def game_against_user_started(
-        self,
-        game: Game,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
     async def game_against_ai_started(
         self,
         game: Game,

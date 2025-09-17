@@ -18,6 +18,7 @@ def test_create_user(tracking: Tracking, object_: str) -> None:
             selected_emoji_id=None,
             current_game_id=None,
             admin_right=None,
+            matchmaking_waiting=None,
         )
 
     if object_ == "tracking":

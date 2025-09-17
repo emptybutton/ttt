@@ -10,7 +10,7 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
-from ttt.application.matchmaking.game.wait_game import WaitGame
+from ttt.application.user.game.wait_for_matchmaking import WaitForMatchmaking
 from ttt.presentation.aiogram_dialog.common.wigets.hint import hint
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
     OneTimekey,
@@ -23,9 +23,9 @@ async def on_matchmaking_clicked(
     callback: CallbackQuery,
     _: Button,
     __: DialogManager,
-    wait_game: FromDishka[WaitGame],
+    wait_for_matchmaking: FromDishka[WaitForMatchmaking],
 ) -> None:
-    await wait_game(callback.from_user.id)
+    await wait_for_matchmaking(callback.from_user.id)
 
 
 game_start_window = Window(

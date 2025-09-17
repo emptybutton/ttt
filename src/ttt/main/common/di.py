@@ -30,12 +30,6 @@ from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import
 from ttt.application.invitation_to_game.game.ports.invitations_to_game import (
     InvitationsToGame,
 )
-from ttt.application.matchmaking.common.matchmaking_log import (
-    CommonMatchmakingLog,
-)
-from ttt.application.matchmaking.common.shared_matchmaking import (
-    SharedMatchmaking,
-)
 from ttt.application.stars_purchase.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
     PaidStarsPurchasePaymentInbox,
 )
@@ -57,6 +51,7 @@ from ttt.application.user.emoji_purchase.ports.user_log import (
 from ttt.application.user.emoji_selection.ports.user_log import (
     EmojiSelectionUserLog,
 )
+from ttt.application.user.game.ports.user_log import GameUserLog
 from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.game_ai_gateway import GeminiGameAiGateway
 from ttt.infrastructure.adapters.game_dao import PostgresGameDao
@@ -72,9 +67,6 @@ from ttt.infrastructure.adapters.invitations_to_game import (
     InPostgresInvitationsToGame,
 )
 from ttt.infrastructure.adapters.map import MapToPostgres
-from ttt.infrastructure.adapters.matchmaking_log import (
-    StructlogCommonMatchmakingLog,
-)
 from ttt.infrastructure.adapters.original_admin_token import (
     TokenAsOriginalAdminToken,
 )
@@ -82,9 +74,6 @@ from ttt.infrastructure.adapters.paid_stars_purchase_payment_inbox import (
     InNatsPaidStarsPurchasePaymentInbox,
 )
 from ttt.infrastructure.adapters.randoms import MersenneTwisterRandoms
-from ttt.infrastructure.adapters.shared_matchmaking import (
-    InPostgresSharedMatchmaking,
-)
 from ttt.infrastructure.adapters.stars_purchase_log import (
     StructlogStarsPurchaseLog,
 )
@@ -95,6 +84,7 @@ from ttt.infrastructure.adapters.user_log import (
     StructlogCommonUserLog,
     StructlogEmojiPurchaseUserLog,
     StructlogEmojiSelectionUserLog,
+    StructlogGameUserLog,
 )
 from ttt.infrastructure.adapters.users import InPostgresUsers
 from ttt.infrastructure.adapters.uuids import UUIDv4s
@@ -234,21 +224,20 @@ class InfrastructureProvider(Provider):
         scope=Scope.REQUEST,
     )
 
-    provide_users = provide(
-        InPostgresUsers,
-        provides=Users,
-        scope=Scope.REQUEST,
-    )
+    @provide(scope=Scope.REQUEST)
+    def provide_users(
+        self,
+        session: AsyncSession,
+        envs: Envs,
+    ) -> Users:
+        return InPostgresUsers(
+            session,
+            _users_to_matchmake_limit=envs.matchmaking_worker_max_users,
+        )
 
     provide_stars_purchases = provide(
         PostgresStarsPurchases,
         provides=StarsPurchases,
-        scope=Scope.REQUEST,
-    )
-
-    provide_shared_matchmaking = provide(
-        InPostgresSharedMatchmaking,
-        provides=SharedMatchmaking,
         scope=Scope.REQUEST,
     )
 
@@ -310,6 +299,12 @@ class InfrastructureProvider(Provider):
         scope=Scope.REQUEST,
     )
 
+    provide_game_user_log = provide(
+        StructlogGameUserLog,
+        provides=GameUserLog,
+        scope=Scope.REQUEST,
+    )
+
     provide_emoji_purchase_user_log = provide(
         StructlogEmojiPurchaseUserLog,
         provides=EmojiPurchaseUserLog,
@@ -325,12 +320,6 @@ class InfrastructureProvider(Provider):
     provide_stars_purchase_user_log = provide(
         StructlogStarsPurchaseLog,
         provides=StarsPurchaseLog,
-        scope=Scope.REQUEST,
-    )
-
-    provide_common_matchmaking_log = provide(
-        StructlogCommonMatchmakingLog,
-        provides=CommonMatchmakingLog,
         scope=Scope.REQUEST,
     )
 

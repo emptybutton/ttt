@@ -1,3 +1,4 @@
+from asyncio import gather
 from dataclasses import dataclass
 
 from structlog.types import FilteringBoundLogger
@@ -12,6 +13,8 @@ from ttt.application.user.emoji_purchase.ports.user_log import (
 from ttt.application.user.emoji_selection.ports.user_log import (
     EmojiSelectionUserLog,
 )
+from ttt.application.user.game.ports.user_log import GameUserLog
+from ttt.entities.core.game.game import Game
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.user import User
 from ttt.entities.text.emoji import Emoji
@@ -338,4 +341,56 @@ class StructlogChangeOtherUserAccountLog(ChangeOtherUserAccountLog):
             user_id=user.id,
             other_user_id=other_user_id,
             other_user_account_stars=other_user_account_stars,
+        )
+
+
+@dataclass(frozen=True, unsafe_hash=False)
+class StructlogGameUserLog(GameUserLog):
+    _logger: FilteringBoundLogger
+
+    async def user_is_waiting_for_matchmaking(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_is_waiting_for_matchmaking",
+            user_id=user.id,
+        )
+
+    async def user_is_not_waiting_for_matchmaking(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_is_not_waiting_for_matchmaking",
+            user_id=user.id,
+        )
+
+    async def user_is_already_waiting_for_matchmaking(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_is_already_waiting_for_matchmaking",
+            user_id=user.id,
+        )
+
+    async def user_is_in_game_to_wait_for_matchmaking(
+        self, user: User, /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_is_in_game_to_wait_for_matchmaking",
+            user_id=user.id,
+        )
+
+    async def games_were_matched(self, games: list[Game], /) -> None:
+        await gather(*map(self._game_was_matched, games))
+
+    async def _game_was_matched(self, game: Game) -> None:
+        await self._logger.ainfo(
+            "game_was_matched",
+            game_id=game.id.hex,
         )

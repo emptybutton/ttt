@@ -23,6 +23,10 @@ class Envs(BaseSettings):
 
     gemini_url: str
 
+    matchmaking_max_workers: int
+    matchmaking_worker_max_users: int
+    matchmaking_worker_creation_interval_seconds: float
+
     @classmethod
     def settings_customise_sources(
         cls,

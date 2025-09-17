@@ -13,6 +13,7 @@ from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 @dataclass(frozen=True, unsafe_hash=False)
 class InPostgresUsers(Users):
     _session: AsyncSession
+    _users_to_matchmake_limit: int
 
     async def contains_user_with_id(
         self,
@@ -54,3 +55,17 @@ class InPostgresUsers(Users):
         table_user = await self._session.scalar(stmt)
 
         return None if table_user is None else table_user.entity()
+
+    async def some_users_waiting_for_matchmaking_to_matchmake(
+        self,
+    ) -> list[User]:
+        stmt = (
+            select(TableUser)
+            .where(TableUser.has_matchmaking_waiting)
+            .limit(self._users_to_matchmake_limit)
+            .with_for_update(skip_locked=True)
+        )
+        result = await self._session.scalars(stmt)
+        table_users = result.all()
+
+        return [table_user.entity() for table_user in table_users]
