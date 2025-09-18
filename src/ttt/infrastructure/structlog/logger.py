@@ -20,6 +20,11 @@ class DevLoggerFactory(LoggerFactory):
     adds_request_id: bool = field(kw_only=True)
 
     def __call__(self) -> FilteringBoundLogger:
+        renderer = structlog.dev.ConsoleRenderer(
+            exception_formatter=(
+                structlog.dev.RichTracebackFormatter(show_locals=False)
+            ),
+        )
         return cast(
             FilteringBoundLogger,
             structlog.wrap_logger(
@@ -28,7 +33,7 @@ class DevLoggerFactory(LoggerFactory):
                     structlog.processors.add_log_level,
                     structlog.processors.TimeStamper(fmt="iso"),
                     *([AddRequestId()] if self.adds_request_id else []),
-                    structlog.dev.ConsoleRenderer(),
+                    renderer,
                 ],
             ),
         )
