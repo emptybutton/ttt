@@ -105,8 +105,12 @@ from ttt.application.user.emoji_selection.ports.user_views import (
     EmojiSelectionUserViews,
 )
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
+from ttt.application.user.game.dont_wait_for_matchmaking import (
+    DontWaitForMatchmaking,
+)
 from ttt.application.user.game.matchmake import Matchmake
 from ttt.application.user.game.ports.user_views import GameUserViews
+from ttt.application.user.game.view_matchmaking import ViewMatchmaking
 from ttt.application.user.game.wait_for_matchmaking import WaitForMatchmaking
 from ttt.application.user.register_user import RegisterUser
 from ttt.application.user.relinquish_admin_right import RelinquishAdminRight
@@ -378,6 +382,10 @@ class ApplicationProvider(Provider):
     provide_wait_for_matchmaking = provide(
         WaitForMatchmaking, scope=Scope.REQUEST,
     )
+    provide_dont_wait_for_matchmaking = provide(
+        DontWaitForMatchmaking, scope=Scope.REQUEST,
+    )
+    provide_view_matchmaking = provide(ViewMatchmaking, scope=Scope.REQUEST)
 
     provide_start_stars_purchase = provide(
         StartStarsPurchase,

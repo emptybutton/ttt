@@ -26,3 +26,16 @@ class GameUserViews(ABC):
 
     @abstractmethod
     async def matched_games_view(self, games: list[Game], /) -> None: ...
+
+    @abstractmethod
+    async def user_is_not_waiting_for_matchmaking_to_dont_wait_view(
+        self, user: User, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def user_is_not_waiting_for_matchmaking_view(
+        self, user: User, /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def matchmaking_view(self, user_id: int, /) -> None: ...

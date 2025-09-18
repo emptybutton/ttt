@@ -394,3 +394,11 @@ class StructlogGameUserLog(GameUserLog):
             "game_was_matched",
             game_id=game.id.hex,
         )
+
+    async def user_is_not_waiting_for_matchmaking_to_dont_wait(
+        self, user: User, /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_is_not_waiting_for_matchmaking_to_dont_wait",
+            user_id=user.id,
+        )

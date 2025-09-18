@@ -61,6 +61,9 @@ from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.aiogram_dialog.main_dialog.emojis_window import (
     EmojiMenuView,
 )
+from ttt.presentation.aiogram_dialog.main_dialog.game_start_window import (
+    GameStartView,
+)
 from ttt.presentation.aiogram_dialog.main_dialog.game_window import (
     ActiveGameView,
 )
@@ -630,30 +633,21 @@ class AiogramChangeOtherUserAccountViews(ChangeOtherUserAccountViews):
 class AiogramGameUserViews(GameUserViews):
     _dialog_manager_for_user: DialogManagerForUser
     _result_buffer: ResultBuffer
+    _session: AsyncSession
 
     async def user_is_waiting_for_matchmaking_view(
         self,
         user: User,
         /,
     ) -> None:
-        dialog_manager = self._dialog_manager_for_user(user.id)
-        await dialog_manager.start(
-            MainDialogState.game_mode_to_start_game,
-            {"hint": "⚔️ Подбор начат"},
-            StartMode.RESET_STACK,
-        )
+        ...
 
     async def user_is_already_waiting_for_matchmaking_view(
         self,
         user: User,
         /,
     ) -> None:
-        dialog_manager = self._dialog_manager_for_user(user.id)
-        await dialog_manager.start(
-            MainDialogState.game_mode_to_start_game,
-            {"hint": "⚔️ Подбор начат"},
-            StartMode.RESET_STACK,
-        )
+        ...
 
     async def user_is_in_game_to_wait_for_matchmaking_view(
         self, user: User, /,
@@ -683,3 +677,27 @@ class AiogramGameUserViews(GameUserViews):
             ActiveGameView.of(game, user_id).window_data(),
             StartMode.RESET_STACK,
         )
+
+    async def user_is_not_waiting_for_matchmaking_to_dont_wait_view(
+        self, user: User, /,
+    ) -> None:
+        ...
+
+    async def user_is_not_waiting_for_matchmaking_view(
+        self, user: User, /,
+    ) -> None:
+        ...
+
+    async def matchmaking_view(self, user_id: int, /) -> None:
+        stmt = (
+            select(TableUser.has_matchmaking_waiting)
+            .where(TableUser.id == user_id)
+        )
+        has_matchmaking_waiting = await self._session.scalar(stmt)
+
+        if has_matchmaking_waiting is None:
+            self._result_buffer.result = None
+        else:
+            self._result_buffer.result = GameStartView(
+                is_user_waiting_for_matchmaking=has_matchmaking_waiting,
+            )
