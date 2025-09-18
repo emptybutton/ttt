@@ -463,8 +463,8 @@ class User:
             else_=UserIsNotWaitingForMatchmakingError,
         )
 
-        tracking.register_unused(self.matchmaking_waiting)
         self.matchmaking_waiting = None
+        tracking.register_mutated(self)
 
 
 UserAtomic = User | UserEmoji

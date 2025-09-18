@@ -1,4 +1,5 @@
 from asyncio import gather
+from contextlib import suppress
 from dataclasses import dataclass
 
 from ttt.application.common.ports.emojis import Emojis
@@ -43,11 +44,13 @@ class Matchmake:
         games = list[Game]()
         matchmaking_ = matchmaking(users, input_, tracking)
 
-        try:
+        with suppress(StopIteration):
+            games.append(next(matchmaking_))
+
             while True:
                 games.append(matchmaking_.send(await self._matchmaking_input()))
-        except StopIteration:
-            return games
+
+        return games
 
     async def _matchmaking_input(self) -> MatchmakingInput:
         (
