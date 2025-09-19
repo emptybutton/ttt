@@ -79,12 +79,10 @@ class TableUser(Base[User]):
     account_stars: Mapped[int] = mapped_column(server_default="0")
     selected_emoji_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("user_emojis.id", deferrable=True, initially="DEFERRED"),
-        index=True,
     )
     rating: Mapped[float]
     current_game_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
-        index=True,
     )
     admin_right: Mapped[TableAdminRight | None] = mapped_column(admin_right)
     admin_right_via_other_admin_admin_id: Mapped[int | None] = mapped_column(
@@ -101,6 +99,16 @@ class TableUser(Base[User]):
     )
 
     __table_args__ = (
+        Index(
+            "ix_users_selected_emoji_id",
+            selected_emoji_id,
+            postgresql_where=(selected_emoji_id.is_not(None)),
+        ),
+        Index(
+            "ix_users_current_game_id",
+            current_game_id,
+            postgresql_where=(current_game_id.is_not(None)),
+        ),
         Index(
             "ix_users_admin_right_via_other_admin_admin_id",
             admin_right_via_other_admin_admin_id,
