@@ -1,4 +1,3 @@
-from collections.abc import AsyncIterable
 from dataclasses import dataclass, field
 from uuid import UUID
 
@@ -6,13 +5,11 @@ from aiogram import Bot
 from aiogram.types import PreCheckoutQuery
 from aiogram_dialog import ShowMode, StartMode
 
-from ttt.application.stars_purchase.dto.common import PaidStarsPurchasePayment
 from ttt.application.stars_purchase.ports.stars_purchase_payment_gateway import (  # noqa: E501
     StarsPurchasePaymentGateway,
 )
 from ttt.entities.core.stars_purchase.stars_purchase import StarsPurchase
 from ttt.entities.tools.assertion import not_none
-from ttt.infrastructure.buffer import Buffer
 from ttt.presentation.aiogram.user.invoices import stars_invoce
 from ttt.presentation.aiogram_dialog.common.dialog_manager_for_user import (
     DialogManagerForUser,
@@ -23,7 +20,6 @@ from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 @dataclass
 class AiogramPaymentGateway(StarsPurchasePaymentGateway):
     _pre_checkout_query: PreCheckoutQuery | None
-    _buffer: Buffer[PaidStarsPurchasePayment]
     _bot: Bot
     _payments_token: str = field(repr=False)
     _dialog_manager_for_user: DialogManagerForUser
@@ -60,9 +56,3 @@ class AiogramPaymentGateway(StarsPurchasePaymentGateway):
             ok=False,
             error_message=message,
         )
-
-    async def paid_payment_stream(
-        self,
-    ) -> AsyncIterable[PaidStarsPurchasePayment]:
-        async for payment in self._buffer.stream():
-            yield payment

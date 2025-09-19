@@ -10,7 +10,7 @@ from ttt.infrastructure.structlog.logger import unexpected_error_log
 
 
 @dataclass(frozen=True, unsafe_hash=False)
-class UnkillableTasks:
+class UnkillableTaskGroup:
     _logger: FilteringBoundLogger
     _loop: asyncio.AbstractEventLoop = field(
         init=False,

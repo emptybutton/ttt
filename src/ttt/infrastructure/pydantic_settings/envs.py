@@ -27,6 +27,8 @@ class Envs(BaseSettings):
     matchmaking_worker_max_users: int
     matchmaking_worker_creation_interval_seconds: float
 
+    auto_cancel_invitations_to_game_interval_seconds: float
+
     @classmethod
     def settings_customise_sources(
         cls,

@@ -6,13 +6,16 @@ from dishka.integrations.aiogram import AiogramProvider
 
 from ttt import __version__
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
-from ttt.infrastructure.structlog.logger import LoggerFactory, ProdLoggerFactory
 from ttt.main.common.di import InfrastructureProvider
 from ttt.main.tg_bot.di import (
     ApplicationProvider,
     PresentationProvider,
 )
-from ttt.main.tg_bot.start_aiogram import start_aiogram
+from ttt.main.tg_bot.start_tg_bot import start_tg_bot
+from ttt.main.tg_bot_prod.di import (
+    ProdTgBotAppLoggerProvider,
+    ProdTgBotRequestLoggerProvider,
+)
 
 
 async def amain() -> None:
@@ -21,15 +24,14 @@ async def amain() -> None:
         ApplicationProvider(),
         PresentationProvider(),
         InfrastructureProvider(),
-        context={
-            LoggerFactory: ProdLoggerFactory(adds_request_id=True),
-        },
+        ProdTgBotAppLoggerProvider(),
+        ProdTgBotRequestLoggerProvider(),
     )
 
     secrets = await container.get(Secrets)
     sentry_sdk.init(dsn=secrets.sentry_dsn, release=__version__)
 
-    await start_aiogram(container)
+    await start_tg_bot(container)
 
 
 def main() -> None:

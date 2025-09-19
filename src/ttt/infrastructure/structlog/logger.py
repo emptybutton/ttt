@@ -1,6 +1,4 @@
 import logging
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from typing import cast
 
 import structlog
@@ -10,53 +8,40 @@ from structlog_sentry import SentryProcessor
 from ttt.infrastructure.structlog.processors import AddRequestId
 
 
-class LoggerFactory(ABC):
-    @abstractmethod
-    def __call__(self) -> FilteringBoundLogger: ...
+def dev_logger(*, with_request_id: bool) -> FilteringBoundLogger:
+    renderer = structlog.dev.ConsoleRenderer(
+        exception_formatter=(
+            structlog.dev.RichTracebackFormatter(show_locals=False)
+        ),
+    )
+    return cast(
+        FilteringBoundLogger,
+        structlog.wrap_logger(
+            structlog.PrintLogger(),
+            processors=[
+                structlog.processors.add_log_level,
+                structlog.processors.TimeStamper(fmt="iso"),
+                *([AddRequestId()] if with_request_id else []),
+                renderer,
+            ],
+        ),
+    )
 
 
-@dataclass(frozen=True)
-class DevLoggerFactory(LoggerFactory):
-    adds_request_id: bool = field(kw_only=True)
-
-    def __call__(self) -> FilteringBoundLogger:
-        renderer = structlog.dev.ConsoleRenderer(
-            exception_formatter=(
-                structlog.dev.RichTracebackFormatter(show_locals=False)
-            ),
-        )
-        return cast(
-            FilteringBoundLogger,
-            structlog.wrap_logger(
-                structlog.PrintLogger(),
-                processors=[
-                    structlog.processors.add_log_level,
-                    structlog.processors.TimeStamper(fmt="iso"),
-                    *([AddRequestId()] if self.adds_request_id else []),
-                    renderer,
-                ],
-            ),
-        )
-
-
-@dataclass(frozen=True)
-class ProdLoggerFactory(LoggerFactory):
-    adds_request_id: bool = field(kw_only=True)
-
-    def __call__(self) -> FilteringBoundLogger:
-        return cast(
-            FilteringBoundLogger,
-            structlog.wrap_logger(
-                structlog.PrintLogger(),
-                processors=[
-                    structlog.processors.add_log_level,
-                    structlog.processors.TimeStamper(fmt="iso", utc=True),
-                    *([AddRequestId()] if self.adds_request_id else []),
-                    SentryProcessor(event_level=logging.WARNING),
-                    structlog.processors.KeyValueRenderer(),
-                ],
-            ),
-        )
+def prod_logger(*, with_request_id: bool) -> FilteringBoundLogger:
+    return cast(
+        FilteringBoundLogger,
+        structlog.wrap_logger(
+            structlog.PrintLogger(),
+            processors=[
+                structlog.processors.add_log_level,
+                structlog.processors.TimeStamper(fmt="iso", utc=True),
+                *([AddRequestId()] if with_request_id else []),
+                SentryProcessor(event_level=logging.WARNING),
+                structlog.processors.KeyValueRenderer(),
+            ],
+        ),
+    )
 
 
 async def unexpected_error_log(

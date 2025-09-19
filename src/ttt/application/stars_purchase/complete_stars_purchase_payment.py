@@ -32,7 +32,7 @@ class CompleteStarsPurchasePayment:
     stars_purchases: StarsPurchases
 
     async def __call__(self) -> None:
-        async for paid_payment in self.inbox.stream():
+        async for paid_payment in self.inbox:
             current_datetime = await self.clock.current_datetime()
 
             async with self.transaction:

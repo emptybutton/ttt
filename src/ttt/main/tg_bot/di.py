@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import cast
+from typing import Annotated, cast
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.context import FSMContext
@@ -16,6 +16,7 @@ from aiogram_dialog import BgManagerFactory, setup_dialogs
 from aiogram_dialog.manager.bg_manager import BgManagerFactoryImpl
 from aiogram_dialog.manager.manager import ManagerImpl
 from dishka import (
+    FromComponent,
     Provider,
     Scope,
     provide,
@@ -61,7 +62,6 @@ from ttt.application.invitation_to_game.game.view_outcoming_invitations_to_game 
 from ttt.application.stars_purchase.complete_stars_purchase_payment import (
     CompleteStarsPurchasePayment,
 )
-from ttt.application.stars_purchase.dto.common import PaidStarsPurchasePayment
 from ttt.application.stars_purchase.ports.stars_purchase_payment_gateway import (  # noqa: E501
     StarsPurchasePaymentGateway,
 )
@@ -119,7 +119,7 @@ from ttt.application.user.view_main_menu import ViewMainMenu
 from ttt.application.user.view_other_user import ViewOtherUser
 from ttt.application.user.view_user import ViewUser
 from ttt.application.user.view_user_emojis import ViewUserEmojis
-from ttt.infrastructure.buffer import Buffer
+from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
@@ -150,7 +150,15 @@ from ttt.presentation.aiogram_dialog.common.dialog_manager_for_user import (
 )
 from ttt.presentation.aiogram_dialog.main_dialog import main_dialog
 from ttt.presentation.result_buffer import ResultBuffer
-from ttt.presentation.unkillable_tasks import UnkillableTasks
+from ttt.presentation.tasks.auto_cancel_invitations_to_game_task import (
+    AutoCancelInvitationsToGameTask,
+)
+from ttt.presentation.tasks.complete_stars_purchase_payment_task import (
+    CompleteStarsPurchasePaymentTask,
+)
+from ttt.presentation.tasks.matchmake_tasks import MatchmakeTasks
+from ttt.presentation.tasks.unkillable_tasks import UnkillableTasks
+from ttt.presentation.unkillable_task_group import UnkillableTaskGroup
 
 
 @dataclass
@@ -251,26 +259,57 @@ class PresentationProvider(Provider):
     def provide_result_buffer(self) -> ResultBuffer:
         return ResultBuffer()
 
-    @provide(scope=Scope.REQUEST)
-    async def unkillable_tasks(
-        self,
-        logger: FilteringBoundLogger,
-        start_stars_purchase_payment_completion: (
-            StartStarsPurchasePaymentCompletion
-        ),
-        complete_stars_purchase_payment: CompleteStarsPurchasePayment,
-    ) -> UnkillableTasks:
-        tasks = UnkillableTasks(logger)
-        tasks.add(start_stars_purchase_payment_completion)
-        tasks.add(complete_stars_purchase_payment)
-
-        return tasks
+    @provide(scope=Scope.APP)
+    def provide_auto_cancel_invitations_to_game_task(
+        self, envs: Envs,
+    ) -> AutoCancelInvitationsToGameTask:
+        return AutoCancelInvitationsToGameTask(
+            _interval_seconds=(
+                envs.auto_cancel_invitations_to_game_interval_seconds
+            ),
+        )
 
     @provide(scope=Scope.APP)
-    def provide_paid_stars_purchase_payment_buffer(
+    def provide_complete_stars_purchase_payment_task(
         self,
-    ) -> Buffer[PaidStarsPurchasePayment]:
-        return Buffer()
+    ) -> CompleteStarsPurchasePaymentTask:
+        return CompleteStarsPurchasePaymentTask()
+
+    @provide(scope=Scope.APP)
+    def provide_matchmake_tasks(
+        self,
+        envs: Envs,
+        logger: Annotated[FilteringBoundLogger, FromComponent("app")],
+    ) -> MatchmakeTasks:
+        return MatchmakeTasks(
+            _max_workers=envs.matchmaking_max_workers,
+            _worker_creation_interval_seconds=(
+                envs.matchmaking_worker_creation_interval_seconds
+            ),
+            _logger=logger,
+        )
+
+    @provide(scope=Scope.APP)
+    async def unkillable_task_group(
+        self, logger: Annotated[FilteringBoundLogger, FromComponent("app")],
+    ) -> AsyncIterator[UnkillableTaskGroup]:
+        async with UnkillableTaskGroup(logger) as group:
+            yield group
+
+    @provide(scope=Scope.APP)
+    async def unkillable_tasks(
+        self,
+        task_group: UnkillableTaskGroup,
+        auto_cancel_invitations_to_game_task: AutoCancelInvitationsToGameTask,
+        complete_stars_purchase_payment_task: CompleteStarsPurchasePaymentTask,
+        matchmake_tasks: MatchmakeTasks,
+    ) -> UnkillableTasks:
+        tasks = (
+            auto_cancel_invitations_to_game_task,
+            complete_stars_purchase_payment_task,
+            matchmake_tasks,
+        )
+        return UnkillableTasks(tasks, task_group)
 
     @provide(scope=Scope.APP)
     def provide_dp(self, storage: BaseStorage) -> Dispatcher:
@@ -331,12 +370,10 @@ class PresentationProvider(Provider):
         pre_checkout_query: PreCheckoutQuery | None,
         secrets: Secrets,
         bot: Bot,
-        buffer: Buffer[PaidStarsPurchasePayment],
         dialog_manager_for_user: DialogManagerForUser,
     ) -> StarsPurchasePaymentGateway:
         return AiogramPaymentGateway(
             pre_checkout_query,
-            buffer,
             bot,
             secrets.payments_token,
             dialog_manager_for_user,

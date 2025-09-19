@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterable
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 
 from ttt.application.stars_purchase.dto.common import PaidStarsPurchasePayment
@@ -17,6 +17,6 @@ class InNatsPaidStarsPurchasePaymentInbox(PaidStarsPurchasePaymentInbox):
     async def push(self, payment: PaidStarsPurchasePayment) -> None:
         await self._inbox.push(payment)
 
-    async def stream(self) -> AsyncIterable[PaidStarsPurchasePayment]:
+    async def __aiter__(self) -> AsyncIterator[PaidStarsPurchasePayment]:
         async for payment in self._inbox:
             yield payment

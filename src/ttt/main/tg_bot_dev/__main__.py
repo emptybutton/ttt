@@ -3,16 +3,16 @@ import asyncio
 from dishka import make_async_container
 from dishka.integrations.aiogram import AiogramProvider
 
-from ttt.infrastructure.structlog.logger import (
-    DevLoggerFactory,
-    LoggerFactory,
-)
 from ttt.main.common.di import InfrastructureProvider
 from ttt.main.tg_bot.di import (
     ApplicationProvider,
     PresentationProvider,
 )
-from ttt.main.tg_bot.start_aiogram import start_aiogram
+from ttt.main.tg_bot.start_tg_bot import start_tg_bot
+from ttt.main.tg_bot_dev.di import (
+    DevTgBotAppLoggerProvider,
+    DevTgBotRequestLoggerProvider,
+)
 
 
 async def amain() -> None:
@@ -21,12 +21,11 @@ async def amain() -> None:
         ApplicationProvider(),
         PresentationProvider(),
         InfrastructureProvider(),
-        context={
-            LoggerFactory: DevLoggerFactory(adds_request_id=True),
-        },
+        DevTgBotRequestLoggerProvider(),
+        DevTgBotAppLoggerProvider(),
     )
 
-    await start_aiogram(container)
+    await start_tg_bot(container)
 
 
 def main() -> None:

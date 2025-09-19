@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterator
 
-from dishka import Provider, Scope, from_context, provide
+from dishka import Provider, Scope, provide
 from nats import connect as connect_to_nats
 from nats.aio.client import Client as Nats
 from nats.js import JetStreamContext
@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
 )
-from structlog.types import FilteringBoundLogger
 
 from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
@@ -88,22 +87,15 @@ from ttt.infrastructure.adapters.user_log import (
 )
 from ttt.infrastructure.adapters.users import InPostgresUsers
 from ttt.infrastructure.adapters.uuids import UUIDv4s
-from ttt.infrastructure.background_tasks import BackgroundTasks
 from ttt.infrastructure.nats.paid_stars_purchase_payment_inbox import (
     InNatsPaidStarsPurchasePaymentInbox as OriginalInNatsPaidStarsPurchasePaymentInbox,  # noqa: E501
 )
 from ttt.infrastructure.openai.gemini import Gemini, gemini
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
-from ttt.infrastructure.structlog.logger import LoggerFactory
 
 
 class InfrastructureProvider(Provider):
-    provide_logger_factory = from_context(
-        provides=LoggerFactory,
-        scope=Scope.APP,
-    )
-
     provide_envs = provide(source=Envs.load, scope=Scope.APP)
     provide_secrets = provide(source=Secrets.load, scope=Scope.APP)
 
@@ -112,11 +104,6 @@ class InfrastructureProvider(Provider):
         self, secrets: Secrets,
     ) -> OriginalAdminToken:
         return TokenAsOriginalAdminToken(secrets.admin_token)
-
-    @provide(scope=Scope.APP)
-    async def provide_background_tasks(self) -> AsyncIterator[BackgroundTasks]:
-        async with BackgroundTasks() as tasks:
-            yield tasks
 
     @provide(scope=Scope.APP)
     async def provide_postgres_engine(self, envs: Envs) -> AsyncEngine:
@@ -198,13 +185,6 @@ class InfrastructureProvider(Provider):
     @provide(scope=Scope.APP)
     def provide_gemini(self, secrets: Secrets, envs: Envs) -> Gemini:
         return gemini(secrets.gemini_api_key, envs.gemini_url)
-
-    @provide(scope=Scope.REQUEST)
-    def provide_logger(
-        self,
-        logger_factory: LoggerFactory,
-    ) -> FilteringBoundLogger:
-        return logger_factory()
 
     provide_in_nats_paid_stars_purchase_payment_inbox = provide(
         InNatsPaidStarsPurchasePaymentInbox,
