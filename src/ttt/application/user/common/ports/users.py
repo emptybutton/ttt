@@ -2,7 +2,9 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import overload
 
+from ttt.entities.core.user.rank import UsersWithMaxRating
 from ttt.entities.core.user.user import User
+from ttt.entities.elo.rating import EloRating
 
 
 class Users(ABC):
@@ -43,3 +45,8 @@ class Users(ABC):
     async def some_users_waiting_for_matchmaking_to_matchmake(
         self,
     ) -> list[User]: ...
+
+    @abstractmethod
+    async def max_rating_and_users_with_max_rating(
+        self,
+    ) -> tuple[EloRating, UsersWithMaxRating]: ...

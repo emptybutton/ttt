@@ -80,7 +80,7 @@ class TableUser(Base[User]):
     selected_emoji_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("user_emojis.id", deferrable=True, initially="DEFERRED"),
     )
-    rating: Mapped[float]
+    rating: Mapped[float] = mapped_column(index=True)
     current_game_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("games.id", deferrable=True, initially="DEFERRED"),
     )

@@ -15,7 +15,7 @@ from magic_filter import F
 
 from ttt.application.user.view_other_user import ViewOtherUser
 from ttt.entities.core.user.admin_right import AdminRight
-from ttt.entities.core.user.rank import rank_for_rating
+from ttt.entities.core.user.rank import UsersWithMaxRating, rank
 from ttt.entities.tools.assertion import not_none
 from ttt.presentation.aiogram_dialog.admin_dialog.common import (
     AdminDialogState,
@@ -57,6 +57,8 @@ class OtherUserProfileView(EncodableToWindowData):
         number_of_defeats: int,
         account_stars: int,
         rating: float,
+        max_rating: float,
+        users_with_max_rating: UsersWithMaxRating,
     ) -> "OtherUserProfileView":
         return OtherUserProfileView(
             id_=id_,
@@ -67,7 +69,9 @@ class OtherUserProfileView(EncodableToWindowData):
             number_of_defeats=number_of_defeats,
             account_stars=account_stars,
             rating_text=short_float_text(rating),
-            rank_text=rank_title(rank_for_rating(rating)),
+            rank_text=rank_title(
+                rank(rating, max_rating, users_with_max_rating),
+            ),
         )
 
 

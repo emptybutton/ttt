@@ -24,6 +24,7 @@ from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.user import User, is_user_in_game, user_stars
 from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.sqlalchemy.stmts import (
+    max_rating_and_users_with_max_rating_from_postgres,
     selected_user_emoji_str_from_postgres,
     user_emojis_from_postgres,
 )
@@ -121,12 +122,20 @@ class AiogramCommonUserViews(CommonUserViews):
         )
         defeats = not_none(await self._session.scalar(defeats_stmt))
 
+        max_rating, users_with_max_rating = (
+            await max_rating_and_users_with_max_rating_from_postgres(
+                self._session,
+            )
+        )
+
         view = UserProfileView.of(
             wins,
             draws,
             defeats,
             user_row.account_stars,
             user_row.rating,
+            max_rating,
+            users_with_max_rating,
         )
         self._result_buffer.result = view
 
@@ -177,6 +186,11 @@ class AiogramCommonUserViews(CommonUserViews):
         else:
             amout_of_incoming_invitations_to_game = "many"
 
+        max_rating, users_with_max_rating = (
+            await max_rating_and_users_with_max_rating_from_postgres(
+                self._session,
+            )
+        )
         view = MainMenuView(
             is_user_in_game=is_user_in_game(row.current_game_id),
             has_user_emojis=row.has_user_emojis,
@@ -185,6 +199,8 @@ class AiogramCommonUserViews(CommonUserViews):
             amout_of_incoming_invitations_to_game=(
                 amout_of_incoming_invitations_to_game
             ),
+            max_rating=max_rating,
+            users_with_max_rating=users_with_max_rating,
         )
         self._result_buffer.result = view
 
@@ -387,6 +403,12 @@ class AiogramCommonUserViews(CommonUserViews):
                 row.admin_right_via_other_admin_admin_id,
             )
 
+        max_rating, users_with_max_rating = (
+            await max_rating_and_users_with_max_rating_from_postgres(
+                self._session,
+            )
+        )
+
         view = OtherUserProfileView.of(
             other_user_id,
             admin_right,
@@ -395,6 +417,8 @@ class AiogramCommonUserViews(CommonUserViews):
             defeats,
             row.account_stars,
             row.rating,
+            max_rating,
+            users_with_max_rating,
         )
 
         manager = self._dialog_manager_for_user(user.id)

@@ -3,8 +3,9 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from ttt.entities.core.game.game import Game, start_game
-from ttt.entities.core.user.rank import are_ranks_adjacent
+from ttt.entities.core.user.rank import UsersWithMaxRating, are_ranks_adjacent
 from ttt.entities.core.user.user import User
+from ttt.entities.elo.rating import EloRating
 from ttt.entities.math.matrix import Matrix
 from ttt.entities.text.emoji import Emoji
 from ttt.entities.tools.combinations import Combinations
@@ -27,6 +28,8 @@ class UsersAreNotWaitingForMatchmakingError(Exception):
 def matchmaking(
     users: list[User],
     input_: MatchmakingInput,
+    max_rating: EloRating,
+    users_with_max_rating: UsersWithMaxRating,
     tracking: Tracking,
 ) -> Generator[Game, MatchmakingInput]:
     """
@@ -52,7 +55,7 @@ def matchmaking(
 
     combinations = Combinations(users)
     for user1, user2 in combinations:
-        if _is_game_allowed(user1, user2):
+        if _is_game_allowed(user1, user2, max_rating, users_with_max_rating):
             user1.dont_wait_for_matchmaking(tracking)
             user2.dont_wait_for_matchmaking(tracking)
             combinations.cut()
@@ -69,8 +72,13 @@ def matchmaking(
             input_ = yield game
 
 
-def _is_game_allowed(user1: User, user2: User) -> bool:
-    rank1 = user1.rank()
-    rank2 = user2.rank()
+def _is_game_allowed(
+    user1: User,
+    user2: User,
+    max_rating: EloRating,
+    users_with_max_rating: UsersWithMaxRating,
+) -> bool:
+    rank1 = user1.rank(max_rating, users_with_max_rating)
+    rank2 = user2.rank(max_rating, users_with_max_rating)
 
     return rank1 == rank2 or are_ranks_adjacent(rank1, rank2)

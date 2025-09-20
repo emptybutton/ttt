@@ -19,7 +19,7 @@ from ttt.application.invitation_to_game.game.view_one_incoming_invitation_to_gam
 )
 from ttt.application.user.view_main_menu import ViewMainMenu
 from ttt.entities.core.stars import Stars
-from ttt.entities.core.user.rank import rank_for_rating
+from ttt.entities.core.user.rank import UsersWithMaxRating, rank
 from ttt.entities.elo.rating import EloRating
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.common.wigets.func_text import FuncText
@@ -50,6 +50,8 @@ class MainMenuView(EncodableToWindowData):
     is_user_in_game: bool
     has_user_emojis: bool
     rating: EloRating
+    max_rating: EloRating
+    users_with_max_rating: UsersWithMaxRating
     stars: Stars
     amout_of_incoming_invitations_to_game: AmoutOfIncomingInvitationsToGame
 
@@ -59,9 +61,11 @@ async def rank_text(  # noqa: RUF029
     _: DialogManager,
 ) -> str:
     rating = data["main"]["rating"]
-    rank = rank_for_rating(rating)
+    max_rating = data["main"]["max_rating"]
+    users_with_max_rating = data["main"]["users_with_max_rating"]
+    rank_ = rank(rating, max_rating, users_with_max_rating)
 
-    return f"Вы — {rank_title(rank)} {rank_progres_text(rating)}"
+    return f"Вы — {rank_title(rank_)} {rank_progres_text(rank_, rating)}"
 
 
 @inject

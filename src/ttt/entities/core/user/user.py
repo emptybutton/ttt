@@ -14,7 +14,7 @@ from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.emoji import UserEmoji
 from ttt.entities.core.user.loss import UserLoss
 from ttt.entities.core.user.matchmaking_waiting import MatchmakingWaiting
-from ttt.entities.core.user.rank import Rank, rank_for_rating
+from ttt.entities.core.user.rank import Rank, UsersWithMaxRating, rank
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.elo.rating import (
     EloRating,
@@ -97,8 +97,10 @@ class User:
 
     emoji_cost: ClassVar[Stars] = 1000
 
-    def rank(self) -> Rank:
-        return rank_for_rating(self.rating)
+    def rank(
+        self, max_rating: EloRating, users_with_max_rating: UsersWithMaxRating,
+    ) -> Rank:
+        return rank(self.rating, max_rating, users_with_max_rating)
 
     def is_admin(self) -> bool:
         return is_user_admin(self.admin_right)

@@ -6,7 +6,12 @@ from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ttt.application.user.common.ports.users import Users
+from ttt.entities.core.user.rank import UsersWithMaxRating
 from ttt.entities.core.user.user import User
+from ttt.entities.elo.rating import EloRating
+from ttt.infrastructure.sqlalchemy.stmts import (
+    max_rating_and_users_with_max_rating_from_postgres,
+)
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 
 
@@ -69,3 +74,10 @@ class InPostgresUsers(Users):
         table_users = result.all()
 
         return [table_user.entity() for table_user in table_users]
+
+    async def max_rating_and_users_with_max_rating(
+        self,
+    ) -> tuple[EloRating, UsersWithMaxRating]:
+        return await max_rating_and_users_with_max_rating_from_postgres(
+            self._session,
+        )

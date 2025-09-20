@@ -40,9 +40,14 @@ class Matchmake:
             self.users.some_users_waiting_for_matchmaking_to_matchmake(),
             self._matchmaking_input(),
         )
+        max_rating, users_with_max_rating = (
+            await self.users.max_rating_and_users_with_max_rating()
+        )
 
         games = list[Game]()
-        matchmaking_ = matchmaking(users, input_, tracking)
+        matchmaking_ = matchmaking(
+            users, input_, max_rating, users_with_max_rating, tracking,
+        )
 
         with suppress(StopIteration):
             games.append(next(matchmaking_))
