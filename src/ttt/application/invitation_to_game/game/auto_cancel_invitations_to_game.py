@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from ttt.application.common.ports.clock import Clock
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.invitation_to_game.game.ports.invitation_to_game_dao import (  # noqa: E501
     InvitationToGameDao,
 )
@@ -15,12 +15,16 @@ from ttt.entities.core.invitation_to_game.invitation_to_game import (
 
 @dataclass(frozen=True, unsafe_hash=False)
 class AutoCancelInvitationsToGame:
-    transaction: Transaction
+    transaction: SerializableTransaction
     log: InvitationToGameLog
     clock: Clock
     invitation_to_game_dao: InvitationToGameDao
 
     async def __call__(self) -> None:
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501
+
         async with self.transaction:
             expiration_datetime = await self.clock.current_datetime()
             auto_cancelled_invitations_to_game_ids = await (

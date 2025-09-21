@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from ttt.application.common.ports.map import Map, NotUniqueUserIdError
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.entities.core.user.user import register_user
 from ttt.entities.tools.tracking import Tracking
@@ -9,11 +9,15 @@ from ttt.entities.tools.tracking import Tracking
 
 @dataclass(frozen=True, unsafe_hash=False)
 class RegisterUser:
-    transaction: Transaction
+    transaction: SerializableTransaction
     map_: Map
     log: CommonUserLog
 
     async def __call__(self, user_id: int) -> None:
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501
+
         tracking = Tracking()
         user = register_user(user_id, tracking)
 

@@ -4,7 +4,7 @@ from uuid import UUID
 
 from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.stars_purchase.ports.stars_purchase_log import (
     StarsPurchaseLog,
@@ -19,7 +19,7 @@ from ttt.entities.tools.tracking import Tracking
 
 @dataclass(frozen=True, unsafe_hash=False)
 class StartStarsPurchasePayment:
-    transaction: Transaction
+    transaction: SerializableTransaction
     uuids: UUIDs
     clock: Clock
     stars_purchases: StarsPurchases
@@ -27,7 +27,11 @@ class StartStarsPurchasePayment:
     map_: Map
     log: StarsPurchaseLog
 
-    async def __call__(self, purchase_id: UUID) -> None:
+    async def __call__(self, purchase_id: UUID, retry: bool) -> None:  # noqa: FBT001
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501
+
         async with self.transaction:
             stars_purchase, payment_id, current_datetime = await gather(
                 self.stars_purchases.stars_purchase_with_id(purchase_id),
@@ -51,12 +55,18 @@ class StartStarsPurchasePayment:
                 await self.log.double_stars_purchase_payment_start(
                     stars_purchase,
                 )
-                await self.payment_gateway.stop_payment_due_to_dublicate(
-                    payment_id,
-                )
+                await self.transaction.commit()
+
+                if retry:
+                    await self.payment_gateway.start_payment(payment_id)
+                else:
+                    await self.payment_gateway.stop_payment_due_to_dublicate(
+                        payment_id,
+                    )
             else:
                 await self.log.stars_puchase_payment_started(
                     stars_purchase,
                 )
                 await self.map_(tracking)
+                await self.transaction.commit()
                 await self.payment_gateway.start_payment(payment_id)

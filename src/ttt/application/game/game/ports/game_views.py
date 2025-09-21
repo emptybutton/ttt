@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from uuid import UUID
 
 from ttt.entities.core.game.game import Game
 
@@ -18,9 +19,16 @@ class GameViews(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def no_game_view(
+    async def no_current_game_view(
         self,
         user_id: int,
+        /,
+    ) -> None: ...
+
+    @abstractmethod
+    async def no_game_with_id_view(
+        self,
+        game_id: UUID,
         /,
     ) -> None: ...
 

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
@@ -25,7 +25,7 @@ from ttt.entities.tools.tracking import Tracking
 class BuyEmoji:
     uuids: UUIDs
     clock: Clock
-    transaction: Transaction
+    transaction: SerializableTransaction
     users: Users
     common_views: CommonUserViews
     emoji_purchase_views: EmojiPurchaseUserViews
@@ -37,6 +37,10 @@ class BuyEmoji:
         user_id: int,
         emoji_str: str | None,
     ) -> None:
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501
+
         if emoji_str is None:
             await self.emoji_purchase_views.invalid_emoji_to_buy_view(user_id)
             return
@@ -56,6 +60,7 @@ class BuyEmoji:
             user = await self.users.user_with_id(user_id)
 
             if user is None:
+                await self.transaction.commit()
                 await self.common_views.user_is_not_registered_view(user_id)
                 return
 
@@ -69,10 +74,12 @@ class BuyEmoji:
                 )
             except EmojiAlreadyPurchasedError:
                 await self.log.emoji_already_purchased_to_buy(user, emoji)
+                await self.transaction.commit()
                 await self.emoji_purchase_views.emoji_already_purchased_view(
                     user_id,
                 )
             except NotEnoughStarsError as error:
+                await self.transaction.commit()
                 await (
                     self.emoji_purchase_views
                     .not_enough_stars_to_buy_emoji_view(
@@ -82,8 +89,8 @@ class BuyEmoji:
                 )
             else:
                 await self.log.user_bought_emoji(user, emoji)
-
                 await self.map_(tracking)
+                await self.transaction.commit()
                 await self.emoji_purchase_views.emoji_was_purchased_view(
                     user_id,
                 )

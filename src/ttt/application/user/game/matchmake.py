@@ -4,7 +4,10 @@ from dataclasses import dataclass
 
 from ttt.application.common.ports.emojis import Emojis
 from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import (
+    NotSerializableTransaction,
+    SerializableTransaction,
+)
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.user.common.ports.users import Users
 from ttt.application.user.game.ports.user_log import GameUserLog
@@ -17,7 +20,7 @@ from ttt.entities.tools.tracking import Tracking
 @dataclass(frozen=True, unsafe_hash=False)
 class Matchmake:
     map_: Map
-    transaction: Transaction
+    transaction: NotSerializableTransaction
     users: Users
     log: GameUserLog
     views: GameUserViews
@@ -32,8 +35,12 @@ class Matchmake:
             await self.log.games_were_matched(games)
             await gather(
                 self.views.matched_games_view(games),
-                self.map_(tracking),
+                self._output_tracking(tracking),
             )
+
+    async def _output_tracking(self, tracking: Tracking) -> None:
+        await self.map_(tracking)
+        await self.transaction.commit()
 
     async def _result(self, tracking: Tracking) -> list[Game]:
         users, input_ = await gather(

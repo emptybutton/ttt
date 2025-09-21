@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import ReadonlyTransaction, SerializableTransaction
 from ttt.application.invitation_to_game.game.ports.invitation_to_game_views import (  # noqa: E501
     InvitationToGameViews,
 )
@@ -10,7 +10,7 @@ from ttt.application.invitation_to_game.game.ports.invitation_to_game_views impo
 @dataclass(frozen=True, unsafe_hash=False)
 class ViewIncomingInvitationToGame:
     views: InvitationToGameViews
-    transaction: Transaction
+    transaction: ReadonlyTransaction
 
     async def __call__(self, user_id: int, invitation_to_game_id: UUID) -> None:
         async with self.transaction:

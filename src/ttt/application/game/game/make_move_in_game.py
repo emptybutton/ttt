@@ -3,11 +3,12 @@ from dataclasses import dataclass
 
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.game.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.game.ports.game_dao import GameDao
 from ttt.application.game.game.ports.game_log import GameLog
+from ttt.application.game.game.ports.game_tasks import GameTasks
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.ports.games import Games
 from ttt.application.user.common.ports.users import Users
@@ -29,20 +30,25 @@ class MakeMoveInGame:
     uuids: UUIDs
     randoms: Randoms
     ai_gateway: GameAiGateway
-    transaction: Transaction
+    transaction: SerializableTransaction
     log: GameLog
     dao: GameDao
+    tasks: GameTasks
 
     async def __call__(
         self,
         user_id: int,
         cell_number_int: int,
     ) -> None:
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501
+
         async with self.transaction:
             game = await self.games.current_user_game(user_id)
 
             if game is None:
-                await self.game_views.no_game_view(user_id)
+                await self.game_views.no_current_game_view(user_id)
                 return
 
             (
@@ -68,6 +74,7 @@ class MakeMoveInGame:
                     user_id,
                     cell_number_int,
                 )
+                await self.transaction.commit()
                 await self.game_views.game_already_complteted_view(
                     user_id,
                     game,
@@ -78,6 +85,7 @@ class MakeMoveInGame:
                     user_id,
                     cell_number_int,
                 )
+                await self.transaction.commit()
                 await self.game_views.not_current_user_view(
                     user_id,
                     game,
@@ -88,6 +96,7 @@ class MakeMoveInGame:
                     user_id,
                     cell_number_int,
                 )
+                await self.transaction.commit()
                 await self.game_views.no_cell_view(user_id, game)
             except AlreadyFilledCellError:
                 await self.log.already_filled_cell_to_make_move(
@@ -95,6 +104,7 @@ class MakeMoveInGame:
                     user_id,
                     cell_number_int,
                 )
+                await self.transaction.commit()
                 await self.game_views.already_filled_cell_error(
                     user_id,
                     game,
@@ -102,34 +112,15 @@ class MakeMoveInGame:
             else:
                 await self.log.user_move_maked(user_id, game, user_move)
 
-                if user_move.next_move_ai_id is not None:
-                    await self.game_views.game_view(game)
-
-                    (
-                        free_cell_random,
-                        ai_move_cell_number_int,
-                    ) = await gather(
-                        self.randoms.random(),
-                        self.ai_gateway.next_move_cell_number_int(
-                            game,
-                            user_move.next_move_ai_id,
-                        ),
-                    )
-                    ai_move = game.make_ai_move(
-                        user_move.next_move_ai_id,
-                        ai_move_cell_number_int,
-                        free_cell_random,
-                        tracking,
-                    )
-
-                    await self.log.ai_move_maked(
-                        user_id,
-                        game,
-                        ai_move,
-                    )
-
                 if game.is_completed():
-                    await self.log.game_completed(user_id, game)
+                    await self.log.game_was_completed_by_user(user_id, game)
 
                 await self.map_(tracking)
+
+                if user_move.next_move_ai_id is not None:
+                    await self.tasks.make_ai_move(
+                        game.id, user_move.next_move_ai_id,
+                    )
+
+                await self.transaction.commit()
                 await self.game_views.game_view(game)

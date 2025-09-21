@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import (  # noqa: E501
     InvitationToGameLog,
 )
@@ -22,7 +22,7 @@ from ttt.entities.tools.tracking import Tracking
 @dataclass(frozen=True, unsafe_hash=False)
 class CancelInvitationToGame:
     map_: Map
-    transaction: Transaction
+    transaction: SerializableTransaction
     views: InvitationToGameViews
     log: InvitationToGameLog
     invitations_to_game: InvitationsToGame
@@ -32,6 +32,10 @@ class CancelInvitationToGame:
         user_id: int,
         invitation_to_game_id: UUID,
     ) -> None:
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501
+
         async with self.transaction:
             invitation_to_game = await (
                 self.invitations_to_game.invitation_to_game_with_id(
@@ -43,6 +47,7 @@ class CancelInvitationToGame:
                 await self.log.no_invitation_to_game_to_cancel(
                     user_id, invitation_to_game_id,
                 )
+                await self.transaction.commit()
                 await self.views.no_invitation_to_game_to_cancel_view(
                     user_id, invitation_to_game_id,
                 )
@@ -58,6 +63,7 @@ class CancelInvitationToGame:
                         invitation_to_game, user_id,
                     )
                 )
+                await self.transaction.commit()
                 await (
                     self.views
                     .user_is_not_inviting_user_to_cancel_invitation_to_game_view(
@@ -68,6 +74,7 @@ class CancelInvitationToGame:
                 await self.log.invitation_to_game_is_not_active_to_cancel(
                     invitation_to_game, user_id,
                 )
+                await self.transaction.commit()
                 await (
                     self.views.invitation_to_game_is_not_active_to_cancel_view(
                         invitation_to_game, user_id,
@@ -78,6 +85,7 @@ class CancelInvitationToGame:
                     invitation_to_game,
                 )
                 await self.map_(tracking)
+                await self.transaction.commit()
                 await self.views.cancelled_invitation_to_game_view(
                     invitation_to_game,
                 )

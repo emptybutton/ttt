@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from ttt.application.stars_purchase.dto.common import PaidStarsPurchasePayment
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.stars_purchase.stars_purchase import StarsPurchase
 from ttt.entities.core.user.user import User
+from ttt.entities.finance.payment.success import PaymentSuccess
 
 
 class StarsPurchaseLog(ABC):
@@ -25,7 +25,8 @@ class StarsPurchaseLog(ABC):
     @abstractmethod
     async def stars_purchase_payment_completion_started(
         self,
-        payment: PaidStarsPurchasePayment,
+        purchase_id: UUID,
+        success: PaymentSuccess,
         /,
     ) -> None: ...
 
@@ -33,7 +34,7 @@ class StarsPurchaseLog(ABC):
     async def stars_purchase_payment_completed(
         self,
         stars_purchase: StarsPurchase,
-        payment: PaidStarsPurchasePayment,
+        success: PaymentSuccess,
         /,
     ) -> None: ...
 
@@ -41,7 +42,8 @@ class StarsPurchaseLog(ABC):
     async def double_stars_purchase_payment_completion(
         self,
         stars_purchase: StarsPurchase,
-        paid_payment: PaidStarsPurchasePayment,
+        success: PaymentSuccess,
+        /,
     ) -> None: ...
 
     @abstractmethod

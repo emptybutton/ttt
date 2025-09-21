@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
@@ -14,13 +14,17 @@ from ttt.entities.tools.tracking import Tracking
 
 @dataclass(frozen=True, unsafe_hash=False)
 class DeauthorizeOtherUserAsAdmin:
-    transaction: Transaction
+    transaction: SerializableTransaction
     users: Users
     map_: Map
     log: CommonUserLog
     views: CommonUserViews
 
     async def __call__(self, user_id: int, other_user_id: int) -> None:
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501
+
         async with self.transaction:
             user, other_user = await self.users.users_with_ids(
                 (user_id, other_user_id),
@@ -40,6 +44,7 @@ class DeauthorizeOtherUserAsAdmin:
                         user, other_user,
                     )
                 )
+                await self.transaction.commit()
                 await (
                     self.views
                     .not_authorized_as_admin_via_admin_token_to_deauthorize_other_user_as_admin_view(
@@ -53,6 +58,7 @@ class DeauthorizeOtherUserAsAdmin:
                         user, other_user,
                     )
                 )
+                await self.transaction.commit()
                 await (
                     self.views
                     .other_user_is_not_authorized_as_admin_via_other_admin_to_deauthorize_view(
@@ -64,6 +70,7 @@ class DeauthorizeOtherUserAsAdmin:
                     user, other_user,
                 )
                 await self.map_(tracking)
+                await self.transaction.commit()
                 await self.views.user_deauthorized_other_user_as_admin_view(
                     user, other_user,
                 )

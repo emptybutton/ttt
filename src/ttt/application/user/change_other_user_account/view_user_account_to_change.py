@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import ReadonlyTransaction, SerializableTransaction
 from ttt.application.user.change_other_user_account.ports.user_views import (
     ChangeOtherUserAccountViews,
 )
@@ -8,7 +8,7 @@ from ttt.application.user.change_other_user_account.ports.user_views import (
 
 @dataclass(frozen=True, unsafe_hash=False)
 class ViewUserAccountToChange:
-    transaction: Transaction
+    transaction: ReadonlyTransaction
     views: ChangeOtherUserAccountViews
 
     async def __call__(

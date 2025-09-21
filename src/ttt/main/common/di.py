@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import (
 from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.game.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.game.ports.game_dao import GameDao
@@ -194,7 +194,7 @@ class InfrastructureProvider(Provider):
 
     provide_transaction = provide(
         InPostgresTransaction,
-        provides=Transaction,
+        provides=SerializableTransaction,
         scope=Scope.REQUEST,
     )
 

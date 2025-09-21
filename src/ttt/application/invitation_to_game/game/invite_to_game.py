@@ -6,7 +6,7 @@ from ttt.application.common.ports.map import (
     Map,
     NotUniqueActiveInvitationToGameUserIdsError,
 )
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import (  # noqa: E501
     InvitationToGameLog,
@@ -27,7 +27,7 @@ from ttt.entities.tools.tracking import Tracking
 class InviteToGame:
     map_: Map
     uuids: UUIDs
-    transaction: Transaction
+    transaction: SerializableTransaction
     clock: Clock
     users: Users
     user_views: CommonUserViews
@@ -35,12 +35,17 @@ class InviteToGame:
     log: InvitationToGameLog
 
     async def __call__(self, user_id: int, invited_user_id: int) -> None:
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501
+
         async with self.transaction:
             user, invited_user = await self.users.users_with_ids(
                 (user_id, invited_user_id),
             )
 
             if user is None:
+                await self.transaction.commit()
                 await self.user_views.user_is_not_registered_view(user_id)
                 return
 
@@ -64,6 +69,7 @@ class InviteToGame:
                 )
             except InvitationSelfToGameError:
                 await self.log.invitation_self_to_game(user)
+                await self.transaction.commit()
                 await self.views.invitation_self_to_game_view(user)
                 return
 
@@ -71,6 +77,7 @@ class InviteToGame:
                 await self.map_(tracking)
             except NotUniqueActiveInvitationToGameUserIdsError:
                 await self.log.double_invitation_to_game(invitation_to_game)
+                await self.transaction.commit()
                 await self.views.double_invitation_to_game_view(
                     invitation_to_game,
                 )
@@ -78,4 +85,5 @@ class InviteToGame:
                 await self.log.user_invited_other_user_to_game(
                     invitation_to_game,
                 )
+                await self.transaction.commit()
                 await self.views.invitation_to_game_view(invitation_to_game)

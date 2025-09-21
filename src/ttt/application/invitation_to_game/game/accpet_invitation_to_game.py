@@ -5,7 +5,7 @@ from uuid import UUID
 from ttt.application.common.ports.emojis import Emojis
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import (  # noqa: E501
     InvitationToGameLog,
@@ -27,7 +27,7 @@ from ttt.entities.tools.tracking import Tracking
 @dataclass(frozen=True, unsafe_hash=False)
 class AcceptInvitationToGame:
     map_: Map
-    transaction: Transaction
+    transaction: SerializableTransaction
     views: InvitationToGameViews
     log: InvitationToGameLog
     invitations_to_game: InvitationsToGame
@@ -40,6 +40,10 @@ class AcceptInvitationToGame:
         user_id: int,
         invitation_to_game_id: UUID,
     ) -> None:
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501
+
         async with self.transaction:
             (
                 invitation_to_game,
@@ -63,6 +67,7 @@ class AcceptInvitationToGame:
                 await self.log.no_invitation_to_game_to_accept(
                     user_id, invitation_to_game_id,
                 )
+                await self.transaction.commit()
                 await self.views.no_invitation_to_game_to_accept_view(
                     user_id, invitation_to_game_id,
                 )
@@ -86,6 +91,7 @@ class AcceptInvitationToGame:
                         invitation_to_game, user_id,
                     )
                 )
+                await self.transaction.commit()
                 await (
                     self.views
                     .user_is_not_invited_user_to_accept_invitation_to_game_view(
@@ -96,6 +102,7 @@ class AcceptInvitationToGame:
                 await self.log.invitation_to_game_is_not_active_to_accept(
                     invitation_to_game, user_id,
                 )
+                await self.transaction.commit()
                 await (
                     self.views.invitation_to_game_is_not_active_to_accept_view(
                         invitation_to_game, user_id,
@@ -107,6 +114,7 @@ class AcceptInvitationToGame:
                         invitation_to_game, error.users,
                     )
                 )
+                await self.transaction.commit()
                 await (
                     self.views
                     .users_already_in_game_to_accept_invitation_to_game_view(
@@ -118,6 +126,7 @@ class AcceptInvitationToGame:
                     invitation_to_game, game,
                 )
                 await self.map_(tracking)
+                await self.transaction.commit()
                 await self.views.accepted_invitation_to_game_view(
                     invitation_to_game, game,
                 )

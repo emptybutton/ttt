@@ -23,4 +23,5 @@ class Map(ABC):
         """
         :raises ttt.application.common.ports.map.NotUniqueUserIdError:
         :raises ttt.application.common.ports.map.NotUniqueActiveInvitationToGameUserIdsError:
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
         """  # noqa: E501
