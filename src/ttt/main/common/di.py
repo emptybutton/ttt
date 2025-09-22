@@ -1,4 +1,6 @@
+from asyncio import gather
 from collections.abc import AsyncIterator
+from typing import NewType
 
 from dishka import Provider, Scope, provide
 from nats import connect as connect_to_nats
@@ -14,11 +16,16 @@ from sqlalchemy.ext.asyncio import (
 from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
-from ttt.application.common.ports.transaction import SerializableTransaction
+from ttt.application.common.ports.transaction import (
+    NotSerializableTransaction,
+    ReadonlyTransaction,
+    SerializableTransaction,
+)
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.game.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.game.ports.game_dao import GameDao
 from ttt.application.game.game.ports.game_log import GameLog
+from ttt.application.game.game.ports.game_tasks import GameTasks
 from ttt.application.game.game.ports.games import Games
 from ttt.application.invitation_to_game.game.ports.invitation_to_game_dao import (  # noqa: E501
     InvitationToGameDao,
@@ -29,11 +36,11 @@ from ttt.application.invitation_to_game.game.ports.invitation_to_game_log import
 from ttt.application.invitation_to_game.game.ports.invitations_to_game import (
     InvitationsToGame,
 )
-from ttt.application.stars_purchase.ports.paid_stars_purchase_payment_inbox import (  # noqa: E501
-    PaidStarsPurchasePaymentInbox,
-)
 from ttt.application.stars_purchase.ports.stars_purchase_log import (
     StarsPurchaseLog,
+)
+from ttt.application.stars_purchase.ports.stars_purchase_tasks import (
+    StarsPurchaseTasks,
 )
 from ttt.application.stars_purchase.ports.stars_purchases import StarsPurchases
 from ttt.application.user.change_other_user_account.ports.user_log import (
@@ -42,6 +49,7 @@ from ttt.application.user.change_other_user_account.ports.user_log import (
 from ttt.application.user.common.ports.original_admin_token import (
     OriginalAdminToken,
 )
+from ttt.application.user.common.ports.user_locks import UserLocks
 from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.common.ports.users import Users
 from ttt.application.user.emoji_purchase.ports.user_log import (
@@ -55,6 +63,7 @@ from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.game_ai_gateway import GeminiGameAiGateway
 from ttt.infrastructure.adapters.game_dao import PostgresGameDao
 from ttt.infrastructure.adapters.game_log import StructlogGameLog
+from ttt.infrastructure.adapters.game_tasks import TaskiqGameTasks
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.invitation_to_game_dao import (
     PostgresInvitationToGameDao,
@@ -69,15 +78,20 @@ from ttt.infrastructure.adapters.map import MapToPostgres
 from ttt.infrastructure.adapters.original_admin_token import (
     TokenAsOriginalAdminToken,
 )
-from ttt.infrastructure.adapters.paid_stars_purchase_payment_inbox import (
-    InNatsPaidStarsPurchasePaymentInbox,
-)
 from ttt.infrastructure.adapters.randoms import MersenneTwisterRandoms
 from ttt.infrastructure.adapters.stars_purchase_log import (
     StructlogStarsPurchaseLog,
 )
+from ttt.infrastructure.adapters.stars_purchase_tasks import (
+    TaskiqStarsPurchaseTasks,
+)
 from ttt.infrastructure.adapters.stars_purchases import PostgresStarsPurchases
-from ttt.infrastructure.adapters.transaction import InPostgresTransaction
+from ttt.infrastructure.adapters.transaction import (
+    InPostgresNotSerializableTransaction,
+    InPostgresReadonlyTransaction,
+    InPostgresSerializableTransaction,
+)
+from ttt.infrastructure.adapters.user_locks import InPostgresUserLocks
 from ttt.infrastructure.adapters.user_log import (
     StructlogChangeOtherUserAccountLog,
     StructlogCommonUserLog,
@@ -87,12 +101,12 @@ from ttt.infrastructure.adapters.user_log import (
 )
 from ttt.infrastructure.adapters.users import InPostgresUsers
 from ttt.infrastructure.adapters.uuids import UUIDv4s
-from ttt.infrastructure.nats.paid_stars_purchase_payment_inbox import (
-    InNatsPaidStarsPurchasePaymentInbox as OriginalInNatsPaidStarsPurchasePaymentInbox,  # noqa: E501
-)
 from ttt.infrastructure.openai.gemini import Gemini, gemini
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
+from ttt.infrastructure.taskiq.broker import NatsBrokers
+from ttt.infrastructure.taskiq.tasks.complete_stars_purchase_payment_task import complete_stars_purchase_payment_broker
+from ttt.infrastructure.taskiq.tasks.make_ai_move_in_game_task import make_ai_move_in_game_broker
 
 
 class InfrastructureProvider(Provider):
@@ -146,16 +160,8 @@ class InfrastructureProvider(Provider):
         finally:
             await pool.aclose()
 
-    @provide(scope=Scope.REQUEST)
-    async def provide_request_redis(
-        self,
-        pool: ConnectionPool,
-    ) -> AsyncIterator[Redis]:
-        async with Redis(connection_pool=pool) as redis:
-            yield redis
-
     @provide(scope=Scope.APP)
-    async def provide_app_redis(self, envs: Envs) -> AsyncIterator[Redis]:
+    async def provide_redis(self, envs: Envs) -> AsyncIterator[Redis]:
         async with Redis.from_url(str(envs.redis_url)) as redis:
             yield redis
 
@@ -174,27 +180,33 @@ class InfrastructureProvider(Provider):
         return nats.jetstream()
 
     @provide(scope=Scope.APP)
-    async def provide_original_in_nats_paid_stars_purchase_payment_inbox(
-        self,
-        jetstream: JetStreamContext,
-    ) -> AsyncIterator[OriginalInNatsPaidStarsPurchasePaymentInbox]:
-        inbox = OriginalInNatsPaidStarsPurchasePaymentInbox(jetstream)
-        async with inbox:
-            yield inbox
+    async def provide_taskiq_brokers(self, js: JetStreamContext) -> NatsBrokers:
+        nats_brokers = (
+            complete_stars_purchase_payment_broker,
+            make_ai_move_in_game_broker,
+        )
+        for broker in nats_brokers:
+            broker.js = js
+
+        return NatsBrokers(nats_brokers)
 
     @provide(scope=Scope.APP)
     def provide_gemini(self, secrets: Secrets, envs: Envs) -> Gemini:
         return gemini(secrets.gemini_api_key, envs.gemini_url)
 
-    provide_in_nats_paid_stars_purchase_payment_inbox = provide(
-        InNatsPaidStarsPurchasePaymentInbox,
-        provides=PaidStarsPurchasePaymentInbox,
-        scope=Scope.APP,
-    )
-
-    provide_transaction = provide(
-        InPostgresTransaction,
+    provide_serializable_transaction = provide(
+        InPostgresSerializableTransaction,
         provides=SerializableTransaction,
+        scope=Scope.REQUEST,
+    )
+    provide_not_serializable_transaction = provide(
+        InPostgresNotSerializableTransaction,
+        provides=NotSerializableTransaction,
+        scope=Scope.REQUEST,
+    )
+    provide_readonly_transaction = provide(
+        InPostgresReadonlyTransaction,
+        provides=ReadonlyTransaction,
         scope=Scope.REQUEST,
     )
 
@@ -313,4 +325,20 @@ class InfrastructureProvider(Provider):
         StructlogInvitationToGameLog,
         provides=InvitationToGameLog,
         scope=Scope.REQUEST,
+    )
+    provide_user_locks = provide(
+        InPostgresUserLocks,
+        provides=UserLocks,
+        scope=Scope.REQUEST,
+    )
+
+    provide_game_tasks = provide(
+        TaskiqGameTasks,
+        provides=GameTasks,
+        scope=Scope.APP,
+    )
+    provide_stars_purchase_tasks = provide(
+        TaskiqStarsPurchaseTasks,
+        provides=StarsPurchaseTasks,
+        scope=Scope.APP,
     )

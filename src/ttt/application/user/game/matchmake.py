@@ -4,10 +4,7 @@ from dataclasses import dataclass
 
 from ttt.application.common.ports.emojis import Emojis
 from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.transaction import (
-    NotSerializableTransaction,
-    SerializableTransaction,
-)
+from ttt.application.common.ports.transaction import NotSerializableTransaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.user.common.ports.users import Users
 from ttt.application.user.game.ports.user_log import GameUserLog

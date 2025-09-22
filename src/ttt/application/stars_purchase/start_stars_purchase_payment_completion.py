@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from ttt.application.common.ports.transaction import ReadonlyTransaction
+from ttt.application.stars_purchase.ports.stars_purchase_locks import (
+    StarsPurchaseLocks,
+)
 from ttt.application.stars_purchase.ports.stars_purchase_log import (
     StarsPurchaseLog,
 )
@@ -22,6 +26,7 @@ class StartStarsPurchasePaymentCompletion:
     payment_gateway: StarsPurchasePaymentGateway
     views: StarsPurchaseViews
     log: StarsPurchaseLog
+    locks: StarsPurchaseLocks
 
     async def __call__(
         self,
@@ -29,7 +34,9 @@ class StartStarsPurchasePaymentCompletion:
         purchase_id: UUID,
         success: PaymentSuccess,
     ) -> None:
-        await self.tasks.complete_stars_purchase_payment(purchase_id, success)
+        await self.tasks.complete_stars_purchase_payment(
+            purchase_id, success,
+        )
         await self.log.stars_purchase_payment_completion_started(
             purchase_id, success,
         )

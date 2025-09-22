@@ -11,6 +11,7 @@ from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.game.game.ports.game_tasks import GameTasks
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.ports.games import Games
+from ttt.application.user.common.ports.user_locks import UserLocks
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.cell import AlreadyFilledCellError
 from ttt.entities.core.game.game import (
@@ -34,6 +35,7 @@ class MakeMoveInGame:
     log: GameLog
     dao: GameDao
     tasks: GameTasks
+    locks: UserLocks
 
     async def __call__(
         self,
@@ -118,8 +120,9 @@ class MakeMoveInGame:
                 await self.map_(tracking)
 
                 if user_move.next_move_ai_id is not None:
+                    await self.locks.lock_user_by_id(user_id)
                     await self.tasks.make_ai_move(
-                        game.id, user_move.next_move_ai_id,
+                        user_id, game.id, user_move.next_move_ai_id,
                     )
 
                 await self.transaction.commit()

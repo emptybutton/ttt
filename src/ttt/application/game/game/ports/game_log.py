@@ -29,13 +29,6 @@ class GameLog(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def no_current_game(
-        self,
-        user_id: int,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
     async def game_against_ai_started(
         self,
         game: Game,

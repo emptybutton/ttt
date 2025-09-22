@@ -23,7 +23,6 @@ class PostgresStarsPurchases(StarsPurchases):
         stmt = (
             select(TableStarsPurchase)
             .where(TableStarsPurchase.id == id_)
-            .with_for_update()
         )
         table_stars_purchase = await self._session.scalar(stmt)
 

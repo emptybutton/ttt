@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 
-from psycopg.errors import UniqueViolation
-from sqlalchemy.exc import IntegrityError
+from psycopg.errors import SerializationFailure, UniqueViolation
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ttt.application.common.errors.serialization_error import SerializationError
 from ttt.application.common.ports.map import (
     Map,
     MappableTracking,
@@ -40,6 +41,8 @@ class MapToPostgres(Map):
             await self._session.flush()
         except IntegrityError as error:
             self._handle_integrity_error(error)
+        except OperationalError as error:
+            self._handle_operational_error(error)
 
     def _handle_integrity_error(self, error: IntegrityError) -> None:
         match error.orig:
@@ -52,5 +55,11 @@ class MapToPostgres(Map):
                 if constraint_name == "ix_invitations_to_game_user_ids":
                     raise NotUniqueActiveInvitationToGameUserIdsError from error
             case _: ...
+
+        raise error from error
+
+    def _handle_operational_error(self, error: OperationalError) -> None:
+        if isinstance(error.orig, SerializationFailure):
+            raise SerializationError from error
 
         raise error from error

@@ -1,13 +1,10 @@
 from abc import ABC, abstractmethod
-from uuid import UUID
 
 
-class GameTasks(ABC):
+class UserLocks(ABC):
     @abstractmethod
-    async def make_ai_move(
+    async def lock_user_by_id(
         self,
         user_id: int,
-        game_id: UUID,
-        ai_id: UUID,
         /,
     ) -> None: ...

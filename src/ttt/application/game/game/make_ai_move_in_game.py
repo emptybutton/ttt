@@ -4,13 +4,16 @@ from uuid import UUID
 
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
-from ttt.application.common.ports.transaction import SerializableTransaction
+from ttt.application.common.ports.transaction import (
+    NotSerializableTransaction,
+)
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.game.ports.game_ai_gateway import GameAiGateway
 from ttt.application.game.game.ports.game_dao import GameDao
 from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.ports.games import Games
+from ttt.application.user.common.ports.user_locks import UserLocks
 from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.game import (
     AlreadyCompletedGameError,
@@ -28,17 +31,15 @@ class MakeAiMoveInGame:
     uuids: UUIDs
     randoms: Randoms
     ai_gateway: GameAiGateway
-    transaction: SerializableTransaction
+    transaction: NotSerializableTransaction
     log: GameLog
     dao: GameDao
+    locks: UserLocks
 
-    async def __call__(self, game_id: UUID, ai_id: UUID) -> None:
-        """
-        :raises ttt.application.common.errors.serialization_error.SerializationError:
-        """  # noqa: E501
-
+    async def __call__(self, user_id: int, game_id: UUID, ai_id: UUID) -> None:
         async with self.transaction:
-            game = await self.games.game_with_id(game_id)
+            await self.locks.lock_user_by_id(user_id)
+            game = await self.games.not_locked_game_with_id(game_id)
 
             if game is None:
                 await self.log.no_game_to_make_ai_move(game_id)
