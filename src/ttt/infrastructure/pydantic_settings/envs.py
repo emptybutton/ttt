@@ -29,6 +29,8 @@ class Envs(BaseSettings):
 
     auto_cancel_invitations_to_game_interval_seconds: float
 
+    serialization_error_max_retries: int
+
     @classmethod
     def settings_customise_sources(
         cls,

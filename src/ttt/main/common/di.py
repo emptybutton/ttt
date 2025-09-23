@@ -350,7 +350,9 @@ class InfrastructureProvider(Provider):
     )
 
     @provide(scope=Scope.REQUEST)
-    def provide_retrier(self) -> Retrier:
-        return Retrier(_max_retries_map={SerializationError: 10})
+    def provide_retrier(self, envs: Envs) -> Retrier:
+        return Retrier(_max_retries_map={
+            SerializationError: envs.serialization_error_max_retries,
+        })
 
     provide_retry = provide(RetrierRetry, provides=Retry, scope=Scope.REQUEST)
