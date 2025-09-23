@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
-from ttt.application.common.ports.transaction import ReadonlyTransaction, SerializableTransaction
+from ttt.application.common.ports.transaction import (
+    ReadonlyTransaction,
+)
 from ttt.application.invitation_to_game.game.ports.invitation_to_game_views import (  # noqa: E501
     InvitationToGameViews,
 )

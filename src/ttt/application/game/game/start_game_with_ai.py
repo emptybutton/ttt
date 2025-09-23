@@ -1,4 +1,3 @@
-from asyncio import gather
 from dataclasses import dataclass
 
 from ttt.application.common.ports.emojis import Emojis

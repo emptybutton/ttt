@@ -79,7 +79,9 @@ async def on_invitation_selected(
     retrier: FromDishka[Retrier],
 ) -> None:
     invitation_id = UUID(hex=invitation_id_hex)
-    await retrier(cancel_invitation_to_game, callback_query.from_user.id, invitation_id)
+    await retrier(
+        cancel_invitation_to_game, callback_query.from_user.id, invitation_id,
+    )
 
 
 @inject
@@ -100,7 +102,9 @@ async def input_user_id(
             ShowMode.DELETE_AND_SEND,
         )
     else:
-        await retrier(invite_to_game, not_none(message.from_user).id, invited_user_id)
+        await retrier(
+            invite_to_game, not_none(message.from_user).id, invited_user_id,
+        )
 
 
 outcoming_invitations_to_game_window = Window(

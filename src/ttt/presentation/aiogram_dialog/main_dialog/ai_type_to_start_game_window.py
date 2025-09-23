@@ -24,7 +24,9 @@ async def on_game_against_gemini_2_0_flash_clicked(
     start_game_with_ai: FromDishka[StartGameWithAi],
     retrier: FromDishka[Retrier],
 ) -> None:
-    await retrier(start_game_with_ai, callback.from_user.id, AiType.gemini_2_0_flash)
+    await retrier(
+        start_game_with_ai, callback.from_user.id, AiType.gemini_2_0_flash,
+    )
 
 
 ai_type_to_start_game_window = Window(

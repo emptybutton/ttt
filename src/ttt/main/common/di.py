@@ -1,6 +1,4 @@
-from asyncio import gather
 from collections.abc import AsyncIterator
-from typing import NewType
 
 from dishka import Provider, Scope, provide
 from nats import connect as connect_to_nats
@@ -109,8 +107,12 @@ from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.infrastructure.retrier import Retrier
 from ttt.infrastructure.taskiq.broker import NatsBrokers
-from ttt.infrastructure.taskiq.tasks.complete_stars_purchase_payment_task import complete_stars_purchase_payment_broker
-from ttt.infrastructure.taskiq.tasks.make_ai_move_in_game_task import make_ai_move_in_game_broker
+from ttt.infrastructure.taskiq.tasks.complete_stars_purchase_payment_task import (  # noqa: E501
+    complete_stars_purchase_payment_broker,
+)
+from ttt.infrastructure.taskiq.tasks.make_ai_move_in_game_task import (
+    make_ai_move_in_game_broker,
+)
 
 
 class InfrastructureProvider(Provider):

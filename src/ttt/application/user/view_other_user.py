@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from ttt.application.common.ports.transaction import (
     ReadonlyTransaction,
-    SerializableTransaction,
 )
 from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.common.ports.user_views import CommonUserViews

@@ -67,7 +67,7 @@ async def getter(
 
 
 @inject
-async def on_invitation_selected(
+async def on_invitation_selected(  # noqa: PLR0913, PLR0917
     callback_query: CallbackQuery,
     _: Select[Any],
     manager: DialogManager,
@@ -77,7 +77,9 @@ async def on_invitation_selected(
     result_buffer: FromDishka[ResultBuffer],
 ) -> None:
     invitation_id = UUID(hex=invitation_id_hex)
-    await retrier(view_invitation_to_game, callback_query.from_user.id, invitation_id)
+    await retrier(
+        view_invitation_to_game, callback_query.from_user.id, invitation_id,
+    )
     view = result_buffer.result
 
     if not isinstance(view, IncomingInvitationToGameView | None):
