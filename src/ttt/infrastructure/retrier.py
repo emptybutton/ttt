@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 
 
@@ -19,13 +19,13 @@ class Retrier:
 
     async def __call__[**PmT, RT](
         self,
-        action: Callable[PmT, RT],
+        action: Callable[PmT, Awaitable[RT]],
         *args: PmT.args,
         **kwargs: PmT.kwargs,
     ) -> RT:
         while True:
             try:
-                return action(*args, **kwargs)
+                return await action(*args, **kwargs)
             except BaseException as error:
                 if type(error) not in self._max_retries_map:
                     raise error from error

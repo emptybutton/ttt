@@ -153,9 +153,6 @@ from ttt.presentation.result_buffer import ResultBuffer
 from ttt.presentation.tasks.auto_cancel_invitations_to_game_task import (
     AutoCancelInvitationsToGameTask,
 )
-from ttt.presentation.tasks.complete_stars_purchase_payment_task import (
-    CompleteStarsPurchasePaymentTask,
-)
 from ttt.presentation.tasks.matchmake_tasks import MatchmakeTasks
 from ttt.presentation.tasks.unkillable_tasks import UnkillableTasks
 from ttt.presentation.unkillable_task_group import UnkillableTaskGroup
@@ -270,12 +267,6 @@ class PresentationProvider(Provider):
         )
 
     @provide(scope=Scope.APP)
-    def provide_complete_stars_purchase_payment_task(
-        self,
-    ) -> CompleteStarsPurchasePaymentTask:
-        return CompleteStarsPurchasePaymentTask()
-
-    @provide(scope=Scope.APP)
     def provide_matchmake_tasks(
         self,
         envs: Envs,
@@ -301,12 +292,10 @@ class PresentationProvider(Provider):
         self,
         task_group: UnkillableTaskGroup,
         auto_cancel_invitations_to_game_task: AutoCancelInvitationsToGameTask,
-        complete_stars_purchase_payment_task: CompleteStarsPurchasePaymentTask,
         matchmake_tasks: MatchmakeTasks,
     ) -> UnkillableTasks:
         tasks = (
             auto_cancel_invitations_to_game_task,
-            complete_stars_purchase_payment_task,
             matchmake_tasks,
         )
         return UnkillableTasks(tasks, task_group)
