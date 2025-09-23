@@ -24,6 +24,7 @@ from ttt.application.invitation_to_game.game.invite_to_game import InviteToGame
 from ttt.application.invitation_to_game.game.view_outcoming_invitations_to_game import (  # noqa: E501
     ViewOutcomingInvitationsToGame,
 )
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
     OneTimekey,
@@ -58,10 +59,11 @@ async def getter(
     *,
     event_from_user: User,
     view_invitations: FromDishka[ViewOutcomingInvitationsToGame],
+    retrier: FromDishka[Retrier],
     result_buffer: FromDishka[ResultBuffer],
     **_: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
-    await view_invitations(event_from_user.id)
+    await retrier(view_invitations, event_from_user.id)
     view = result_buffer(OutcomingInvitationsToGameView)
 
     return view.window_data()
@@ -74,9 +76,10 @@ async def on_invitation_selected(
     __: DialogManager,
     invitation_id_hex: str,
     cancel_invitation_to_game: FromDishka[CancelInvitationToGame],
+    retrier: FromDishka[Retrier],
 ) -> None:
     invitation_id = UUID(hex=invitation_id_hex)
-    await cancel_invitation_to_game(callback_query.from_user.id, invitation_id)
+    await retrier(cancel_invitation_to_game, callback_query.from_user.id, invitation_id)
 
 
 @inject
@@ -85,6 +88,7 @@ async def input_user_id(
     _: MessageInput,
     manager: DialogManager,
     invite_to_game: FromDishka[InviteToGame],
+    retrier: FromDishka[Retrier],
 ) -> None:
     try:
         invited_user_id = int(message.text)  # type: ignore[arg-type]
@@ -96,7 +100,7 @@ async def input_user_id(
             ShowMode.DELETE_AND_SEND,
         )
     else:
-        await invite_to_game(not_none(message.from_user).id, invited_user_id)
+        await retrier(invite_to_game, not_none(message.from_user).id, invited_user_id)
 
 
 outcoming_invitations_to_game_window = Window(

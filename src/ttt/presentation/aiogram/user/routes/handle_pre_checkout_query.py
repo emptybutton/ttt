@@ -6,6 +6,7 @@ from dishka.integrations.aiogram import inject
 from ttt.application.stars_purchase.start_stars_purchase_payment import (
     StartStarsPurchasePayment,
 )
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram.user.invoices import (
     StarsPurchaseInvoicePayload,
     invoce_payload_adapter,
@@ -27,5 +28,6 @@ async def _(
 
     match invoce_payload:
         case StarsPurchaseInvoicePayload():
+            retrier = await dishka_container.get(Retrier)
             action = await dishka_container.get(StartStarsPurchasePayment)
-            await action(invoce_payload.purchase_id)
+            await retrier(action, invoce_payload.purchase_id)

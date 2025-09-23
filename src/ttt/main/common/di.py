@@ -13,9 +13,11 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from ttt.application.common.errors.serialization_error import SerializationError
 from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
 from ttt.application.common.ports.randoms import Randoms
+from ttt.application.common.ports.retry import Retry
 from ttt.application.common.ports.transaction import (
     NotSerializableTransaction,
     ReadonlyTransaction,
@@ -79,6 +81,7 @@ from ttt.infrastructure.adapters.original_admin_token import (
     TokenAsOriginalAdminToken,
 )
 from ttt.infrastructure.adapters.randoms import MersenneTwisterRandoms
+from ttt.infrastructure.adapters.retry import RetrierRetry
 from ttt.infrastructure.adapters.stars_purchase_log import (
     StructlogStarsPurchaseLog,
 )
@@ -104,6 +107,7 @@ from ttt.infrastructure.adapters.uuids import UUIDv4s
 from ttt.infrastructure.openai.gemini import Gemini, gemini
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
+from ttt.infrastructure.retrier import Retrier
 from ttt.infrastructure.taskiq.broker import NatsBrokers
 from ttt.infrastructure.taskiq.tasks.complete_stars_purchase_payment_task import complete_stars_purchase_payment_broker
 from ttt.infrastructure.taskiq.tasks.make_ai_move_in_game_task import make_ai_move_in_game_broker
@@ -342,3 +346,9 @@ class InfrastructureProvider(Provider):
         provides=StarsPurchaseTasks,
         scope=Scope.APP,
     )
+
+    @provide(scope=Scope.REQUEST)
+    def provide_retrier(self) -> Retrier:
+        return Retrier(_max_retries_map={SerializationError: 10})
+
+    provide_retry = provide(RetrierRetry, provides=Retry, scope=Scope.REQUEST)

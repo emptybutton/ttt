@@ -26,6 +26,7 @@ from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.loss import UserLoss
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.tools.assertion import not_none
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
     OneTimekey,
@@ -43,9 +44,10 @@ async def on_cell_clicked(
     button: Button,
     _: DialogManager,
     make_move_in_game: FromDishka[MakeMoveInGame],
+    retrier: FromDishka[Retrier],
 ) -> None:
     cell_number_int = int(not_none(button.widget_id)[-1])
-    await make_move_in_game(callback.from_user.id, cell_number_int)
+    await retrier(make_move_in_game, callback.from_user.id, cell_number_int)
 
 
 def cell_button(cell_number_int: int) -> Button:

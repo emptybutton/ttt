@@ -15,6 +15,7 @@ from magic_filter import F
 from ttt.application.stars_purchase.start_stars_purchase import (
     StartStarsPurchase,
 )
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.common.wigets.hint import hint
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
     OneTimekey,
@@ -28,6 +29,7 @@ async def on_stars_purchase_clicked(
     button: Button,
     _: DialogManager,
     start_stars_purchase: FromDishka[StartStarsPurchase],
+    retrier: FromDishka[Retrier],
 ) -> None:
     match button.widget_id:
         case "8192_stars_purchase":
@@ -41,7 +43,7 @@ async def on_stars_purchase_clicked(
         case _:
             raise ValueError(button.widget_id)
 
-    await start_stars_purchase(callback.from_user.id, stars)
+    await retrier(start_stars_purchase, callback.from_user.id, stars)
 
 
 @inject

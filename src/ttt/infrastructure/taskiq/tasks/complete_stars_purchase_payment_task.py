@@ -6,6 +6,7 @@ from ttt.application.stars_purchase.complete_stars_purchase_payment import (
     CompleteStarsPurchasePayment,
 )
 from ttt.entities.finance.payment.success import PaymentSuccess
+from ttt.infrastructure.retrier import Retrier
 from ttt.infrastructure.taskiq.broker import NatsBroker
 
 
@@ -26,10 +27,9 @@ async def complete_stars_purchase_payment_task(
     payment_success_id: str,
     payment_success_gateway_id: str,
     complete_stars_purchase_payment: FromDishka[CompleteStarsPurchasePayment],
+    retrier: FromDishka[Retrier],
 ) -> None:
     payment_success = PaymentSuccess(
         payment_success_id, payment_success_gateway_id,
     )
-    await complete_stars_purchase_payment(
-        purchase_id, payment_success,
-    )
+    await retrier(complete_stars_purchase_payment, purchase_id, payment_success)

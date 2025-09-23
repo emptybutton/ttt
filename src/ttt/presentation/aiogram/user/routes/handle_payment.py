@@ -3,12 +3,12 @@ from aiogram.types import ContentType, Message
 from dishka import AsyncContainer
 from dishka.integrations.aiogram import inject
 
-from ttt.application.stars_purchase.dto.common import PaidStarsPurchasePayment
 from ttt.application.stars_purchase.start_stars_purchase_payment_completion import (  # noqa: E501
     StartStarsPurchasePaymentCompletion,
 )
 from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.tools.assertion import not_none
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram.user.invoices import (
     StarsPurchaseInvoicePayload,
     invoce_payload_adapter,
@@ -36,12 +36,13 @@ async def _(
 
     match invoce_payload:
         case StarsPurchaseInvoicePayload():
+            retrier = await dishka_container.get(Retrier)
             start_stars_purchase_payment_completion = (
                 await dishka_container.get(StartStarsPurchasePaymentCompletion)
             )
-            payment = PaidStarsPurchasePayment(
-                invoce_payload.purchase_id,
+            await retrier(
+                start_stars_purchase_payment_completion,
                 invoce_payload.user_id,
+                invoce_payload.purchase_id,
                 success,
             )
-            await start_stars_purchase_payment_completion(payment)

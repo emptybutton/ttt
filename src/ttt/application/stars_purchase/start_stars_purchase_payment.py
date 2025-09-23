@@ -4,6 +4,7 @@ from uuid import UUID
 
 from ttt.application.common.ports.clock import Clock
 from ttt.application.common.ports.map import Map
+from ttt.application.common.ports.retry import Retry
 from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.stars_purchase.ports.stars_purchase_log import (
@@ -26,8 +27,9 @@ class StartStarsPurchasePayment:
     payment_gateway: StarsPurchasePaymentGateway
     map_: Map
     log: StarsPurchaseLog
+    retry: Retry
 
-    async def __call__(self, purchase_id: UUID, retry: bool) -> None:  # noqa: FBT001
+    async def __call__(self, purchase_id: UUID) -> None:
         """
         :raises ttt.application.common.errors.serialization_error.SerializationError:
         """  # noqa: E501
@@ -57,7 +59,7 @@ class StartStarsPurchasePayment:
                 )
                 await self.transaction.commit()
 
-                if retry:
+                if self.retry:
                     await self.payment_gateway.start_payment(payment_id)
                 else:
                     await self.payment_gateway.stop_payment_due_to_dublicate(

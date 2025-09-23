@@ -9,6 +9,7 @@ from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
 
 from ttt.application.user.relinquish_admin_right import RelinquishAdminRight
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState
 from ttt.presentation.aiogram_dialog.common.wigets.hint import hint
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
@@ -22,8 +23,9 @@ async def on_yes_clicked(
     _: Button,
     __: DialogManager,
     relinquish_admin_right: FromDishka[RelinquishAdminRight],
+    retrier: FromDishka[Retrier],
 ) -> None:
-    await relinquish_admin_right(callback.from_user.id)
+    await retrier(relinquish_admin_right, callback.from_user.id)
 
 
 relinquish_admin_right2_window = Window(

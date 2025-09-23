@@ -17,6 +17,7 @@ from ttt.application.user.view_other_user import ViewOtherUser
 from ttt.entities.core.user.admin_right import AdminRight
 from ttt.entities.core.user.rank import UsersWithMaxRating, rank
 from ttt.entities.tools.assertion import not_none
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.admin_dialog.common import (
     AdminDialogState,
     AdminRightName,
@@ -81,6 +82,7 @@ async def input_user_id(
     _: MessageInput,
     manager: DialogManager,
     view_other_user: FromDishka[ViewOtherUser],
+    retrier: FromDishka[Retrier],
 ) -> None:
     try:
         other_user_id = int(message.text)  # type: ignore[arg-type]
@@ -92,7 +94,9 @@ async def input_user_id(
             ShowMode.DELETE_AND_SEND,
         )
     else:
-        await view_other_user(not_none(message.from_user).id, other_user_id)
+        await retrier(
+            view_other_user, not_none(message.from_user).id, other_user_id,
+        )
 
 
 other_user_profile_window = Window(

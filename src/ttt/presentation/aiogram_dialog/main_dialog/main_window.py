@@ -21,6 +21,7 @@ from ttt.application.user.view_main_menu import ViewMainMenu
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.rank import UsersWithMaxRating, rank
 from ttt.entities.elo.rating import EloRating
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.common.wigets.func_text import FuncText
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
@@ -73,10 +74,11 @@ async def main_getter(
     *,
     event_from_user: User,
     view_main_menu: FromDishka[ViewMainMenu],
+    retrier: FromDishka[Retrier],
     result_buffer: FromDishka[ResultBuffer],
     **_: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
-    await view_main_menu(event_from_user.id)
+    await retrier(view_main_menu, event_from_user.id)
     view = result_buffer(MainMenuView)
 
     return view.window_data()
@@ -88,8 +90,9 @@ async def on_cancel_game_clicked(
     _: Button,
     __: DialogManager,
     cancel_game: FromDishka[CancelGame],
+    retrier: FromDishka[Retrier],
 ) -> None:
-    await cancel_game(callback.from_user.id)
+    await retrier(cancel_game, callback.from_user.id)
 
 
 @inject
@@ -98,9 +101,10 @@ async def on_back_to_game_clicked(
     _: Button,
     manager: DialogManager,
     view_game: FromDishka[ViewGame],
+    retrier: FromDishka[Retrier],
     result_buffer: FromDishka[ResultBuffer],
 ) -> None:
-    await view_game(callback.from_user.id)
+    await retrier(view_game, callback.from_user.id)
     view = result_buffer(ActiveGameView)
     data = view.window_data()
 
@@ -113,9 +117,10 @@ async def on_incoming_invitation_to_game_clicked(
     _: Button,
     manager: DialogManager,
     view_invitation_to_game: FromDishka[ViewOneIncomingInvitationToGame],
+    retrier: FromDishka[Retrier],
     result_buffer: FromDishka[ResultBuffer],
 ) -> None:
-    await view_invitation_to_game(callback_query.from_user.id)
+    await retrier(view_invitation_to_game, callback_query.from_user.id)
     view = result_buffer.result
 
     if not isinstance(view, IncomingInvitationToGameView | None):

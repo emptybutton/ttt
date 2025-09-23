@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from ttt.application.invitation_to_game.game.auto_cancel_invitations_to_game import (  # noqa: E501
     AutoCancelInvitationsToGame,
 )
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.tasks.task import NextContainer, Task
 
 
@@ -15,7 +16,8 @@ class AutoCancelInvitationsToGameTask(Task):
         while True:
             await sleep(self._interval_seconds)
             async with container() as request:
+                retrier = await request.get(Retrier)
                 cancel_invitations = await request.get(
                     AutoCancelInvitationsToGame,
                 )
-                await cancel_invitations()
+                await retrier(cancel_invitations)

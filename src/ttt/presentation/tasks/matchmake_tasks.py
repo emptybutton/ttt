@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from structlog.types import FilteringBoundLogger
 
 from ttt.application.user.game.matchmake import Matchmake
+from ttt.infrastructure.retrier import Retrier
 from ttt.infrastructure.structlog.logger import unexpected_error_log
 from ttt.presentation.tasks.task import NextContainer, Task
 
@@ -31,6 +32,7 @@ class MatchmakeTasks(Task):
         try:
             async with self._semaphore, container() as request:
                 matchmake = await request.get(Matchmake)
-                await matchmake()
+                retrier = await request.get(Retrier)
+                await retrier(matchmake)
         except Exception as error:  # noqa: BLE001
             await unexpected_error_log(self._logger, error)

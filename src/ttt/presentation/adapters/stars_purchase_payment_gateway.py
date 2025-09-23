@@ -56,8 +56,3 @@ class AiogramPaymentGateway(StarsPurchasePaymentGateway):
             ok=False,
             error_message=message,
         )
-
-
-# INVOICE
-# OK?
-# | PAY  | Dulicate

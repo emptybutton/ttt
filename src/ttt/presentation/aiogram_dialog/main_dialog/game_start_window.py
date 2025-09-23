@@ -19,6 +19,7 @@ from ttt.application.user.game.dont_wait_for_matchmaking import (
 )
 from ttt.application.user.game.view_matchmaking import ViewMatchmaking
 from ttt.application.user.game.wait_for_matchmaking import WaitForMatchmaking
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.common.wigets.hint import hint
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
@@ -39,8 +40,9 @@ async def on_wait_for_matchmaking_clicked(
     _: Button,
     __: DialogManager,
     wait_for_matchmaking: FromDishka[WaitForMatchmaking],
+    retrier: FromDishka[Retrier],
 ) -> None:
-    await wait_for_matchmaking(callback.from_user.id)
+    await retrier(wait_for_matchmaking, callback.from_user.id)
 
 
 @inject
@@ -49,8 +51,9 @@ async def on_dont_wait_for_matchmaking_clicked(
     _: Button,
     __: DialogManager,
     dont_wait_for_matchmaking: FromDishka[DontWaitForMatchmaking],
+    retrier: FromDishka[Retrier],
 ) -> None:
-    await dont_wait_for_matchmaking(callback.from_user.id)
+    await retrier(dont_wait_for_matchmaking, callback.from_user.id)
 
 
 @inject
@@ -58,10 +61,11 @@ async def getter(
     *,
     event_from_user: User,
     view_matchmaking: FromDishka[ViewMatchmaking],
+    retrier: FromDishka[Retrier],
     result_buffer: FromDishka[ResultBuffer],
     **_: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
-    await view_matchmaking(event_from_user.id)
+    await retrier(view_matchmaking, event_from_user.id)
     view = result_buffer(GameStartView)
 
     return view.window_data()

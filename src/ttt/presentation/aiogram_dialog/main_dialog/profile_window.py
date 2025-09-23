@@ -12,6 +12,7 @@ from dishka.integrations.aiogram_dialog import inject
 
 from ttt.application.user.view_user import ViewUser
 from ttt.entities.core.user.rank import UsersWithMaxRating, rank
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.result_buffer import ResultBuffer
@@ -58,10 +59,11 @@ async def profile_getter(
     *,
     event_from_user: User,
     view_user: FromDishka[ViewUser],
+    retrier: FromDishka[Retrier],
     result_buffer: FromDishka[ResultBuffer],
     **_: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
-    await view_user(event_from_user.id)
+    await retrier(view_user, event_from_user.id)
     view = result_buffer(UserProfileView)
 
     return view.window_data()
