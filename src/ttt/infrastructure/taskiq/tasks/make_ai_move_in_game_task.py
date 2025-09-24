@@ -4,18 +4,18 @@ from dishka.integrations.taskiq import FromDishka, inject
 
 from ttt.application.game.game.make_ai_move_in_game import MakeAiMoveInGame
 from ttt.infrastructure.retrier import Retrier
-from ttt.infrastructure.taskiq.broker import NatsBroker
+from ttt.infrastructure.taskiq.broker import PullSubscribe
+from ttt.infrastructure.taskiq.tasks.common import nats_tasks
 
 
-make_ai_move_in_game_broker = NatsBroker(
-    "game.game.make_ai_move_in_game",
-    lambda js, sub: js.pull_subscribe(
-        sub, "ttt-game-game-make_ai_move_in_game", "GAME",
-    ),
+@nats_tasks.task(
+    subject="game.game.make_ai_move_in_game",
+    pull_subscribe=PullSubscribe(lambda js, subject: js.pull_subscribe(
+        subject,
+        durable="ttt-game-game-make_ai_move_in_game",
+        stream="GAME",
+    )),
 )
-
-
-@make_ai_move_in_game_broker.task()
 @inject(patch_module=True)
 async def make_ai_move_in_game_broker_task(
     user_id: int,

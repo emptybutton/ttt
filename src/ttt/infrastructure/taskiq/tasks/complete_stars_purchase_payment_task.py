@@ -7,20 +7,18 @@ from ttt.application.stars_purchase.complete_stars_purchase_payment import (
 )
 from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.infrastructure.retrier import Retrier
-from ttt.infrastructure.taskiq.broker import NatsBroker
+from ttt.infrastructure.taskiq.broker import PullSubscribe
+from ttt.infrastructure.taskiq.tasks.common import nats_tasks
 
 
-complete_stars_purchase_payment_broker = NatsBroker(
-    "stars_purchase.stars_purchase.complete_stars_purchase_payment",
-    lambda js, sub: js.pull_subscribe(
-        sub,
+@nats_tasks.task(
+    subject="stars_purchase.stars_purchase.complete_stars_purchase_payment",
+    pull_subscribe=PullSubscribe(lambda js, subject: js.pull_subscribe(
+        subject,
         "ttt-stars_purchase-stars_purchase-complete_stars_purchase_payment",
-        "STARS_PURCHASE",
-    ),
+        stream="STARS_PURCHASE",
+    )),
 )
-
-
-@complete_stars_purchase_payment_broker.task()
 @inject(patch_module=True)
 async def complete_stars_purchase_payment_task(
     purchase_id: UUID,

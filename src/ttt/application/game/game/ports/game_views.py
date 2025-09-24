@@ -26,13 +26,6 @@ class GameViews(ABC):
     ) -> None: ...
 
     @abstractmethod
-    async def no_game_with_id_view(
-        self,
-        game_id: UUID,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
     async def game_already_complteted_view(
         self,
         user_id: int,

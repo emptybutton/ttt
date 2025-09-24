@@ -32,9 +32,16 @@ class InPostgresSerializableTransaction(SerializableTransaction):
         error: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        transaction = not_none(self._session.get_transaction())
+        transaction = self._session.get_transaction()
+
+        if transaction is None:
+            return
+
         with reraise_serialization_error():
-            await transaction.__aexit__(error_type, error, traceback)
+            if error is None:
+                await transaction.commit()
+            else:
+                await transaction.rollback()
 
     async def commit(self) -> None:
         transaction = not_none(self._session.get_transaction())
@@ -49,7 +56,7 @@ class InPostgresNotSerializableTransaction(NotSerializableTransaction):
     async def __aenter__(self) -> Self:
         assert_(not self._session.in_transaction())
         await self._session.connection(
-            execution_options={"isolation_level": "READ COMMITED"},
+            execution_options={"isolation_level": "READ COMMITTED"},
         )
         return self
 
@@ -59,8 +66,15 @@ class InPostgresNotSerializableTransaction(NotSerializableTransaction):
         error: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        transaction = not_none(self._session.get_transaction())
-        await transaction.__aexit__(error_type, error, traceback)
+        transaction = self._session.get_transaction()
+
+        if transaction is None:
+            return
+
+        if error is None:
+            await transaction.commit()
+        else:
+            await transaction.rollback()
 
     async def commit(self) -> None:
         transaction = not_none(self._session.get_transaction())
@@ -83,5 +97,12 @@ class InPostgresReadonlyTransaction(ReadonlyTransaction):
         error: BaseException | None,
         traceback: TracebackType | None,
     ) -> None:
-        transaction = not_none(self._session.get_transaction())
-        await transaction.__aexit__(error_type, error, traceback)
+        transaction = self._session.get_transaction()
+
+        if transaction is None:
+            return
+
+        if error is None:
+            await transaction.commit()
+        else:
+            await transaction.rollback()

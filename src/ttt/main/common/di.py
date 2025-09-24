@@ -1,3 +1,4 @@
+from asyncio import Queue
 from collections.abc import AsyncIterator
 
 from dishka import Provider, Scope, provide
@@ -10,6 +11,7 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
 )
+from taskiq.receiver import Receiver
 
 from ttt.application.common.errors.serialization_error import SerializationError
 from ttt.application.common.ports.clock import Clock
@@ -106,13 +108,9 @@ from ttt.infrastructure.openai.gemini import Gemini, gemini
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.infrastructure.retrier import Retrier
-from ttt.infrastructure.taskiq.broker import NatsBrokers
-from ttt.infrastructure.taskiq.tasks.complete_stars_purchase_payment_task import (  # noqa: E501
-    complete_stars_purchase_payment_broker,
-)
-from ttt.infrastructure.taskiq.tasks.make_ai_move_in_game_task import (
-    make_ai_move_in_game_broker,
-)
+from ttt.infrastructure.taskiq.broker import NatsBroker
+from ttt.infrastructure.taskiq.tasks.common import nats_tasks
+from ttt.infrastructure.taskiq.worker import TaskiqBgWorker
 
 
 class InfrastructureProvider(Provider):
@@ -145,7 +143,6 @@ class InfrastructureProvider(Provider):
         session = AsyncSession(
             engine,
             autoflush=False,
-            autobegin=False,
             expire_on_commit=False,
         )
 
@@ -186,15 +183,20 @@ class InfrastructureProvider(Provider):
         return nats.jetstream()
 
     @provide(scope=Scope.APP)
-    async def provide_taskiq_brokers(self, js: JetStreamContext) -> NatsBrokers:
-        nats_brokers = (
-            complete_stars_purchase_payment_broker,
-            make_ai_move_in_game_broker,
-        )
-        for broker in nats_brokers:
-            broker.js = js
+    async def provide_nats_broker(
+        self, js: JetStreamContext,
+    ) -> NatsBroker:
+        nats_tasks.js = js
+        nats_tasks.pulling_queue = Queue()
 
-        return NatsBrokers(nats_brokers)
+        return nats_tasks
+
+    @provide(scope=Scope.APP)
+    async def provide_taskiq_bg_worker(
+        self, nats_broker: NatsBroker,
+    ) -> AsyncIterator[TaskiqBgWorker]:
+        async with TaskiqBgWorker((Receiver(nats_broker), )) as worker:
+            yield worker
 
     @provide(scope=Scope.APP)
     def provide_gemini(self, secrets: Secrets, envs: Envs) -> Gemini:

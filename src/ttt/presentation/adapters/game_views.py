@@ -64,7 +64,7 @@ class AiogramGameViews(GameViews):
             for user in game.users()
         ))
 
-    async def no_game_view(self, user_id: int, /) -> None:
+    async def no_current_game_view(self, user_id: int, /) -> None:
         dialog_manager = self._dialog_manager_for_user(user_id)
 
         data = {"hint": "❌ Игра уже закончилась"}

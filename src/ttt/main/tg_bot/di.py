@@ -27,6 +27,7 @@ from structlog.types import FilteringBoundLogger
 
 from ttt.application.common.ports.emojis import Emojis
 from ttt.application.game.game.cancel_game import CancelGame
+from ttt.application.game.game.make_ai_move_in_game import MakeAiMoveInGame
 from ttt.application.game.game.make_move_in_game import MakeMoveInGame
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.start_game_with_ai import StartGameWithAi
@@ -436,6 +437,7 @@ class ApplicationProvider(Provider):
     )
     provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
     provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)
+    provide_make_ai_move_in_game = provide(MakeAiMoveInGame, scope=Scope.REQUEST)
     provide_view_game = provide(ViewGame, scope=Scope.REQUEST)
 
     provide_accept_invitation_to_game = provide(

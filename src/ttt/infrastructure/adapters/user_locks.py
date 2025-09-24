@@ -1,4 +1,5 @@
-from pydantic.dataclasses import dataclass
+from dataclasses import dataclass
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

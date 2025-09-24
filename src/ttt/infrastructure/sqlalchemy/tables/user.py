@@ -122,7 +122,7 @@ class TableUser(Base[User]):
         Index(
             "ix_users_has_matchmaking_waiting",
             has_matchmaking_waiting,
-            postgresql_where=(has_matchmaking_waiting.is_(True)),
+            postgresql_where="has_matchmaking_waiting",
         ),
     )
 

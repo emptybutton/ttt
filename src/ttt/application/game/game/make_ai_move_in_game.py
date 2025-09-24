@@ -26,8 +26,7 @@ from ttt.entities.tools.tracking import Tracking
 class MakeAiMoveInGame:
     map_: Map
     games: Games
-    game_views: GameViews
-    users: Users
+    views: GameViews
     uuids: UUIDs
     randoms: Randoms
     ai_gateway: GameAiGateway
@@ -77,4 +76,4 @@ class MakeAiMoveInGame:
                 await self.map_(tracking)
                 await self.transaction.commit()
 
-                await self.game_views.game_view(game)
+                await self.views.game_view(game)
