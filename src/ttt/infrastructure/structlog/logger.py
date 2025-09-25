@@ -1,4 +1,6 @@
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import cast
 
 import structlog
@@ -49,3 +51,13 @@ async def unexpected_error_log(
     error: Exception,
 ) -> None:
     await logger.aexception("unexpected_error", exc_info=error)
+
+
+@asynccontextmanager
+async def unexpected_error_logging(
+    logger: FilteringBoundLogger,
+) -> AsyncIterator[None]:
+    try:
+        yield
+    except Exception as error:  # noqa: BLE001
+        await unexpected_error_log(logger, error)

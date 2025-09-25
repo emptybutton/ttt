@@ -5,13 +5,13 @@ from structlog.types import FilteringBoundLogger
 
 from ttt.application.user.game.matchmake import Matchmake
 from ttt.infrastructure.dishka.next_container import NextContainer
+from ttt.infrastructure.processors.processor import Processor
 from ttt.infrastructure.retrier import Retrier
 from ttt.infrastructure.structlog.logger import unexpected_error_log
-from ttt.presentation.tasks.task import Task
 
 
 @dataclass
-class MatchmakeTasks(Task):
+class MatchmakeProcessor(Processor):
     _max_workers: int
     _worker_creation_interval_seconds: float
     _logger: FilteringBoundLogger

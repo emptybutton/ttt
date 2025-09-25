@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Annotated, cast
+from typing import cast
 
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.base import BaseStorage, DefaultKeyBuilder
@@ -15,7 +15,6 @@ from aiogram_dialog import BgManagerFactory, setup_dialogs
 from aiogram_dialog.manager.bg_manager import BgManagerFactoryImpl
 from aiogram_dialog.manager.manager import ManagerImpl
 from dishka import (
-    FromComponent,
     Provider,
     Scope,
     from_context,
@@ -23,7 +22,6 @@ from dishka import (
 )
 from dishka.integrations.aiogram import AiogramMiddlewareData
 from redis.asyncio import Redis
-from structlog.types import FilteringBoundLogger
 
 from ttt.application.common.ports.emojis import Emojis
 from ttt.application.game.game.cancel_game import CancelGame
@@ -120,7 +118,6 @@ from ttt.application.user.view_main_menu import ViewMainMenu
 from ttt.application.user.view_other_user import ViewOtherUser
 from ttt.application.user.view_user import ViewUser
 from ttt.application.user.view_user_emojis import ViewUserEmojis
-from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
@@ -151,12 +148,6 @@ from ttt.presentation.aiogram_dialog.common.dialog_manager_for_user import (
 )
 from ttt.presentation.aiogram_dialog.main_dialog import main_dialog
 from ttt.presentation.result_buffer import ResultBuffer
-from ttt.presentation.tasks.auto_cancel_invitations_to_game_task import (
-    AutoCancelInvitationsToGameTask,
-)
-from ttt.presentation.tasks.matchmake_tasks import MatchmakeTasks
-from ttt.presentation.tasks.unkillable_tasks import UnkillableTasks
-from ttt.presentation.unkillable_task_group import UnkillableTaskGroup
 
 
 @dataclass
@@ -252,50 +243,6 @@ class PresentationProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def provide_result_buffer(self) -> ResultBuffer:
         return ResultBuffer()
-
-    @provide(scope=Scope.APP)
-    def provide_auto_cancel_invitations_to_game_task(
-        self, envs: Envs,
-    ) -> AutoCancelInvitationsToGameTask:
-        return AutoCancelInvitationsToGameTask(
-            _interval_seconds=(
-                envs.auto_cancel_invitations_to_game_interval_seconds
-            ),
-        )
-
-    @provide(scope=Scope.APP)
-    def provide_matchmake_tasks(
-        self,
-        envs: Envs,
-        logger: Annotated[FilteringBoundLogger, FromComponent("app")],
-    ) -> MatchmakeTasks:
-        return MatchmakeTasks(
-            _max_workers=envs.matchmaking_max_workers,
-            _worker_creation_interval_seconds=(
-                envs.matchmaking_worker_creation_interval_seconds
-            ),
-            _logger=logger,
-        )
-
-    @provide(scope=Scope.APP)
-    async def unkillable_task_group(
-        self, logger: Annotated[FilteringBoundLogger, FromComponent("app")],
-    ) -> AsyncIterator[UnkillableTaskGroup]:
-        async with UnkillableTaskGroup(logger) as group:
-            yield group
-
-    @provide(scope=Scope.APP)
-    async def unkillable_tasks(
-        self,
-        task_group: UnkillableTaskGroup,
-        auto_cancel_invitations_to_game_task: AutoCancelInvitationsToGameTask,
-        matchmake_tasks: MatchmakeTasks,
-    ) -> UnkillableTasks:
-        tasks = (
-            auto_cancel_invitations_to_game_task,
-            matchmake_tasks,
-        )
-        return UnkillableTasks(tasks, task_group)
 
     @provide(scope=Scope.APP)
     def provide_dp(self, storage: BaseStorage) -> Dispatcher:

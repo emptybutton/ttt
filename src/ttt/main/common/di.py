@@ -1,7 +1,8 @@
 from asyncio import Queue
 from collections.abc import AsyncIterator
+from typing import Annotated
 
-from dishka import Provider, Scope, provide
+from dishka import FromComponent, Provider, Scope, provide
 from nats import connect as connect_to_nats
 from nats.aio.client import Client as Nats
 from nats.js import JetStreamContext
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
 )
+from structlog.types import FilteringBoundLogger
 from taskiq.receiver import Receiver
 
 from ttt.application.common.errors.serialization_error import SerializationError
@@ -105,6 +107,11 @@ from ttt.infrastructure.adapters.user_log import (
 from ttt.infrastructure.adapters.users import InPostgresUsers
 from ttt.infrastructure.adapters.uuids import UUIDv4s
 from ttt.infrastructure.openai.gemini import Gemini, gemini
+from ttt.infrastructure.processors.auto_cancel_invitations_to_game_processor import (  # noqa: E501
+    AutoCancelInvitationsToGameProcessor,
+)
+from ttt.infrastructure.processors.matchmake_processor import MatchmakeProcessor
+from ttt.infrastructure.processors.processors import Processors
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.infrastructure.retrier import Retrier
@@ -358,3 +365,43 @@ class InfrastructureProvider(Provider):
         })
 
     provide_retry = provide(RetrierRetry, provides=Retry, scope=Scope.REQUEST)
+
+    @provide(scope=Scope.APP)
+    def provide_auto_cancel_invitations_to_game_task(
+        self,
+        envs: Envs,
+        logger: Annotated[FilteringBoundLogger, FromComponent("app")],
+    ) -> AutoCancelInvitationsToGameProcessor:
+        return AutoCancelInvitationsToGameProcessor(
+            _interval_seconds=(
+                envs.auto_cancel_invitations_to_game_interval_seconds
+            ),
+            _logger=logger,
+        )
+
+    @provide(scope=Scope.APP)
+    def provide_matchmake_processor(
+        self,
+        envs: Envs,
+        logger: Annotated[FilteringBoundLogger, FromComponent("app")],
+    ) -> MatchmakeProcessor:
+        return MatchmakeProcessor(
+            _max_workers=envs.matchmaking_max_workers,
+            _worker_creation_interval_seconds=(
+                envs.matchmaking_worker_creation_interval_seconds
+            ),
+            _logger=logger,
+        )
+
+    @provide(scope=Scope.APP)
+    async def processors(
+        self,
+        auto_cancel_invitations_to_game_processor: (
+            AutoCancelInvitationsToGameProcessor
+        ),
+        matchmake_processor: MatchmakeProcessor,
+    ) -> Processors:
+        return Processors((
+            auto_cancel_invitations_to_game_processor,
+            matchmake_processor,
+        ))
