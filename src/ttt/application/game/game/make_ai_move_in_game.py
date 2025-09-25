@@ -14,7 +14,6 @@ from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.ports.games import Games
 from ttt.application.user.common.ports.user_locks import UserLocks
-from ttt.application.user.common.ports.users import Users
 from ttt.entities.core.game.game import (
     AlreadyCompletedGameError,
     NotAiCurrentMoveError,

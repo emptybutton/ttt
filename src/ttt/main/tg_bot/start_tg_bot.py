@@ -39,7 +39,7 @@ async def start_tg_bot(container: AsyncContainer) -> None:
     logging.basicConfig(level=logging.INFO)
 
     try:
-        # await tasks(next_container)
+        await tasks(next_container)
         await taskiq_bg_worker()
         await dp.start_polling(bot)
     finally:

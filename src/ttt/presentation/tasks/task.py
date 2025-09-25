@@ -1,7 +1,4 @@
-from collections.abc import Callable
 from typing import Any, Protocol
-
-from dishka.async_container import AsyncContextWrapper
 
 from ttt.infrastructure.dishka.next_container import NextContainer
 

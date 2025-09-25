@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Annotated, cast
 
 from aiogram import Bot, Dispatcher
-from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.base import BaseStorage, DefaultKeyBuilder
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.types import (
