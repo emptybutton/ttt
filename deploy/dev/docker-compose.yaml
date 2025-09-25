@@ -101,6 +101,8 @@ services:
       - ./nats:/mnt
     entrypoint: [""]
     command: ["bash", "/mnt/add_streams.sh"]
+    environment:
+      NATS_URL: nats://nats:4222
 
 volumes:
   backend-data:

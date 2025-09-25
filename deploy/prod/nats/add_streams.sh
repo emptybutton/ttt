@@ -1,3 +1,3 @@
 #!/bin/bash
 
-nats -s nats://nats:4222 stream add --config /mnt/streams/user.json
+nats stream add --config /mnt/streams/user.json
