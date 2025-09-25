@@ -38,7 +38,7 @@ class InPostgresSerializableTransaction(SerializableTransaction):
             return
 
         with reraise_serialization_error():
-            if error is None:
+            if error is None and transaction.is_active:
                 await transaction.commit()
             else:
                 await transaction.rollback()
@@ -71,7 +71,7 @@ class InPostgresNotSerializableTransaction(NotSerializableTransaction):
         if transaction is None:
             return
 
-        if error is None:
+        if error is None and transaction.is_active:
             await transaction.commit()
         else:
             await transaction.rollback()
@@ -102,7 +102,7 @@ class InPostgresReadonlyTransaction(ReadonlyTransaction):
         if transaction is None:
             return
 
-        if error is None:
+        if error is None and transaction.is_active:
             await transaction.commit()
         else:
             await transaction.rollback()

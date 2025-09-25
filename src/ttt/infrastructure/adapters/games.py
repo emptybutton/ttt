@@ -28,10 +28,18 @@ class InPostgresGames(Games):
         return table_game.entity()
 
     async def not_locked_game_with_id(self, game_id: UUID, /) -> Game | None:
-        stmt = (
-            select(TableGame)
+        lock_stmt = (
+            select(1)
+            .select_from(TableGame)
             .where(TableGame.id == game_id)
             .with_for_update()
         )
+        stmt = (
+            select(TableGame)
+            .where(TableGame.id == game_id)
+        )
+
+        await self._session.execute(lock_stmt)
         table_game = await self._session.scalar(stmt)
+
         return None if table_game is None else table_game.entity()
