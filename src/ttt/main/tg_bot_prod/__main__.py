@@ -2,7 +2,6 @@ import asyncio
 
 import sentry_sdk
 from dishka import make_async_container
-from dishka.integrations.aiogram import AiogramProvider
 
 from ttt import __version__
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
@@ -20,7 +19,6 @@ from ttt.main.tg_bot_prod.di import (
 
 async def amain() -> None:
     container = make_async_container(
-        AiogramProvider(),
         ApplicationProvider(),
         PresentationProvider(),
         InfrastructureProvider(),

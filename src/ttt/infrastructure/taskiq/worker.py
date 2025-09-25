@@ -3,8 +3,6 @@ from dataclasses import dataclass, field
 from types import TracebackType
 from typing import Self
 
-from dishka import AsyncContainer
-from dishka.integrations.taskiq import setup_dishka
 from taskiq.receiver import Receiver
 
 
@@ -19,10 +17,7 @@ class TaskiqBgWorker:
         await self._task_group.__aenter__()
         return self
 
-    async def __call__(self, container: AsyncContainer) -> None:
-        for receiver in self._receivers:
-            setup_dishka(container, receiver.broker)
-
+    async def __call__(self) -> None:
         await gather(*(
             receiver.broker.startup()
             for receiver in self._receivers

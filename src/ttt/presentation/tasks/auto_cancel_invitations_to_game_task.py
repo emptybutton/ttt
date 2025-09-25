@@ -4,8 +4,9 @@ from dataclasses import dataclass
 from ttt.application.invitation_to_game.game.auto_cancel_invitations_to_game import (  # noqa: E501
     AutoCancelInvitationsToGame,
 )
+from ttt.infrastructure.dishka.next_container import NextContainer
 from ttt.infrastructure.retrier import Retrier
-from ttt.presentation.tasks.task import NextContainer, Task
+from ttt.presentation.tasks.task import Task
 
 
 @dataclass(frozen=True)

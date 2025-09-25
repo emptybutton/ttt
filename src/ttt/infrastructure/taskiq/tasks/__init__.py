@@ -3,5 +3,5 @@ from ttt.infrastructure.taskiq.tasks.complete_stars_purchase_payment_task import
     complete_stars_purchase_payment_task,
 )
 from ttt.infrastructure.taskiq.tasks.make_ai_move_in_game_task import (
-    make_ai_move_in_game_broker_task,
+    make_ai_move_in_game_task,
 )

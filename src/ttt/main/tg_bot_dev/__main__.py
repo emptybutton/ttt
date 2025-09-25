@@ -1,7 +1,6 @@
 import asyncio
 
 from dishka import make_async_container
-from dishka.integrations.aiogram import AiogramProvider
 
 from ttt.main.common.di import InfrastructureProvider
 from ttt.main.tg_bot.di import (
@@ -17,7 +16,6 @@ from ttt.main.tg_bot_dev.di import (
 
 async def amain() -> None:
     container = make_async_container(
-        AiogramProvider(),
         ApplicationProvider(),
         PresentationProvider(),
         InfrastructureProvider(),

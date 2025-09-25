@@ -12,6 +12,7 @@ from ttt.infrastructure.taskiq.tasks.common import nats_tasks
 
 
 @nats_tasks.task(
+    task_name="stars_purchase-stars_purchase-complete_stars_purchase_payment",
     subject="stars_purchase.stars_purchase.complete_stars_purchase_payment",
     pull_subscribe=PullSubscribe(lambda js, subject: js.pull_subscribe(
         subject,

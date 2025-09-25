@@ -19,6 +19,7 @@ from dishka import (
     FromComponent,
     Provider,
     Scope,
+    from_context,
     provide,
 )
 from dishka.integrations.aiogram import AiogramMiddlewareData
@@ -165,15 +166,11 @@ class NoMessageInEventError(Exception):
 
 
 class PresentationProvider(Provider):
-    @provide(scope=Scope.REQUEST)
-    def provide_event(self, event: TelegramObject) -> TelegramObject | None:
-        return event
-
-    @provide(scope=Scope.REQUEST)
-    def provide_aiogram_middleware_data(
-        self, data: AiogramMiddlewareData,
-    ) -> AiogramMiddlewareData | None:
-        return data
+    provide_aiogram_middleware_data = from_context(
+        AiogramMiddlewareData | None,
+        scope=Scope.REQUEST,
+    )
+    provide_event = from_context(TelegramObject | None, scope=Scope.REQUEST)
 
     @provide(scope=Scope.APP)
     def provide_strage(self, redis: Redis) -> BaseStorage:
@@ -348,13 +345,6 @@ class PresentationProvider(Provider):
                 return None
 
     @provide(scope=Scope.REQUEST)
-    def provide_fsm_context(
-        self,
-        middleware_data: AiogramMiddlewareData,
-    ) -> FSMContext:
-        return cast(FSMContext, middleware_data["state"])
-
-    @provide(scope=Scope.REQUEST)
     def provide_stars_purchase_payment_gateway(
         self,
         pre_checkout_query: PreCheckoutQuery | None,
@@ -437,7 +427,9 @@ class ApplicationProvider(Provider):
     )
     provide_cancel_game = provide(CancelGame, scope=Scope.REQUEST)
     provide_make_move_in_game = provide(MakeMoveInGame, scope=Scope.REQUEST)
-    provide_make_ai_move_in_game = provide(MakeAiMoveInGame, scope=Scope.REQUEST)
+    provide_make_ai_move_in_game = provide(
+        MakeAiMoveInGame, scope=Scope.REQUEST,
+    )
     provide_view_game = provide(ViewGame, scope=Scope.REQUEST)
 
     provide_accept_invitation_to_game = provide(

@@ -9,6 +9,7 @@ from ttt.infrastructure.taskiq.tasks.common import nats_tasks
 
 
 @nats_tasks.task(
+    task_name="game-game-make_ai_move_in_game",
     subject="game.game.make_ai_move_in_game",
     pull_subscribe=PullSubscribe(lambda js, subject: js.pull_subscribe(
         subject,
@@ -17,7 +18,7 @@ from ttt.infrastructure.taskiq.tasks.common import nats_tasks
     )),
 )
 @inject(patch_module=True)
-async def make_ai_move_in_game_broker_task(
+async def make_ai_move_in_game_task(
     user_id: int,
     game_id: UUID,
     ai_id: UUID,

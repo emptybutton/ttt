@@ -6,7 +6,8 @@ from structlog.types import FilteringBoundLogger
 from ttt.application.user.game.matchmake import Matchmake
 from ttt.infrastructure.retrier import Retrier
 from ttt.infrastructure.structlog.logger import unexpected_error_log
-from ttt.presentation.tasks.task import NextContainer, Task
+from ttt.presentation.tasks.task import Task
+from ttt.infrastructure.dishka.next_container import NextContainer
 
 
 @dataclass
