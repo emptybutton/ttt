@@ -1,4 +1,3 @@
-from asyncio import Queue
 from collections.abc import AsyncIterator
 from typing import Annotated
 
@@ -13,7 +12,6 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from structlog.types import FilteringBoundLogger
-from taskiq.receiver import Receiver
 
 from ttt.application.common.errors.serialization_error import SerializationError
 from ttt.application.common.ports.clock import Clock
