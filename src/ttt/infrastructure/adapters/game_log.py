@@ -88,7 +88,7 @@ class StructlogGameLog(GameLog):
         /,
     ) -> None:
         await self._logger.ainfo(
-            "already_completed_game_to_make_move",
+            "already_completed_game_to_make_ai_move",
             ai_id=ai_id.hex,
             game_id=game.id.hex,
         )

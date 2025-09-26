@@ -67,7 +67,7 @@ from ttt.infrastructure.adapters.clock import NotMonotonicUtcClock
 from ttt.infrastructure.adapters.game_ai_gateway import GeminiGameAiGateway
 from ttt.infrastructure.adapters.game_dao import PostgresGameDao
 from ttt.infrastructure.adapters.game_log import StructlogGameLog
-from ttt.infrastructure.adapters.game_tasks import TaskiqGameTasks
+from ttt.infrastructure.adapters.game_tasks import NatsRemoteFuncGameTasks
 from ttt.infrastructure.adapters.games import InPostgresGames
 from ttt.infrastructure.adapters.invitation_to_game_dao import (
     PostgresInvitationToGameDao,
@@ -88,7 +88,7 @@ from ttt.infrastructure.adapters.stars_purchase_log import (
     StructlogStarsPurchaseLog,
 )
 from ttt.infrastructure.adapters.stars_purchase_tasks import (
-    TaskiqStarsPurchaseTasks,
+    NatsRemoteFuncStarsPurchaseTasks,
 )
 from ttt.infrastructure.adapters.stars_purchases import PostgresStarsPurchases
 from ttt.infrastructure.adapters.transaction import (
@@ -106,18 +106,24 @@ from ttt.infrastructure.adapters.user_log import (
 )
 from ttt.infrastructure.adapters.users import InPostgresUsers
 from ttt.infrastructure.adapters.uuids import UUIDv4s
+from ttt.infrastructure.multi_asynccontextmanager import (
+    multi_asynccontextmanager,
+)
 from ttt.infrastructure.openai.gemini import Gemini, gemini
 from ttt.infrastructure.processors.auto_cancel_invitations_to_game_processor import (  # noqa: E501
     AutoCancelInvitationsToGameProcessor,
 )
 from ttt.infrastructure.processors.matchmake_processor import MatchmakeProcessor
-from ttt.infrastructure.processors.processors import Processors
+from ttt.infrastructure.processors.processor import Processor
 from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
+from ttt.infrastructure.remote_funcs.complete_stars_purchase_payment import (
+    complete_stars_purchase_payment_remotely,
+)
+from ttt.infrastructure.remote_funcs.make_ai_move_in_game import (
+    make_ai_move_in_game_remotely,
+)
 from ttt.infrastructure.retrier import Retrier
-from ttt.infrastructure.taskiq.broker import NatsBroker
-from ttt.infrastructure.taskiq.tasks.common import nats_tasks
-from ttt.infrastructure.taskiq.worker import TaskiqBgWorker
 
 
 class InfrastructureProvider(Provider):
@@ -188,22 +194,6 @@ class InfrastructureProvider(Provider):
     @provide(scope=Scope.APP)
     async def provide_jetstream(self, nats: Nats) -> JetStreamContext:
         return nats.jetstream()
-
-    @provide(scope=Scope.APP)
-    async def provide_nats_broker(
-        self, js: JetStreamContext,
-    ) -> NatsBroker:
-        nats_tasks.js = js
-        nats_tasks.pulling_queue = Queue()
-
-        return nats_tasks
-
-    @provide(scope=Scope.APP)
-    async def provide_taskiq_bg_worker(
-        self, nats_broker: NatsBroker,
-    ) -> AsyncIterator[TaskiqBgWorker]:
-        async with TaskiqBgWorker((Receiver(nats_broker), )) as worker:
-            yield worker
 
     @provide(scope=Scope.APP)
     def provide_gemini(self, secrets: Secrets, envs: Envs) -> Gemini:
@@ -348,12 +338,12 @@ class InfrastructureProvider(Provider):
     )
 
     provide_game_tasks = provide(
-        TaskiqGameTasks,
+        NatsRemoteFuncGameTasks,
         provides=GameTasks,
         scope=Scope.APP,
     )
     provide_stars_purchase_tasks = provide(
-        TaskiqStarsPurchaseTasks,
+        NatsRemoteFuncStarsPurchaseTasks,
         provides=StarsPurchaseTasks,
         scope=Scope.APP,
     )
@@ -396,12 +386,26 @@ class InfrastructureProvider(Provider):
     @provide(scope=Scope.APP)
     async def processors(
         self,
+        js: JetStreamContext,
         auto_cancel_invitations_to_game_processor: (
             AutoCancelInvitationsToGameProcessor
         ),
         matchmake_processor: MatchmakeProcessor,
-    ) -> Processors:
-        return Processors((
-            auto_cancel_invitations_to_game_processor,
-            matchmake_processor,
+    ) -> AsyncIterator[tuple[Processor, ...]]:
+        nats_remote_funcs = (
+            make_ai_move_in_game_remotely,
+            complete_stars_purchase_payment_remotely,
+        )
+        multi_startup = multi_asynccontextmanager(*(
+            func.startup(js) for func in nats_remote_funcs
         ))
+        async with multi_startup:
+            nats_remote_func_processors = (
+                func.processor
+                for func in nats_remote_funcs
+            )
+            yield (
+                auto_cancel_invitations_to_game_processor,
+                matchmake_processor,
+                *nats_remote_func_processors,
+            )

@@ -2,13 +2,13 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from ttt.application.game.game.ports.game_tasks import GameTasks
-from ttt.infrastructure.taskiq.tasks.make_ai_move_in_game_task import (
-    make_ai_move_in_game_task,
+from ttt.infrastructure.remote_funcs.make_ai_move_in_game import (
+    make_ai_move_in_game_remotely,
 )
 
 
 @dataclass
-class TaskiqGameTasks(GameTasks):
+class NatsRemoteFuncGameTasks(GameTasks):
     async def make_ai_move(
         self,
         user_id: int,
@@ -16,4 +16,6 @@ class TaskiqGameTasks(GameTasks):
         ai_id: UUID,
         /,
     ) -> None:
-        await make_ai_move_in_game_task.kiq(user_id, game_id, ai_id)
+        await make_ai_move_in_game_remotely(
+            user_id=user_id, game_id=game_id.hex, ai_id=ai_id.hex,
+        )

@@ -8,10 +8,7 @@ from dishka import AsyncContainer
 from dishka.integrations.aiogram import AiogramMiddlewareData
 from taskiq import TaskiqMessage
 
-from ttt.infrastructure.processors.processors import Processors
-from ttt.infrastructure.taskiq.broker import NatsBroker
-from ttt.infrastructure.taskiq.middlewares import TaskiqNextContainerMiddleware
-from ttt.infrastructure.taskiq.worker import TaskiqBgWorker
+from ttt.infrastructure.processors.processor import Processor
 from ttt.main.common.next_container import NextContainerWithFilledContext
 from ttt.presentation.aiogram.common.middlewares import (
     AiogramNextContainerMiddleware,
@@ -29,11 +26,7 @@ async def start_tg_bot(container: AsyncContainer) -> None:
     for observer in dp.observers.values():
         observer.middleware(middleware)
 
-    nats_broker = await container.get(NatsBroker)
-    nats_broker.add_middlewares(TaskiqNextContainerMiddleware(next_container))
-
-    taskiq_bg_worker = await container.get(TaskiqBgWorker)
-    processors = await container.get(Processors)
+    processors = await container.get(tuple[Processor, ...])
     bot = await container.get(Bot)
 
     logging.basicConfig(level=logging.INFO)
@@ -41,8 +34,8 @@ async def start_tg_bot(container: AsyncContainer) -> None:
     try:
         with suppress(CancelledError):
             async with TaskGroup() as tasks:
-                tasks.create_task(processors(next_container))
-                await taskiq_bg_worker()
+                for processor in processors:
+                    tasks.create_task(processor(next_container))
                 await dp.start_polling(bot)
                 raise CancelledError
     finally:
