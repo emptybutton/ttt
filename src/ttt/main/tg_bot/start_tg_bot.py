@@ -6,7 +6,6 @@ from aiogram import Bot, Dispatcher
 from aiogram.types import TelegramObject
 from dishka import AsyncContainer
 from dishka.integrations.aiogram import AiogramMiddlewareData
-from taskiq import TaskiqMessage
 
 from ttt.infrastructure.processors.processor import Processor
 from ttt.main.common.next_container import NextContainerWithFilledContext
@@ -18,7 +17,7 @@ from ttt.presentation.aiogram.common.middlewares import (
 async def start_tg_bot(container: AsyncContainer) -> None:
     next_container = NextContainerWithFilledContext(
         container,
-        (TelegramObject, AiogramMiddlewareData, TaskiqMessage),
+        (TelegramObject, AiogramMiddlewareData),
     )
 
     dp = await container.get(Dispatcher)
