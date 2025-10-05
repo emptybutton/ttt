@@ -1,28 +1,23 @@
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any
 from uuid import UUID
 
-from aiogram import Bot
 from aiogram.enums import ContentType
 from aiogram.types import (
     CallbackQuery,
-    InlineKeyboardButton,
     KeyboardButtonRequestUsers,
     Message,
     User,
 )
-from aiogram_dialog import DialogManager, ShowMode, StartMode, Window
+from aiogram_dialog import DialogManager, Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import (
-    Button,
     Group,
-    ListGroup,
-    ScrollingGroup,
     Select,
     SwitchTo,
 )
 from aiogram_dialog.widgets.markup.reply_keyboard import ReplyKeyboardFactory
-from aiogram_dialog.widgets.text import Const, Format, Multi
+from aiogram_dialog.widgets.text import Const
 from alembic.util import not_none
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject

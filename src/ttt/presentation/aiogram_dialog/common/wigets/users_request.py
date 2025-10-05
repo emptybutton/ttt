@@ -1,24 +1,16 @@
 from collections.abc import Awaitable, Callable
-from typing import Any, Optional, Union
+from typing import Any
 
 from aiogram.types import (
     CallbackQuery,
-    InlineKeyboardButton,
     KeyboardButton,
     KeyboardButtonRequestUsers,
-    LoginUrl,
-    SwitchInlineQueryChosenChat,
-    WebAppInfo,
 )
 from aiogram_dialog.api.internal import RawKeyboard
 from aiogram_dialog.api.protocols import DialogManager, DialogProtocol
 from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.kbd import Keyboard
-from aiogram_dialog.widgets.kbd.button import OnClick
 from aiogram_dialog.widgets.text import Text
-from aiogram_dialog.widgets.widget_event import (
-    WidgetEventProcessor,
-)
 
 
 UsersRequestOnClick = Callable[
@@ -40,9 +32,9 @@ class UsersRequest(Keyboard):
 
     async def _process_own_callback(
             self,
-            callback: CallbackQuery,
+            callback: CallbackQuery,  # noqa: ARG002
             dialog: DialogProtocol,  # noqa: ARG002
-            manager: DialogManager,
+            manager: DialogManager,  # noqa: ARG002
     ) -> bool:
         return True
 

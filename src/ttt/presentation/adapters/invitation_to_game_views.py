@@ -5,7 +5,7 @@ from typing import cast
 from uuid import UUID
 
 from aiogram.types import CallbackQuery
-from aiogram.utils.formatting import Code, Text
+from aiogram.utils.formatting import Code
 from aiogram_dialog import DialogManager, ShowMode, StartMode
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
