@@ -41,7 +41,9 @@ class InvitationToGame:
 
     id_: UUID
     inviting_user: User
+    inviting_user_username: str | None
     invited_user: User
+    invited_user_username: str | None
     invitation_datetime: datetime
     state: InvitationToGameState
 
@@ -155,8 +157,10 @@ InvitationToGameAtomic = InvitationToGame
 
 def invite_to_game(  # noqa: PLR0913, PLR0917
     user: User,
+    user_username: str | None,
     invited_user: User | None,
     invited_user_id: int,
+    invited_user_username: str | None,
     invitation_to_game_id: UUID,
     current_datetime: datetime,
     tracking: Tracking,
@@ -170,7 +174,9 @@ def invite_to_game(  # noqa: PLR0913, PLR0917
 
     invitation_to_game = InvitationToGame(
         id_=invitation_to_game_id,
+        inviting_user_username=user_username,
         inviting_user=user,
+        invited_user_username=invited_user_username,
         invited_user=invited_user,
         invitation_datetime=current_datetime,
         state=InvitationToGameState.active,

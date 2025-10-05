@@ -34,7 +34,13 @@ class InviteToGame:
     views: InvitationToGameViews
     log: InvitationToGameLog
 
-    async def __call__(self, user_id: int, invited_user_id: int) -> None:
+    async def __call__(
+        self,
+        user_id: int,
+        user_username: str | None,
+        invited_user_id: int,
+        invited_user_username: str | None,
+    ) -> None:
         """
         :raises ttt.application.common.errors.serialization_error.SerializationError:
         """  # noqa: E501
@@ -61,8 +67,10 @@ class InviteToGame:
                 tracking = Tracking()
                 invitation_to_game = invite_to_game(
                     user,
+                    user_username,
                     invited_user,
                     invited_user_id,
+                    invited_user_username,
                     invitation_to_game_id,
                     current_datetime,
                     tracking,

@@ -75,6 +75,7 @@ class TableInvitationToGame(Base[InvitationToGame]):
         ),
         index=True,
     )
+    inviting_user_username: Mapped[str | None]
     invited_user_id: Mapped[int] = mapped_column(
         ForeignKey(
             "users.id",
@@ -83,6 +84,7 @@ class TableInvitationToGame(Base[InvitationToGame]):
         ),
         index=True,
     )
+    invited_user_username: Mapped[str | None]
     invitation_datetime: Mapped[datetime] = mapped_column()
     state: Mapped[TableInvitationToGameState] = mapped_column(
         invitation_to_game_state,
@@ -117,6 +119,8 @@ class TableInvitationToGame(Base[InvitationToGame]):
             invited_user=self.invited_user.entity(),
             invitation_datetime=self.invitation_datetime,
             state=self.state.entity(),
+            inviting_user_username=self.inviting_user_username,
+            invited_user_username=self.invited_user_username,
         )
 
     @classmethod
@@ -127,6 +131,8 @@ class TableInvitationToGame(Base[InvitationToGame]):
             invited_user_id=it.invited_user.id,
             invitation_datetime=it.invitation_datetime,
             state=TableInvitationToGameState.of(it.state),
+            inviting_user_username=it.inviting_user_username,
+            invited_user_username=it.invited_user_username,
         )
 
 

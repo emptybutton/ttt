@@ -34,21 +34,18 @@ from ttt.presentation.result_buffer import ResultBuffer
 class IncomingInvitationToGameData:
     id_hex: str
     inviting_user_id: int
+    inviting_user_username: str | None
 
 
 @dataclass(frozen=True)
 class IncomingInvitationsToGameView(EncodableToWindowData):
     invitations: list[IncomingInvitationToGameData]
-    need_to_paginate: bool
 
     @classmethod
     def of(
         cls, invitations: list[IncomingInvitationToGameData],
     ) -> "IncomingInvitationsToGameView":
-        return IncomingInvitationsToGameView(
-            invitations=invitations,
-            need_to_paginate=len(invitations) > 7,  # noqa: PLR2004
-        )
+        return IncomingInvitationsToGameView(invitations=invitations)
 
 
 @inject
@@ -97,35 +94,39 @@ async def on_invitation_selected(  # noqa: PLR0913, PLR0917
     await manager.start(MainDialogState.incoming_invitation_to_game, start_data)
 
 
-async def incoming_invitations_to_game_html(  # noqa: RUF029
+async def incoming_invitations_to_game_text(  # noqa: RUF029
     data: dict[str, Any],
     _: DialogManager,
 ) -> str:
     return f"👥 У вас {len(data["main"]["invitations"])} приглашений к игре"
 
 
+async def incoming_invitation_to_game_text(  # noqa: RUF029
+    data: dict[str, Any],
+    _: DialogManager,
+) -> str:
+    invitation = data["item"]
+
+    if invitation.get("inviting_user_username") is None:
+        return f"От {invitation["inviting_user_id"]}"
+
+    return f"От @{invitation["inviting_user_username"]}"
+
+
 incoming_invitations_to_game_window = Window(
-    FuncText(incoming_invitations_to_game_html),
-    Select(
-        Format("От {item[inviting_user_id]}"),
-        id="n",
-        items=F["main"]["invitations"],
-        item_id_getter=lambda it: it["id_hex"],
-        on_click=on_invitation_selected,
-        when=~F["main"]["need_to_paginate"],
-    ),
+    FuncText(incoming_invitations_to_game_text),
     ScrollingGroup(
         Select(
-            Format("От {item[inviting_user_id]}"),
+            FuncText(incoming_invitation_to_game_text),
             id="n",
             items=F["main"]["invitations"],
             item_id_getter=lambda it: it["id_hex"],
             on_click=on_invitation_selected,
         ),
-        width=4,
-        height=4,
+        width=2,
+        height=2,
+        hide_on_single_page=True,
         id="y",
-        when=F["main"]["need_to_paginate"],
     ),
 
     SwitchTo(

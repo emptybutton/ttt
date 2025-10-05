@@ -36,6 +36,7 @@ from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 class IncomingInvitationToGameView(EncodableToWindowData):
     id_hex: str
     inviting_user_id: int
+    inviting_user_username: str | None
 
 
 @inject
@@ -80,10 +81,14 @@ async def incoming_invitation_to_game_html(  # noqa: RUF029
         raise TypeError
 
     invitation = manager.start_data["main"]
-    text = Text(
-        "👤 Приглашение к игре от ", Code(invitation["inviting_user_id"]),
-    )
-    return text.as_html()
+
+    if invitation.get("inviting_user_username") is None:
+        text = Text(
+            "👤 Приглашение к игре от ", Code(invitation["inviting_user_id"]),
+        )
+        return text.as_html()
+
+    return f"👤 Приглашение к игре от @{invitation["inviting_user_username"]}"
 
 
 incoming_invitation_to_game_window = Window(
