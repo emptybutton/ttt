@@ -92,7 +92,7 @@ services:
       interval: 3s
 
   nats_streams:
-    image: bitnami/natscli:0.2.3-debian-12-r4
+    image: n255/natscli:0.3.0-bookworm-slim
     container_name: ttt-nats-streams
     depends_on:
       nats:
