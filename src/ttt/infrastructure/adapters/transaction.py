@@ -45,6 +45,11 @@ class InPostgresSerializableTransaction(SerializableTransaction):
 
     async def commit(self) -> None:
         transaction = not_none(self._session.get_transaction())
+
+        if not transaction.is_active:
+            await transaction.rollback()
+            return
+
         with reraise_serialization_error():
             await transaction.commit()
 
@@ -78,7 +83,11 @@ class InPostgresNotSerializableTransaction(NotSerializableTransaction):
 
     async def commit(self) -> None:
         transaction = not_none(self._session.get_transaction())
-        await transaction.commit()
+
+        if transaction.is_active:
+            await transaction.commit()
+        else:
+            await transaction.rollback()
 
 
 @dataclass
