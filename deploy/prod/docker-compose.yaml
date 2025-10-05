@@ -158,7 +158,6 @@ services:
     environment:
       NATS_URL: nats://nats:4222
       NATS_TOKEN: ${NATS_TOKEN}
-    entrypoint: [""]
     command: ["bash", "/mnt/add_streams.sh"]
 
 volumes:

@@ -99,7 +99,6 @@ services:
         condition: service_healthy
     volumes:
       - ./nats:/mnt
-    entrypoint: [""]
     command: ["bash", "/mnt/add_streams.sh"]
     environment:
       NATS_URL: nats://nats:4222
