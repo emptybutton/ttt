@@ -36,6 +36,8 @@ services:
 
       TTT_GEMINI_URL: https://my-openai-gemini-sigma-sandy.vercel.app
 
+      TTT_DIALOG_TTL: 259200  # 3 days
+
       TTT_MATCHMAKING_MAX_WORKERS: 4
       TTT_MATCHMAKING_WORKER_MAX_USERS: 100
       TTT_MATCHMAKING_WORKER_CREATION_INTERVAL_SECONDS: 0.5

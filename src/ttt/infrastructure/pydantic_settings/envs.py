@@ -23,6 +23,8 @@ class Envs(BaseSettings):
 
     gemini_url: str
 
+    dialog_ttl: int
+
     matchmaking_max_workers: int
     matchmaking_worker_max_users: int
     matchmaking_worker_creation_interval_seconds: float

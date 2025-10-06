@@ -118,6 +118,7 @@ from ttt.application.user.view_main_menu import ViewMainMenu
 from ttt.application.user.view_other_user import ViewOtherUser
 from ttt.application.user.view_user import ViewUser
 from ttt.application.user.view_user_emojis import ViewUserEmojis
+from ttt.infrastructure.pydantic_settings.envs import Envs
 from ttt.infrastructure.pydantic_settings.secrets import Secrets
 from ttt.presentation.adapters.emojis import PictographsAsEmojis
 from ttt.presentation.adapters.game_views import (
@@ -163,8 +164,13 @@ class PresentationProvider(Provider):
     provide_event = from_context(TelegramObject | None, scope=Scope.REQUEST)
 
     @provide(scope=Scope.APP)
-    def provide_strage(self, redis: Redis) -> BaseStorage:
-        return RedisStorage(redis, DefaultKeyBuilder(with_destiny=True))
+    def provide_strage(self, redis: Redis, envs: Envs) -> BaseStorage:
+        return RedisStorage(
+            redis,
+            DefaultKeyBuilder(with_destiny=True),
+            state_ttl=envs.dialog_ttl,
+            data_ttl=envs.dialog_ttl,
+        )
 
     @provide(scope=Scope.APP)
     def provide_bg_manager_factory(self, dp: Dispatcher) -> BgManagerFactory:
