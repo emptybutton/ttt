@@ -14,6 +14,7 @@ from ttt.application.user.authorize_other_user_as_admin import (
     AuthorizeOtherUserAsAdmin,
 )
 from ttt.entities.tools.assertion import not_none
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
     OneTimekey,
@@ -26,6 +27,7 @@ async def input_user_id(
     _: MessageInput,
     manager: DialogManager,
     authorize_other_user_as_admin: FromDishka[AuthorizeOtherUserAsAdmin],
+    retrier: FromDishka[Retrier],
 ) -> None:
     try:
         other_user_id = int(message.text)  # type: ignore[arg-type]
@@ -37,8 +39,10 @@ async def input_user_id(
             ShowMode.DELETE_AND_SEND,
         )
     else:
-        await authorize_other_user_as_admin(
-            not_none(message.from_user).id, other_user_id,
+        await retrier(
+            authorize_other_user_as_admin,
+            not_none(message.from_user).id,
+            other_user_id,
         )
 
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from ttt.entities.math.vector import Vector
 from ttt.entities.tools.assertion import assert_, not_none
@@ -44,9 +44,9 @@ class CellNumber:
     @classmethod
     def of_board_position(cls, board_position: Vector) -> "CellNumber":
         int_ = CellNumber._int_by_board_position.get(board_position)
-        int_ = cast(int, not_none(int_, InvalidCellNumberError))
+        int_ = not_none(int_, InvalidCellNumberError)
 
         return CellNumber(int_)
 
     def board_position(self) -> "Vector":
-        return cast(Vector, CellNumber._board_position_by_int[int(self)])
+        return CellNumber._board_position_by_int[int(self)]

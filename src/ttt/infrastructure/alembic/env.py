@@ -1,3 +1,4 @@
+import warnings
 from logging.config import fileConfig
 
 import alembic_postgresql_enum  # noqa: F401
@@ -69,7 +70,10 @@ def run_migrations_online() -> None:
             context.run_migrations()
 
 
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", "Cannot correctly sort tables")
+
+    if context.is_offline_mode():
+        run_migrations_offline()
+    else:
+        run_migrations_online()

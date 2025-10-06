@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 
 from ttt.entities.core.game.game import Game
-from ttt.entities.core.user.location import UserGameLocation
 
 
 class GameViews(ABC):
@@ -10,23 +8,17 @@ class GameViews(ABC):
     async def current_game_view_with_user_id(self, user_id: int, /) -> None: ...
 
     @abstractmethod
-    async def game_view_with_locations(
+    async def game_view(self, game: Game, /) -> None: ...
+
+    @abstractmethod
+    async def started_game_view(
         self,
-        user_locations: Sequence[UserGameLocation],
         game: Game,
         /,
     ) -> None: ...
 
     @abstractmethod
-    async def started_game_view_with_locations(
-        self,
-        user_locations: Sequence[UserGameLocation],
-        game: Game,
-        /,
-    ) -> None: ...
-
-    @abstractmethod
-    async def no_game_view(
+    async def no_current_game_view(
         self,
         user_id: int,
         /,

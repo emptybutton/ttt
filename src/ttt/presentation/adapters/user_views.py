@@ -1,7 +1,7 @@
+from asyncio import gather
 from collections import OrderedDict
 from dataclasses import dataclass
 from typing import cast
-from uuid import UUID
 
 from aiogram import Bot
 from aiogram_dialog import ShowMode, StartMode
@@ -18,16 +18,17 @@ from ttt.application.user.emoji_purchase.ports.user_views import (
 from ttt.application.user.emoji_selection.ports.user_views import (
     EmojiSelectionUserViews,
 )
-from ttt.application.user.stars_purchase.ports.user_views import (
-    StarsPurchaseUserViews,
-)
+from ttt.application.user.game.ports.user_views import GameUserViews
+from ttt.entities.core.game.game import Game
 from ttt.entities.core.stars import Stars
-from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.user import User, is_user_in_game, user_stars
+from ttt.entities.tools.assertion import not_none
 from ttt.infrastructure.sqlalchemy.stmts import (
+    max_rating_and_users_with_max_rating_from_postgres,
     selected_user_emoji_str_from_postgres,
     user_emojis_from_postgres,
 )
+from ttt.infrastructure.sqlalchemy.tables.game import TableGame
 from ttt.infrastructure.sqlalchemy.tables.invitation_to_game import (
     TableInvitationToGame,
     TableInvitationToGameState,
@@ -61,6 +62,12 @@ from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.aiogram_dialog.main_dialog.emojis_window import (
     EmojiMenuView,
 )
+from ttt.presentation.aiogram_dialog.main_dialog.game_start_window import (
+    GameStartView,
+)
+from ttt.presentation.aiogram_dialog.main_dialog.game_window import (
+    ActiveGameView,
+)
 from ttt.presentation.aiogram_dialog.main_dialog.main_window import (
     AmoutOfIncomingInvitationsToGame,
     MainMenuView,
@@ -84,13 +91,7 @@ class AiogramCommonUserViews(CommonUserViews):
         /,
     ) -> None:
         user_stmt = (
-            select(
-                TableUser.number_of_wins,
-                TableUser.number_of_draws,
-                TableUser.number_of_defeats,
-                TableUser.account_stars,
-                TableUser.rating,
-            )
+            select(TableUser.account_stars, TableUser.rating)
             .where(TableUser.id == user_id)
         )
         result = await self._session.execute(user_stmt)
@@ -100,12 +101,41 @@ class AiogramCommonUserViews(CommonUserViews):
             await need_to_start_message(self._bot, user_id)
             return
 
+        wins_stmt = (
+            select(func.count(1))
+            .where(TableGame.result_decided_game_user_win_user_id == user_id)
+        )
+        wins = not_none(await self._session.scalar(wins_stmt))
+
+        draws_stmt = (
+            select(func.count(1))
+            .where(
+                (TableGame.result_draw_game_user_draw1_user_id == user_id)
+                | (TableGame.result_draw_game_user_draw2_user_id == user_id),
+            )
+        )
+        draws = not_none(await self._session.scalar(draws_stmt))
+
+        defeats_stmt = (
+            select(func.count(1))
+            .where(TableGame.result_decided_game_user_loss_user_id == user_id)
+        )
+        defeats = not_none(await self._session.scalar(defeats_stmt))
+
+        max_rating, users_with_max_rating = (
+            await max_rating_and_users_with_max_rating_from_postgres(
+                self._session,
+            )
+        )
+
         view = UserProfileView.of(
-            user_row.number_of_wins,
-            user_row.number_of_draws,
-            user_row.number_of_defeats,
+            wins,
+            draws,
+            defeats,
             user_row.account_stars,
             user_row.rating,
+            max_rating,
+            users_with_max_rating,
         )
         self._result_buffer.result = view
 
@@ -116,7 +146,7 @@ class AiogramCommonUserViews(CommonUserViews):
         )
         stmt = (
             select(
-                TableUser.game_location_game_id,
+                TableUser.current_game_id,
                 TableUser.account_stars,
                 TableUser.rating,
                 has_user_emojis_stmt,
@@ -128,13 +158,6 @@ class AiogramCommonUserViews(CommonUserViews):
 
         if row is None:
             raise ValueError
-
-        game_location_game_id = row.game_location_game_id
-
-        if game_location_game_id is None:
-            game_location = None
-        else:
-            game_location = UserGameLocation(user_id, game_location_game_id)
 
         incoming_invitations_to_game_stmt = (
             select(func.count(1))
@@ -163,14 +186,21 @@ class AiogramCommonUserViews(CommonUserViews):
         else:
             amout_of_incoming_invitations_to_game = "many"
 
+        max_rating, users_with_max_rating = (
+            await max_rating_and_users_with_max_rating_from_postgres(
+                self._session,
+            )
+        )
         view = MainMenuView(
-            is_user_in_game=is_user_in_game(game_location),
+            is_user_in_game=is_user_in_game(row.current_game_id),
             has_user_emojis=row.has_user_emojis,
             stars=row.account_stars,
             rating=row.rating,
             amout_of_incoming_invitations_to_game=(
                 amout_of_incoming_invitations_to_game
             ),
+            max_rating=max_rating,
+            users_with_max_rating=users_with_max_rating,
         )
         self._result_buffer.result = view
 
@@ -330,9 +360,6 @@ class AiogramCommonUserViews(CommonUserViews):
     async def other_user_view(self, user: User, other_user_id: int, /) -> None:
         stmt = (
             select(
-                TableUser.number_of_wins,
-                TableUser.number_of_draws,
-                TableUser.number_of_defeats,
                 TableUser.account_stars,
                 TableUser.rating,
                 TableUser.admin_right,
@@ -353,6 +380,22 @@ class AiogramCommonUserViews(CommonUserViews):
             )
             return
 
+        wins_stmt = select(func.count(1)).where(
+            TableGame.result_decided_game_user_win_user_id == other_user_id,
+        )
+        wins = not_none(await self._session.scalar(wins_stmt))
+
+        draws_stmt = select(func.count(1)).where(
+            (TableGame.result_draw_game_user_draw1_user_id == other_user_id)
+            | (TableGame.result_draw_game_user_draw2_user_id == other_user_id),
+        )
+        draws = not_none(await self._session.scalar(draws_stmt))
+
+        defeats_stmt = select(func.count(1)).where(
+            TableGame.result_decided_game_user_loss_user_id == other_user_id,
+        )
+        defeats = not_none(await self._session.scalar(defeats_stmt))
+
         if row.admin_right is None:
             admin_right = None
         else:
@@ -360,14 +403,22 @@ class AiogramCommonUserViews(CommonUserViews):
                 row.admin_right_via_other_admin_admin_id,
             )
 
+        max_rating, users_with_max_rating = (
+            await max_rating_and_users_with_max_rating_from_postgres(
+                self._session,
+            )
+        )
+
         view = OtherUserProfileView.of(
             other_user_id,
             admin_right,
-            row.number_of_wins,
-            row.number_of_draws,
-            row.number_of_defeats,
+            wins,
+            draws,
+            defeats,
             row.account_stars,
             row.rating,
+            max_rating,
+            users_with_max_rating,
         )
 
         manager = self._dialog_manager_for_user(user.id)
@@ -444,45 +495,6 @@ class AiogramCommonUserViews(CommonUserViews):
         await manager.start(
             AdminDialogState.deauthorize_other_user_as_admin,
             {"hint": "🧿 Пользователь больше не админ"},
-            StartMode.RESET_STACK,
-            ShowMode.DELETE_AND_SEND,
-        )
-
-
-@dataclass(frozen=True, unsafe_hash=False)
-class AiogramStarsPurchaseUserViews(StarsPurchaseUserViews):
-    _dialog_manager_for_user: DialogManagerForUser
-
-    async def invalid_stars_for_stars_purchase_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        raise NotImplementedError
-
-    async def stars_purchase_will_be_completed_view(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        manager = self._dialog_manager_for_user(user_id)
-        await manager.start(
-            MainDialogState.stars_shop,
-            {"hint": "🌟 Звёзды скоро начислятся!"},
-            StartMode.RESET_STACK,
-            ShowMode.DELETE_AND_SEND,
-        )
-
-    async def completed_stars_purchase_view(
-        self,
-        user: User,
-        purchase_id: UUID,
-        /,
-    ) -> None:
-        manager = self._dialog_manager_for_user(user.id)
-        await manager.start(
-            MainDialogState.stars_shop,
-            {"hint": "🌟 Звезды начислились!"},
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,
         )
@@ -639,3 +651,77 @@ class AiogramChangeOtherUserAccountViews(ChangeOtherUserAccountViews):
             StartMode.RESET_STACK,
             ShowMode.DELETE_AND_SEND,
         )
+
+
+@dataclass(frozen=True, unsafe_hash=False)
+class AiogramGameUserViews(GameUserViews):
+    _dialog_manager_for_user: DialogManagerForUser
+    _result_buffer: ResultBuffer
+    _session: AsyncSession
+
+    async def user_is_waiting_for_matchmaking_view(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        ...
+
+    async def user_is_already_waiting_for_matchmaking_view(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        ...
+
+    async def user_is_in_game_to_wait_for_matchmaking_view(
+        self, user: User, /,
+    ) -> None:
+        dialog_manager = self._dialog_manager_for_user(user.id)
+        await dialog_manager.start(
+            MainDialogState.game_mode_to_start_game,
+            {"hint": "⚔️ Вы уже в игре"},
+            StartMode.RESET_STACK,
+        )
+
+    async def matched_games_view(self, games: list[Game], /) -> None:
+        await gather(*map(self._started_game_view, games))
+
+    async def _started_game_view(self, game: Game, /) -> None:
+        await gather(*(
+            self._started_game_view_for_user(user.id, game)
+            for user in game.users()
+        ))
+
+    async def _started_game_view_for_user(
+        self, user_id: int, game: Game, /,
+    ) -> None:
+        dialog_manager = self._dialog_manager_for_user(user_id)
+        await dialog_manager.start(
+            MainDialogState.game,
+            ActiveGameView.of(game, user_id).window_data(),
+            StartMode.RESET_STACK,
+        )
+
+    async def user_is_not_waiting_for_matchmaking_to_dont_wait_view(
+        self, user: User, /,
+    ) -> None:
+        ...
+
+    async def user_is_not_waiting_for_matchmaking_view(
+        self, user: User, /,
+    ) -> None:
+        ...
+
+    async def matchmaking_view(self, user_id: int, /) -> None:
+        stmt = (
+            select(TableUser.has_matchmaking_waiting)
+            .where(TableUser.id == user_id)
+        )
+        has_matchmaking_waiting = await self._session.scalar(stmt)
+
+        if has_matchmaking_waiting is None:
+            self._result_buffer.result = None
+        else:
+            self._result_buffer.result = GameStartView(
+                is_user_waiting_for_matchmaking=has_matchmaking_waiting,
+            )

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import (
+    ReadonlyTransaction,
+)
 from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
@@ -10,7 +12,7 @@ from ttt.application.user.common.ports.users import Users
 class ViewOtherUser:
     views: CommonUserViews
     users: Users
-    transaction: Transaction
+    transaction: ReadonlyTransaction
     log: CommonUserLog
 
     async def __call__(self, user_id: int, other_user_id: int) -> None:

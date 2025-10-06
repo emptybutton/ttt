@@ -3,7 +3,6 @@ from uuid import UUID
 from pytest import fixture
 
 from ttt.entities.core.user.account import Account
-from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.user import User
 from ttt.entities.math.random import Random
 from ttt.entities.text.emoji import Emoji
@@ -26,15 +25,11 @@ def user1() -> User:
         id=1,
         account=Account(0),
         emojis=[],
-        stars_purchases=[],
-        last_games=[],
         selected_emoji_id=None,
         rating=1000.,
-        number_of_wins=0,
-        number_of_draws=0,
-        number_of_defeats=0,
-        game_location=UserGameLocation(1, UUID(int=0)),
+        current_game_id=UUID(int=0),
         admin_right=None,
+        matchmaking_waiting=None,
     )
 
 
@@ -44,15 +39,11 @@ def user2() -> User:
         id=2,
         account=Account(0),
         emojis=[],
-        stars_purchases=[],
-        last_games=[],
         rating=1000.,
         selected_emoji_id=None,
-        number_of_wins=0,
-        number_of_draws=0,
-        number_of_defeats=0,
-        game_location=UserGameLocation(2, UUID(int=0)),
+        current_game_id=UUID(int=0),
         admin_right=None,
+        matchmaking_waiting=None,
     )
 
 

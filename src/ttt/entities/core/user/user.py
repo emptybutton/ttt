@@ -12,23 +12,17 @@ from ttt.entities.core.user.admin_right import (
 )
 from ttt.entities.core.user.draw import UserDraw
 from ttt.entities.core.user.emoji import UserEmoji
-from ttt.entities.core.user.last_game import LastGame, last_game
-from ttt.entities.core.user.location import UserGameLocation
 from ttt.entities.core.user.loss import UserLoss
-from ttt.entities.core.user.rank import Rank, rank_for_rating
-from ttt.entities.core.user.stars_purchase import StarsPurchase
+from ttt.entities.core.user.matchmaking_waiting import MatchmakingWaiting
+from ttt.entities.core.user.rank import Rank, UsersWithMaxRating, rank
 from ttt.entities.core.user.win import UserWin
 from ttt.entities.elo.rating import (
     EloRating,
+    GamesPlayed,
     initial_elo_rating,
     new_elo_rating,
 )
 from ttt.entities.elo.score import WinningScore
-from ttt.entities.finance.payment.payment import (
-    cancel_payment,
-    complete_payment,
-)
-from ttt.entities.finance.payment.success import PaymentSuccess
 from ttt.entities.math.random import Random, deviated_int
 from ttt.entities.text.emoji import Emoji
 from ttt.entities.text.token import Token
@@ -60,9 +54,6 @@ class EmojiNotPurchasedError(Exception): ...
 class NoPurchaseError(Exception): ...
 
 
-class UserAlreadyLeftGameError(Exception): ...
-
-
 class UserAlreadyAdminError(Exception): ...
 
 
@@ -84,26 +75,32 @@ class NotAuthorizedAsAdminViaAdminTokenError(Exception): ...
 class UserAlredyAdminToAuthorizeAsAdminError(Exception): ...
 
 
+class UserAlreadyWaitingForMatchmakingError(Exception): ...
+
+
+class UserIsNotWaitingForMatchmakingError(Exception): ...
+
+
+class UserIsInGameError(Exception): ...
+
+
 @dataclass  # noqa: PLR0904
 class User:
     id: int
     account: Account
     emojis: list[UserEmoji]
-    stars_purchases: list[StarsPurchase]
-    last_games: list[LastGame]
+    matchmaking_waiting: MatchmakingWaiting | None
     selected_emoji_id: UUID | None
     rating: EloRating
     admin_right: AdminRight | None
-
-    number_of_wins: int
-    number_of_draws: int
-    number_of_defeats: int
-    game_location: UserGameLocation | None
+    current_game_id: UUID | None
 
     emoji_cost: ClassVar[Stars] = 1000
 
-    def rank(self) -> Rank:
-        return rank_for_rating(self.rating)
+    def rank(
+        self, max_rating: EloRating, users_with_max_rating: UsersWithMaxRating,
+    ) -> Rank:
+        return rank(self.rating, max_rating, users_with_max_rating)
 
     def is_admin(self) -> bool:
         return is_user_admin(self.admin_right)
@@ -235,11 +232,8 @@ class User:
 
         return user
 
-    def games_played(self) -> int:
-        return len(self.last_games)
-
     def is_in_game(self) -> bool:
-        return self.game_location is not None
+        return self.current_game_id is not None
 
     def be_in_game(
         self,
@@ -252,29 +246,26 @@ class User:
 
         assert_(not self.is_in_game(), else_=UserAlreadyInGameError(self))
 
-        self.game_location = UserGameLocation(self.id, game_id)
+        self.current_game_id = game_id
         tracking.register_mutated(self)
 
     def lose_to_user(
         self,
         enemy_rating: EloRating,
-        last_game_id: UUID,
-        game_id: UUID,
+        games_played: GamesPlayed,
         tracking: Tracking,
     ) -> UserLoss:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
-        :raises ttt.entities.core.user.user.UserAlreadyLeftGameError:
         """
 
-        self.leave_game(last_game_id, game_id, tracking)
+        self.leave_game(tracking)
 
-        self.number_of_defeats += 1
         new_rating = new_elo_rating(
             self.rating,
             enemy_rating,
             WinningScore.when_losing,
-            self.games_played(),
+            games_played,
         )
         rating_vector = new_rating - self.rating
         self.rating = new_rating
@@ -282,20 +273,12 @@ class User:
 
         return UserLoss(user_id=self.id, rating_vector=rating_vector)
 
-    def lose_to_ai(
-        self,
-        last_game_id: UUID,
-        game_id: UUID,
-        tracking: Tracking,
-    ) -> UserLoss:
+    def lose_to_ai(self, tracking: Tracking) -> UserLoss:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
-        :raises ttt.entities.core.user.user.UserAlreadyLeftGameError:
         """
 
-        self.leave_game(last_game_id, game_id, tracking)
-
-        self.number_of_defeats += 1
+        self.leave_game(tracking)
         tracking.register_mutated(self)
 
         return UserLoss(user_id=self.id, rating_vector=None)
@@ -303,25 +286,20 @@ class User:
     def win_against_user(
         self,
         enemy_rating: EloRating,
+        games_played: GamesPlayed,
         random: Random,
-        last_game_id: UUID,
-        game_id: UUID,
         tracking: Tracking,
     ) -> UserWin:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
-        :raises ttt.entities.core.user.user.UserAlreadyLeftGameError:
         """
 
-        self.leave_game(last_game_id, game_id, tracking)
-
-        self.number_of_wins += 1
-
+        self.leave_game(tracking)
         new_rating = new_elo_rating(
             self.rating,
             enemy_rating,
             WinningScore.when_winning,
-            self.games_played(),
+            games_played,
         )
         rating_vector = new_rating - self.rating
         self.rating = new_rating
@@ -332,41 +310,30 @@ class User:
         tracking.register_mutated(self)
         return UserWin(self.id, new_stars, rating_vector)
 
-    def win_against_ai(
-        self,
-        last_game_id: UUID,
-        game_id: UUID,
-        tracking: Tracking,
-    ) -> UserWin:
+    def win_against_ai(self, tracking: Tracking) -> UserWin:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
-        :raises ttt.entities.core.user.user.UserAlreadyLeftGameError:
         """
 
-        self.leave_game(last_game_id, game_id, tracking)
-
+        self.leave_game(tracking)
         return UserWin(self.id, new_stars=None, rating_vector=None)
 
     def be_draw_against_user(
         self,
         enemy_rating: EloRating,
-        last_game_id: UUID,
-        game_id: UUID,
+        games_played: GamesPlayed,
         tracking: Tracking,
     ) -> UserDraw:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
         """
 
-        self.leave_game(last_game_id, game_id, tracking)
-
-        self.number_of_draws += 1
-
+        self.leave_game(tracking)
         new_rating = new_elo_rating(
             self.rating,
             enemy_rating,
             WinningScore.when_winning,
-            self.games_played(),
+            games_played,
         )
         rating_vector = new_rating - self.rating
         self.rating = new_rating
@@ -374,46 +341,25 @@ class User:
 
         return UserDraw(self.id, rating_vector)
 
-    def be_draw_against_ai(
-        self,
-        last_game_id: UUID,
-        game_id: UUID,
-        tracking: Tracking,
-    ) -> UserDraw:
+    def be_draw_against_ai(self, tracking: Tracking) -> UserDraw:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
         """
 
-        self.leave_game(last_game_id, game_id, tracking)
-
-        self.number_of_draws += 1
+        self.leave_game(tracking)
         tracking.register_mutated(self)
 
         return UserDraw(self.id, rating_vector=None)
 
-    def leave_game(
-        self, last_game_id: UUID, game_id: UUID, tracking: Tracking,
-    ) -> None:
+    def leave_game(self, tracking: Tracking) -> None:
         """
         :raises ttt.entities.core.user.user.UserNotInGameError:
-        :raises ttt.entities.core.user.user.UserAlreadyLeftGameError:
         """
 
         assert_(self.is_in_game(), else_=UserNotInGameError(self))
 
-        self.game_location = None
+        self.current_game_id = None
         tracking.register_mutated(self)
-
-        assert_(
-            (
-                self._last_game_with_id(last_game_id) is None
-                and self._last_game_with_game_id(game_id) is None
-            ),
-            else_=UserAlreadyLeftGameError,
-        )
-
-        last_game_ = last_game(last_game_id, self.id, game_id, tracking)
-        self.last_games.append(last_game_)
 
     def buy_emoji(
         self,
@@ -483,129 +429,67 @@ class User:
 
         tracking.register_mutated(self)
 
-    def start_stars_purchase(
-        self,
-        purchase_id: UUID,
-        purchase_stars: Stars,
-        tracking: Tracking,
-    ) -> None:
-        """
-        :raises ttt.entities.core.stars.InvalidStarsForStarsPurchaseError:
-        """
+    def is_waiting_for_matchmaking(self) -> bool:
+        return self.matchmaking_waiting is not None
 
-        stars_purchase = StarsPurchase.start(
-            purchase_id,
-            self.id,
-            purchase_stars,
-            tracking,
-        )
-        self.stars_purchases.append(stars_purchase)
-
-    def start_stars_purchase_payment(
+    def wait_for_matchmaking(
         self,
-        purchase_id: UUID,
-        payment_id: UUID,
-        current_datetime: datetime,
+        curreint_datetime: datetime,
         tracking: Tracking,
-    ) -> None:
+    ) -> "MatchmakingWaiting":
         """
-        :raises ttt.entities.user.user.NoPurchaseError:
-        :raises ttt.entities.finance.payment.payment.PaymentIsAlreadyBeingMadeError:
+        :raises ttt.entities.core.user.user.UserAlreadyWaitingForMatchmakingError:
+        :raises ttt.entities.core.user.user.UserIsInGameError:
         """  # noqa: E501
 
-        purchase = self._stars_purchase(purchase_id)
-        purchase.start_payment(payment_id, current_datetime, tracking)
+        assert_(
+            not self.is_waiting_for_matchmaking(),
+            else_=UserAlreadyWaitingForMatchmakingError,
+        )
+        assert_(not self.is_in_game(), else_=UserIsInGameError)
 
-    def complete_stars_purchase_payment(
-        self,
-        purchase_id: UUID,
-        payment_success: PaymentSuccess,
-        current_datetime: datetime,
-        tracking: Tracking,
-    ) -> None:
-        """
-        :raises ttt.entities.user.user.NoPurchaseError:
-        :raises ttt.entities.finance.payment.payment.NoPaymentError:
-        :raises ttt.entities.finance.payment.payment.PaymentIsNotInProcessError:
-        """
+        waiting = MatchmakingWaiting(start_datetime=curreint_datetime)
 
-        purchase = self._stars_purchase(purchase_id)
-
-        self.account = self.account.map(lambda stars: stars + purchase.stars)
+        self.matchmaking_waiting = waiting
         tracking.register_mutated(self)
-        complete_payment(
-            purchase.payment,
-            payment_success,
-            current_datetime,
-            tracking,
+
+        return waiting
+
+    def dont_wait_for_matchmaking(self, tracking: Tracking) -> None:
+        """
+        :raises ttt.entities.core.user.user.UserIsNotWaitingForMatchmakingError:
+        """
+
+        assert_(
+            self.is_waiting_for_matchmaking(),
+            else_=UserIsNotWaitingForMatchmakingError,
         )
 
-    def cancel_stars_purchase(
-        self,
-        purchase_id: UUID,
-        current_datetime: datetime,
-        tracking: Tracking,
-    ) -> None:
-        """
-        :raises ttt.entities.user.user.NoPurchaseError:
-        :raises ttt.entities.finance.payment.payment.NoPaymentError:
-        :raises ttt.entities.finance.payment.payment.PaymentIsNotInProcessError:
-        """
-
-        purchase = self._stars_purchase(purchase_id)
-        cancel_payment(purchase.payment, current_datetime, tracking)
-
-    def _stars_purchase(self, purchase_id: UUID) -> StarsPurchase:
-        """
-        :raises ttt.entities.user.user.NoPurchaseError:
-        """
-
-        for purchase in self.stars_purchases:
-            if purchase.id_ == purchase_id:
-                return purchase
-
-        raise NoPurchaseError
-
-    def _last_game_with_id(self, last_game_id: UUID) -> LastGame | None:
-        for last_game_ in self.last_games:
-            if last_game_.id == last_game_id:
-                return last_game_
-
-        return None
-
-    def _last_game_with_game_id(self, game_id: UUID) -> LastGame | None:
-        for last_game_ in self.last_games:
-            if last_game_.game_id == game_id:
-                return last_game_
-
-        return None
+        self.matchmaking_waiting = None
+        tracking.register_mutated(self)
 
 
-UserAtomic = User | UserEmoji | StarsPurchase | LastGame
+UserAtomic = User | UserEmoji
 
 
 def register_user(user_id: int, tracking: Tracking) -> User:
     user = User(
         id=user_id,
         account=Account(0),
-        stars_purchases=[],
-        last_games=[],
         emojis=[],
         selected_emoji_id=None,
         rating=initial_elo_rating,
-        number_of_wins=0,
-        number_of_draws=0,
-        number_of_defeats=0,
-        game_location=None,
+        current_game_id=None,
         admin_right=None,
+        matchmaking_waiting=None,
     )
     tracking.register_new(user)
 
     return user
 
 
-def is_user_in_game(game_location: UserGameLocation | None) -> bool:
-    return game_location is not None
+def is_user_in_game(current_game_id: UUID | None) -> bool:
+    return current_game_id is not None
 
 
 def is_user_admin(admin_right: AdminRight | None) -> bool:

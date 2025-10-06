@@ -11,7 +11,8 @@ from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 
 from ttt.application.user.view_user import ViewUser
-from ttt.entities.core.user.rank import rank_for_rating
+from ttt.entities.core.user.rank import UsersWithMaxRating, rank
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.result_buffer import ResultBuffer
@@ -31,13 +32,15 @@ class UserProfileView(EncodableToWindowData):
     rank_text: str
 
     @classmethod
-    def of(
+    def of(  # noqa: PLR0913, PLR0917
         cls,
         number_of_wins: int,
         number_of_draws: int,
         number_of_defeats: int,
         account_stars: int,
         rating: float,
+        max_rating: float,
+        users_with_max_rating: UsersWithMaxRating,
     ) -> "UserProfileView":
         return UserProfileView(
             number_of_wins=number_of_wins,
@@ -45,7 +48,9 @@ class UserProfileView(EncodableToWindowData):
             number_of_defeats=number_of_defeats,
             account_stars=account_stars,
             rating_text=short_float_text(rating),
-            rank_text=rank_title(rank_for_rating(rating)),
+            rank_text=rank_title(
+                rank(rating, max_rating, users_with_max_rating),
+            ),
         )
 
 
@@ -54,10 +59,11 @@ async def profile_getter(
     *,
     event_from_user: User,
     view_user: FromDishka[ViewUser],
+    retrier: FromDishka[Retrier],
     result_buffer: FromDishka[ResultBuffer],
     **_: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
-    await view_user(event_from_user.id)
+    await retrier(view_user, event_from_user.id)
     view = result_buffer(UserProfileView)
 
     return view.window_data()

@@ -1,6 +1,6 @@
 [project]
 name = "ttt"
-version = "0.4.2"
+version = "0.5.0"
 description = "Tic-Tac-Toe Telegram Bot"
 authors = [
     {name = "Alexander Smolin", email = "88573504+emptybutton@users.noreply.github.com"}
@@ -29,13 +29,13 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "mypy[faster-cache]==1.16.0",
-    "ruff==0.11.13",
+    "mypy[faster-cache]==1.18.1",
+    "ruff==0.13.0",
     "pytest==8.4.0",
     "pytest-cov==6.1.1",
     "pytest-asyncio==1.0.0",
     "dirty-equals==0.9.0",
-    "better-exceptions==0.3.3",
+    "rich==14.1.0",
 ]
 
 [project.urls]
@@ -111,6 +111,7 @@ ignore = [
     "EM101",
     "N807",
     "FURB118",
+    "DOC402",
 ]
 
 [tool.ruff.lint.per-file-ignores]

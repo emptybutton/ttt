@@ -26,6 +26,7 @@ from ttt.application.user.change_other_user_account.view_user_account_to_change 
 )
 from ttt.entities.core.stars import Stars
 from ttt.entities.tools.assertion import not_none
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.admin_dialog.common import AdminDialogState
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.common.wigets.hint import hint
@@ -46,6 +47,7 @@ async def getter(
     event_from_user: User,
     view_user_account_to_change: FromDishka[ViewUserAccountToChange],
     result_buffer: FromDishka[ResultBuffer],
+    retrier: FromDishka[Retrier],
     dialog_manager: DialogManager,
     **_: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
@@ -57,7 +59,8 @@ async def getter(
         view = ChangeOtherUserAccount2View(stars)
         return view.window_data()
 
-    await view_user_account_to_change(
+    await retrier(
+        view_user_account_to_change,
         event_from_user.id,
         dialog_manager.start_data["other_user_id"],
     )

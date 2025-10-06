@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.user.common.ports.user_views import CommonUserViews
 from ttt.application.user.common.ports.users import Users
 from ttt.application.user.emoji_selection.ports.user_log import (
@@ -17,7 +17,7 @@ from ttt.entities.tools.tracking import Tracking
 
 @dataclass(frozen=True, unsafe_hash=False)
 class SelectEmoji:
-    transaction: Transaction
+    transaction: SerializableTransaction
     users: Users
     user_views: CommonUserViews
     emoji_selection_views: EmojiSelectionUserViews
@@ -29,6 +29,10 @@ class SelectEmoji:
         user_id: int,
         emoji_str: str,
     ) -> None:
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501
+
         try:
             emoji = Emoji(emoji_str)
         except InvalidEmojiError:
@@ -42,6 +46,7 @@ class SelectEmoji:
             user = await self.users.user_with_id(user_id)
 
             if user is None:
+                await self.transaction.commit()
                 await self.user_views.user_is_not_registered_view(user_id)
                 return
 
@@ -50,11 +55,12 @@ class SelectEmoji:
                 user.select_emoji(emoji, tracking)
             except EmojiNotPurchasedError:
                 await self.log.emoji_not_purchased_to_select(user, emoji)
+                await self.transaction.commit()
                 await (
                     self.emoji_selection_views
                     .emoji_not_purchased_to_select_view(user_id)
                 )
             else:
                 await self.log.user_selected_emoji(user, emoji)
-
                 await self.map_(tracking)
+                await self.transaction.commit()

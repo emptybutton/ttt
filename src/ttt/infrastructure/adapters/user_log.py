@@ -1,12 +1,11 @@
+from asyncio import gather
 from dataclasses import dataclass
-from uuid import UUID
 
 from structlog.types import FilteringBoundLogger
 
 from ttt.application.user.change_other_user_account.ports.user_log import (
     ChangeOtherUserAccountLog,
 )
-from ttt.application.user.common.dto.common import PaidStarsPurchasePayment
 from ttt.application.user.common.ports.user_log import CommonUserLog
 from ttt.application.user.emoji_purchase.ports.user_log import (
     EmojiPurchaseUserLog,
@@ -14,9 +13,8 @@ from ttt.application.user.emoji_purchase.ports.user_log import (
 from ttt.application.user.emoji_selection.ports.user_log import (
     EmojiSelectionUserLog,
 )
-from ttt.application.user.stars_purchase.ports.user_log import (
-    StarsPurchaseUserLog,
-)
+from ttt.application.user.game.ports.user_log import GameUserLog
+from ttt.entities.core.game.game import Game
 from ttt.entities.core.stars import Stars
 from ttt.entities.core.user.user import User
 from ttt.entities.text.emoji import Emoji
@@ -33,7 +31,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_registered",
-            chat_id=user.id,
             user_id=user.id,
         )
 
@@ -44,14 +41,12 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_double_registration",
-            chat_id=user.id,
             user_id=user.id,
         )
 
     async def user_viewed(self, user_id: int, /) -> None:
         await self._logger.ainfo(
             "user_viewed",
-            chat_id=user_id,
             user_id=user_id,
         )
 
@@ -62,21 +57,18 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_removed_emoji",
-            chat_id=user.id,
             user_id=user.id,
         )
 
     async def menu_viewed(self, user_id: int) -> None:
         await self._logger.ainfo(
             "menu_viewed",
-            chat_id=user_id,
             user_id=user_id,
         )
 
     async def emoji_menu_viewed(self, user_id: int) -> None:
         await self._logger.ainfo(
             "emoji_menu_viewed",
-            chat_id=user_id,
             user_id=user_id,
         )
 
@@ -87,7 +79,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_authorized_as_admin",
-            chat_id=user.id,
             user_id=user.id,
         )
 
@@ -98,7 +89,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_already_admin_to_get_admin_rights",
-            chat_id=user.id,
             user_id=user.id,
         )
 
@@ -109,7 +99,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "admin_token_mismatch_to_get_admin_rights",
-            chat_id=user.id,
             user_id=user.id,
         )
 
@@ -120,14 +109,12 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "not_admin_to_relinquish_admin_right",
-            chat_id=user.id,
             user_id=user.id,
         )
 
     async def user_relinquished_admin_rights(self, user: User, /) -> None:
         await self._logger.ainfo(
             "user_relinquished_admin_rights",
-            chat_id=user.id,
             user_id=user.id,
         )
 
@@ -136,7 +123,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "not_authorized_as_admin_via_admin_token_to_authorize_other_user_as_admin",
-            chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,
         )
@@ -146,7 +132,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "other_user_already_admin_to_authorize_other_user_as_admin",
-            chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,
         )
@@ -156,7 +141,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_authorized_other_user_as_admin",
-            chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,
         )
@@ -166,7 +150,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "not_authorized_as_admin_via_admin_token_to_deauthorize_other_user_as_admin",
-            chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,
         )
@@ -176,7 +159,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "other_user_is_not_authorized_as_admin_via_other_admin_to_deauthorize",
-            chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,
         )
@@ -186,7 +168,6 @@ class StructlogCommonUserLog(CommonUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_deauthorized_other_user_as_admin",
-            chat_id=user.id,
             user_id=user.id,
             other_user_id=None if other_user is None else other_user.id,
         )
@@ -204,7 +185,6 @@ class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_bought_emoji",
-            chat_id=user.id,
             user_id=user.id,
             emoji=emoji.str_,
         )
@@ -216,7 +196,6 @@ class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_intends_to_buy_emoji",
-            chat_id=user_id,
             user_id=user_id,
         )
 
@@ -227,7 +206,6 @@ class StructlogEmojiPurchaseUserLog(EmojiPurchaseUserLog):
     ) -> None:
         await self._logger.ainfo(
             "emoji_already_purchased_to_buy",
-            chat_id=user.id,
             user_id=user.id,
             emoji=emoji.str_,
         )
@@ -245,7 +223,6 @@ class StructlogEmojiSelectionUserLog(EmojiSelectionUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_selected_emoji",
-            chat_id=user.id,
             user_id=user.id,
             emoji=emoji.str_,
         )
@@ -257,7 +234,6 @@ class StructlogEmojiSelectionUserLog(EmojiSelectionUserLog):
     ) -> None:
         await self._logger.ainfo(
             "user_intends_to_select_emoji",
-            chat_id=user_id,
             user_id=user_id,
         )
 
@@ -268,116 +244,7 @@ class StructlogEmojiSelectionUserLog(EmojiSelectionUserLog):
     ) -> None:
         await self._logger.ainfo(
             "emoji_not_purchased_to_select",
-            chat_id=user.id,
             user_id=user.id,
-        )
-
-
-@dataclass(frozen=True, unsafe_hash=False)
-class StructlogStarsPurchaseUserLog(StarsPurchaseUserLog):
-    _logger: FilteringBoundLogger
-
-    async def user_intends_to_buy_stars(
-        self,
-        user_id: int,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "user_intends_to_buy_stars",
-            chat_id=user_id,
-            user_id=user_id,
-        )
-
-    async def user_started_stars_puchase(
-        self,
-        user: User,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "user_started_stars_puchase",
-            chat_id=user.id,
-            user_id=user.id,
-        )
-
-    async def user_started_stars_puchase_payment(
-        self,
-        user: User,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "user_started_stars_puchase_payment",
-            user_id=user.id,
-        )
-
-    async def stars_purchase_payment_completion_started(
-        self,
-        payment: PaidStarsPurchasePayment,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "stars_purchase_payment_completion_started",
-            user_id=payment.user_id,
-            chat_id=payment.user_id,
-            purchase_id=payment.purchase_id.hex,
-        )
-
-    async def stars_purchase_payment_completed(
-        self,
-        user: User,
-        payment: PaidStarsPurchasePayment,
-        /,
-    ) -> None:
-        await self._logger.ainfo(
-            "stars_purchase_payment_completed",
-            user_id=payment.user_id,
-            chat_id=payment.user_id,
-            purchase_id=payment.purchase_id.hex,
-        )
-
-    async def double_stars_purchase_payment_completion(
-        self,
-        user: User,
-        paid_payment: PaidStarsPurchasePayment,
-    ) -> None:
-        await self._logger.awarning(
-            "double_stars_purchase_payment_completion",
-            user_id=paid_payment.user_id,
-            chat_id=paid_payment.user_id,
-            purchase_id=paid_payment.purchase_id.hex,
-        )
-
-    async def invalid_stars_for_stars_purchase(
-        self,
-        user: User,
-        stars: Stars,
-    ) -> None:
-        await self._logger.aerror(
-            "invalid_stars_for_stars_purchase",
-            user_id=user.id,
-            chat_id=user.id,
-            stars=stars,
-        )
-
-    async def double_stars_purchase_payment_start(
-        self,
-        user: User,
-        purchase_id: UUID,
-    ) -> None:
-        await self._logger.ainfo(
-            "double_stars_purchase_payment_start",
-            user_id=user.id,
-            purchase_id=purchase_id.hex,
-        )
-
-    async def no_purchase_to_start_stars_purchase_payment(
-        self,
-        user: User,
-        purchase_id: UUID,
-    ) -> None:
-        await self._logger.aerror(
-            "no_purchase_to_start_stars_purchase_payment",
-            user_id=user.id,
-            purchase_id=purchase_id.hex,
         )
 
 
@@ -474,4 +341,64 @@ class StructlogChangeOtherUserAccountLog(ChangeOtherUserAccountLog):
             user_id=user.id,
             other_user_id=other_user_id,
             other_user_account_stars=other_user_account_stars,
+        )
+
+
+@dataclass(frozen=True, unsafe_hash=False)
+class StructlogGameUserLog(GameUserLog):
+    _logger: FilteringBoundLogger
+
+    async def user_is_waiting_for_matchmaking(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_is_waiting_for_matchmaking",
+            user_id=user.id,
+        )
+
+    async def user_is_not_waiting_for_matchmaking(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_is_not_waiting_for_matchmaking",
+            user_id=user.id,
+        )
+
+    async def user_is_already_waiting_for_matchmaking(
+        self,
+        user: User,
+        /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_is_already_waiting_for_matchmaking",
+            user_id=user.id,
+        )
+
+    async def user_is_in_game_to_wait_for_matchmaking(
+        self, user: User, /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_is_in_game_to_wait_for_matchmaking",
+            user_id=user.id,
+        )
+
+    async def games_were_matched(self, games: list[Game], /) -> None:
+        await gather(*map(self._game_was_matched, games))
+
+    async def _game_was_matched(self, game: Game) -> None:
+        await self._logger.ainfo(
+            "game_was_matched",
+            game_id=game.id.hex,
+        )
+
+    async def user_is_not_waiting_for_matchmaking_to_dont_wait(
+        self, user: User, /,
+    ) -> None:
+        await self._logger.ainfo(
+            "user_is_not_waiting_for_matchmaking_to_dont_wait",
+            user_id=user.id,
         )

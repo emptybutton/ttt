@@ -1,15 +1,12 @@
-from asyncio import gather
 from dataclasses import dataclass
 
 from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.common.ports.uuids import UUIDs
 from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.game.game.ports.game_views import GameViews
 from ttt.application.game.game.ports.games import Games
 from ttt.entities.core.game.game import AlreadyCompletedGameError
-from ttt.entities.core.user.user import User
-from ttt.entities.tools.assertion import not_none
 from ttt.entities.tools.tracking import Tracking
 
 
@@ -19,50 +16,38 @@ class CancelGame:
     games: Games
     game_views: GameViews
     uuids: UUIDs
-    transaction: Transaction
+    transaction: SerializableTransaction
     log: GameLog
 
     async def __call__(self, user_id: int) -> None:
-        async with self.transaction:
-            (
-                game,
-                user1_last_game_id,
-                user2_last_game_id,
-            ) = await gather(
-                self.games.game_with_game_location(user_id),
-                self.uuids.random_uuid(),
-                self.uuids.random_uuid(),
-            )
-            if game is None:
-                await self.game_views.no_game_view(user_id)
-                return
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501
 
-            locations = tuple(
-                not_none(user.game_location)
-                for user in (game.player1, game.player2)
-                if isinstance(user, User)
-            )
+        async with self.transaction:
+            game = await self.games.current_user_game(user_id)
+
+            if game is None:
+                await self.log.no_current_game_to_cancel_game(user_id)
+                await self.transaction.commit()
+                await self.game_views.no_current_game_view(user_id)
+                return
 
             try:
                 tracking = Tracking()
-                game.cancel(
-                    user_id,
-                    user1_last_game_id,
-                    user2_last_game_id,
-                    tracking,
-                )
+                game.cancel(user_id, tracking)
             except AlreadyCompletedGameError:
                 await self.log.already_completed_game_to_cancel(game, user_id)
+                await self.transaction.commit()
                 await self.game_views.game_already_complteted_view(
                     user_id,
                     game,
                 )
                 return
+            else:
+                await self.log.game_cancelled(user_id, game)
 
-            await self.log.game_cancelled(user_id, game)
+                await self.map_(tracking)
+                await self.transaction.commit()
 
-            await self.map_(tracking)
-            await self.game_views.game_view_with_locations(
-                locations,
-                game,
-            )
+                await self.game_views.game_view(game)

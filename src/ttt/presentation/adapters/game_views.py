@@ -1,5 +1,4 @@
 from asyncio import gather
-from collections.abc import Sequence
 from dataclasses import dataclass
 
 from aiogram import Bot
@@ -11,7 +10,6 @@ from ttt.application.game.game.ports.game_views import GameViews
 from ttt.entities.core.game.game import (
     Game,
 )
-from ttt.entities.core.user.location import UserGameLocation
 from ttt.infrastructure.sqlalchemy.tables.game import TableGame
 from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 from ttt.presentation.aiogram.game.messages import completed_game_sticker
@@ -36,7 +34,7 @@ class AiogramGameViews(GameViews):
     async def current_game_view_with_user_id(self, user_id: int, /) -> None:
         join_condition = (
             (TableUser.id == user_id)
-            & (TableUser.game_location_game_id == TableGame.id)
+            & (TableUser.current_game_id == TableGame.id)
         )
         stmt = select(TableGame).join(TableUser, join_condition)
         table_game = await self._session.scalar(stmt)
@@ -47,36 +45,26 @@ class AiogramGameViews(GameViews):
         game = table_game.entity()
         self._result_buffer.result = ActiveGameView.of(game, user_id)
 
-    async def game_view_with_locations(
-        self,
-        user_locations: Sequence[UserGameLocation],
-        game: Game,
-        /,
-    ) -> None:
+    async def game_view(self, game: Game, /) -> None:
         match game.result:
             case None:
                 await gather(*(
-                    self._active_game_view(location, game)
-                    for location in user_locations
+                    self._active_game_view(user.id, game)
+                    for user in game.users()
                 ))
             case _:
                 await gather(*(
-                    self._completed_game_view(location, game)
-                    for location in user_locations
+                    self._completed_game_view(user.id, game)
+                    for user in game.users()
                 ))
 
-    async def started_game_view_with_locations(
-        self,
-        user_locations: Sequence[UserGameLocation],
-        game: Game,
-        /,
-    ) -> None:
+    async def started_game_view(self, game: Game, /) -> None:
         await gather(*(
-            self._started_game_view(location, game)
-            for location in user_locations
+            self._started_game_view(user.id, game)
+            for user in game.users()
         ))
 
-    async def no_game_view(self, user_id: int, /) -> None:
+    async def no_current_game_view(self, user_id: int, /) -> None:
         dialog_manager = self._dialog_manager_for_user(user_id)
 
         data = {"hint": "❌ Игра уже закончилась"}
@@ -145,50 +133,34 @@ class AiogramGameViews(GameViews):
             MainDialogState.game, data, StartMode.RESET_STACK,
         )
 
-    async def _started_game_view(
-        self,
-        user_location: UserGameLocation,
-        game: Game,
-        /,
-    ) -> None:
-        dialog_manager = self._dialog_manager_for_user(user_location.user_id)
-
+    async def _started_game_view(self, user_id: int, game: Game, /) -> None:
+        dialog_manager = self._dialog_manager_for_user(user_id)
         await dialog_manager.start(
             MainDialogState.game,
-            ActiveGameView.of(game, user_location.user_id).window_data(),
+            ActiveGameView.of(game, user_id).window_data(),
             StartMode.RESET_STACK,
         )
 
-    async def _active_game_view(
-        self, location: UserGameLocation, game: Game,
-    ) -> None:
-        dialog_manager = self._dialog_manager_for_user(location.user_id)
+    async def _active_game_view(self, user_id: int, game: Game) -> None:
+        dialog_manager = self._dialog_manager_for_user(user_id)
 
-        view = ActiveGameView.of(game, location.user_id)
+        view = ActiveGameView.of(game, user_id)
         data = view.window_data()
 
         await dialog_manager.start(
             MainDialogState.game, data, StartMode.RESET_STACK,
         )
 
-    async def _completed_game_view(
-        self,
-        location: UserGameLocation,
-        game: Game,
-    ) -> None:
-        dialog_manager = self._dialog_manager_for_user(location.user_id)
+    async def _completed_game_view(self, user_id: int, game: Game) -> None:
+        dialog_manager = self._dialog_manager_for_user(user_id)
 
-        view = CompletedGameView.of(game, location.user_id)
+        view = CompletedGameView.of(game, user_id)
         data = view.window_data()
 
-        await gather(
-            completed_game_sticker(
-                self._bot, location.user_id, game, location.user_id,
-            ),
-            dialog_manager.start(
-                MainDialogState.game,
-                data,
-                StartMode.RESET_STACK,
-                ShowMode.DELETE_AND_SEND,
-            ),
+        await completed_game_sticker(self._bot, user_id, game, user_id)
+        await dialog_manager.start(
+            MainDialogState.game,
+            data,
+            StartMode.RESET_STACK,
+            ShowMode.DELETE_AND_SEND,
         )

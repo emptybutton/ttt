@@ -1,13 +1,15 @@
 from dataclasses import dataclass
 
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import (
+    ReadonlyTransaction,
+)
 from ttt.application.game.game.ports.game_log import GameLog
 from ttt.application.game.game.ports.game_views import GameViews
 
 
 @dataclass(frozen=True, unsafe_hash=False)
 class ViewGame:
-    transaction: Transaction
+    transaction: ReadonlyTransaction
     game_views: GameViews
     log: GameLog
 

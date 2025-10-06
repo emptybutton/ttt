@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import AsyncIterable
 
 from pytest import fixture
@@ -18,7 +19,7 @@ def engine(envs: Envs) -> AsyncEngine:
 
 
 @fixture(scope="session")
-async def _session_session(
+async def _session(
     engine: AsyncEngine,
 ) -> AsyncIterable[AsyncSession]:
     session = AsyncSession(
@@ -34,12 +35,16 @@ async def _session_session(
 
 @fixture
 async def session(
-    _session_session: AsyncSession,
+    _session: AsyncSession,
 ) -> AsyncSession:
-    await _clear_db(_session_session)
-    return _session_session
+    async with _session.begin():
+        await _clear_db(_session)
+        return _session
 
 
 async def _clear_db(session: AsyncSession) -> None:
-    for table in reversed(Base.metadata.sorted_tables):
-        await session.execute(delete(table))
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "Cannot correctly sort tables")
+
+        for table in reversed(Base.metadata.sorted_tables):
+            await session.execute(delete(table))

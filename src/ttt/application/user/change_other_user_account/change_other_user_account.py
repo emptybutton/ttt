@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from ttt.application.common.ports.map import Map
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import SerializableTransaction
 from ttt.application.user.change_other_user_account.ports.user_log import (
     ChangeOtherUserAccountLog,
 )
@@ -20,7 +20,7 @@ from ttt.entities.tools.tracking import Tracking
 
 @dataclass(frozen=True, unsafe_hash=False)
 class ChangeOtherUserAccount:
-    transaction: Transaction
+    transaction: SerializableTransaction
     users: Users
     map_: Map
     log: ChangeOtherUserAccountLog
@@ -33,12 +33,17 @@ class ChangeOtherUserAccount:
         other_user_id: int,
         other_user_account_stars_vector: Stars,
     ) -> None:
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501
+
         async with self.transaction:
             user, other_user = await self.users.users_with_ids(
                 (user_id, other_user_id),
             )
 
             if user is None:
+                await self.transaction.commit()
                 await self.common_views.user_is_not_registered_view(user_id)
                 return
 
@@ -57,6 +62,7 @@ class ChangeOtherUserAccount:
                     other_user_id,
                     other_user_account_stars_vector,
                 )
+                await self.transaction.commit()
                 await self.common_views.user_is_not_admin_view(user)
             except NegativeAccountError:
                 await self.log.negative_account_on_change_other_user_account(
@@ -65,6 +71,7 @@ class ChangeOtherUserAccount:
                     other_user_id,
                     other_user_account_stars_vector,
                 )
+                await self.transaction.commit()
                 await (
                     self.views
                     .negative_account_on_change_other_user_account_view(
@@ -79,6 +86,7 @@ class ChangeOtherUserAccount:
                     user, other_user, other_user_account_stars_vector,
                 )
                 await self.map_(tracking)
+                await self.transaction.commit()
                 await self.views.user_changed_other_user_account_view(
                     user, other_user, other_user_account_stars_vector,
                 )

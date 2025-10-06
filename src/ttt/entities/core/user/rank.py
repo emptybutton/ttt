@@ -5,23 +5,46 @@ from typing import Literal
 from ttt.entities.elo.rating import EloRating
 
 
-type RankTier = Literal[-1, 0, 1, 2, 3, 4]
+type RankTier = Literal[-1, 0, 1, 2, 3, 4, 5]
 
 
 @dataclass(frozen=True)
-class Rank:
+class IntervalRank:
     tier: RankTier
     min_rating: EloRating
     max_rating: EloRating
 
 
+@dataclass(frozen=True)
+class SpecialRank[TierT: RankTier, NameT: str]:
+    tier: TierT
+    name: NameT
+
+
+StrongestRank = SpecialRank[Literal[5], Literal["strongest"]]
+strongest_rank = StrongestRank(tier=5, name="strongest")
+
+special_ranks = (
+    strongest_rank,
+)
+
+
+type Rank = IntervalRank | StrongestRank
+
+
+interval_ranks = (
+    IntervalRank(tier=-1, min_rating=-math.inf, max_rating=871),
+    IntervalRank(tier=0, min_rating=872, max_rating=1085),
+    IntervalRank(tier=1, min_rating=1086, max_rating=1336),
+    IntervalRank(tier=2, min_rating=1337, max_rating=1679),
+    IntervalRank(tier=3, min_rating=1680, max_rating=1999),
+    IntervalRank(tier=4, min_rating=2000, max_rating=math.inf),
+)
+
+
 ranks = (
-    Rank(tier=-1, min_rating=-math.inf, max_rating=871),
-    Rank(tier=0, min_rating=872, max_rating=1085),
-    Rank(tier=1, min_rating=1086, max_rating=1336),
-    Rank(tier=2, min_rating=1337, max_rating=1679),
-    Rank(tier=3, min_rating=1680, max_rating=1999),
-    Rank(tier=4, min_rating=2000, max_rating=math.inf),
+    *interval_ranks,
+    *special_ranks,
 )
 
 
@@ -33,8 +56,18 @@ def rank_with_tier(tier: RankTier) -> Rank:
     raise ValueError
 
 
-def rank_for_rating(rating: EloRating) -> Rank:
-    for rank in ranks:
+type UsersWithMaxRating = Literal["1", ">1"]
+
+
+def rank(
+    rating: EloRating,
+    max_rating: EloRating,
+    users_with_max_rating: UsersWithMaxRating,
+) -> Rank:
+    if rating == max_rating and users_with_max_rating == "1":
+        return strongest_rank
+
+    for rank in interval_ranks:
         if rank.min_rating <= rating <= rank.max_rating:
             return rank
 

@@ -35,6 +35,16 @@ services:
       TTT_NATS_URL: nats://${NATS_TOKEN}@nats:4222
 
       TTT_GEMINI_URL: ${GEMINI_URL}
+
+      TTT_DIALOG_TTL: 259200  # 3 days
+
+      TTT_MATCHMAKING_MAX_WORKERS: 4
+      TTT_MATCHMAKING_WORKER_MAX_USERS: 100
+      TTT_MATCHMAKING_WORKER_CREATION_INTERVAL_SECONDS: 0.5
+
+      TTT_AUTO_CANCEL_INVITATIONS_TO_GAME_INTERVAL_SECONDS: 1
+
+      TTT_SERIALIZATION_ERROR_MAX_RETRIES: 10
     secrets:
       - secrets
     networks:
@@ -138,7 +148,7 @@ services:
       interval: 3s
 
   nats_streams:
-    image: bitnami/natscli:0.2.3-debian-12-r4
+    image: n255/natscli:0.3.0-bookworm-slim
     container_name: ttt-nats-streams
     depends_on:
       nats:
@@ -148,8 +158,8 @@ services:
     networks:
       - nats
     environment:
+      NATS_URL: nats://nats:4222
       NATS_TOKEN: ${NATS_TOKEN}
-    entrypoint: [""]
     command: ["bash", "/mnt/add_streams.sh"]
 
 volumes:

@@ -5,7 +5,7 @@ from typing import cast
 from uuid import UUID
 
 from aiogram.types import CallbackQuery
-from aiogram.utils.formatting import Code, Text
+from aiogram.utils.formatting import Code
 from aiogram_dialog import DialogManager, ShowMode, StartMode
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -61,6 +61,7 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
             select(
                 TableInvitationToGame.id,
                 TableInvitationToGame.inviting_user_id,
+                TableInvitationToGame.inviting_user_username,
             )
             .where(
                 (TableInvitationToGame.invited_user_id == user_id)
@@ -74,7 +75,11 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
         rows = result.all()
 
         invitations = [
-            IncomingInvitationToGameData(row.id, row.inviting_user_id)
+            IncomingInvitationToGameData(
+                row.id,
+                row.inviting_user_id,
+                row.inviting_user_username,
+            )
             for row in rows
         ]
         self._result_buffer.result = IncomingInvitationsToGameView.of(
@@ -90,6 +95,7 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
             select(
                 TableInvitationToGame.id,
                 TableInvitationToGame.invited_user_id,
+                TableInvitationToGame.invited_user_username,
             )
             .where(
                 (TableInvitationToGame.inviting_user_id == user_id)
@@ -103,7 +109,11 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
         rows = result.all()
 
         invitations = [
-            OutcomingInvitationToGameData(row.id.hex, row.invited_user_id)
+            OutcomingInvitationToGameData(
+                row.id.hex,
+                row.invited_user_id,
+                row.invited_user_username,
+            )
             for row in rows
         ]
         self._result_buffer.result = OutcomingInvitationsToGameView.of(
@@ -117,6 +127,7 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
             select(
                 TableInvitationToGame.id,
                 TableInvitationToGame.inviting_user_id,
+                TableInvitationToGame.inviting_user_username,
             )
             .where(
                 (TableInvitationToGame.invited_user_id == user_id)
@@ -137,13 +148,17 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
         self._result_buffer.result = IncomingInvitationToGameView(
             id_hex=row.id.hex,
             inviting_user_id=row.inviting_user_id,
+            inviting_user_username=row.inviting_user_username,
         )
 
     async def incoming_invitation_to_game_view(
         self, user_id: int, invitation_to_game_id: UUID, /,
     ) -> None:
         stmt = (
-            select(TableInvitationToGame.inviting_user_id)
+            select(
+                TableInvitationToGame.inviting_user_id,
+                TableInvitationToGame.inviting_user_username,
+            )
             .where(
                 (TableInvitationToGame.id == invitation_to_game_id)
                 & (
@@ -152,15 +167,17 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
                 ),
             )
         )
-        inviting_user_id = await self._session.scalar(stmt)
+        result = await self._session.execute(stmt)
+        row = result.first()
 
-        if inviting_user_id is None:
+        if row is None:
             self._result_buffer.result = None
             return
 
         self._result_buffer.result = IncomingInvitationToGameView(
             id_hex=invitation_to_game_id.hex,
-            inviting_user_id=inviting_user_id,
+            inviting_user_id=row.inviting_user_id,
+            inviting_user_username=row.inviting_user_username,
         )
 
     async def invitation_to_game_view(
@@ -195,6 +212,7 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
         view = IncomingInvitationToGameView(
             id_hex=invitation_to_game.id_.hex,
             inviting_user_id=invitation_to_game.inviting_user.id,
+            inviting_user_username=invitation_to_game.inviting_user_username,
         )
         start_data = view.window_data()
         await manager.start(
@@ -230,17 +248,20 @@ class AiogramInvitationToGameViews(InvitationToGameViews):
             invitation_to_game.inviting_user.id,
         )
 
-        inviting_user_hint = Text(
-            "👤 Пользователь ",
-            Code(invitation_to_game.invited_user.id),
-            " отклонил ваше приглашение к игре",
-        ).as_html()
+        if invitation_to_game.invited_user_username is None:
+            public_user_id = Code(invitation_to_game.invited_user.id).as_html()
+        else:
+            public_user_id = f"@{invitation_to_game.invited_user_username}"
+
+        hint = (
+            f"👤 Пользователь {public_user_id} отклонил ваше приглашение к игре"
+        )
 
         await gather(
             invited_user_manager.done(),
             inviting_user_manager.start(
                 MainDialogState.notification,
-                {"hint": inviting_user_hint},
+                {"hint": hint},
             ),
         )
 

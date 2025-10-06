@@ -1,13 +1,15 @@
 from dataclasses import dataclass
 
-from ttt.application.common.ports.transaction import Transaction
+from ttt.application.common.ports.transaction import (
+    ReadonlyTransaction,
+)
 from ttt.application.user.common.ports.user_views import CommonUserViews
 
 
 @dataclass(frozen=True, unsafe_hash=False)
 class ViewMainMenu:
     views: CommonUserViews
-    transaction: Transaction
+    transaction: ReadonlyTransaction
 
     async def __call__(self, user_id: int) -> None:
         async with self.transaction:

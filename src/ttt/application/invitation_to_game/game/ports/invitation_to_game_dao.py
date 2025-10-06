@@ -10,4 +10,7 @@ class InvitationToGameDao(ABC):
         self,
         datetime: datetime,
         /,
-    ) -> Sequence[UUID]: ...
+    ) -> Sequence[UUID]:
+        """
+        :raises ttt.application.common.errors.serialization_error.SerializationError:
+        """  # noqa: E501

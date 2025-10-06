@@ -9,7 +9,7 @@ from aiogram_dialog.widgets.kbd import (
     Select,
     SwitchTo,
 )
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Const
 from dishka import FromDishka
 from dishka.integrations.aiogram_dialog import inject
 from magic_filter import F
@@ -20,6 +20,7 @@ from ttt.application.invitation_to_game.game.view_incoming_invitation_to_game im
 from ttt.application.invitation_to_game.game.view_incoming_invitations_to_game import (  # noqa: E501
     ViewIncomingInvitationsToGame,
 )
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.common.wigets.func_text import FuncText
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
@@ -33,21 +34,18 @@ from ttt.presentation.result_buffer import ResultBuffer
 class IncomingInvitationToGameData:
     id_hex: str
     inviting_user_id: int
+    inviting_user_username: str | None
 
 
 @dataclass(frozen=True)
 class IncomingInvitationsToGameView(EncodableToWindowData):
     invitations: list[IncomingInvitationToGameData]
-    need_to_paginate: bool
 
     @classmethod
     def of(
         cls, invitations: list[IncomingInvitationToGameData],
     ) -> "IncomingInvitationsToGameView":
-        return IncomingInvitationsToGameView(
-            invitations=invitations,
-            need_to_paginate=len(invitations) > 7,  # noqa: PLR2004
-        )
+        return IncomingInvitationsToGameView(invitations=invitations)
 
 
 @inject
@@ -55,26 +53,30 @@ async def getter(
     *,
     event_from_user: User,
     view_invitations: FromDishka[ViewIncomingInvitationsToGame],
+    retrier: FromDishka[Retrier],
     result_buffer: FromDishka[ResultBuffer],
     **_: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
-    await view_invitations(event_from_user.id)
+    await retrier(view_invitations, event_from_user.id)
     view = result_buffer(IncomingInvitationsToGameView)
 
     return view.window_data()
 
 
 @inject
-async def on_invitation_selected(
+async def on_invitation_selected(  # noqa: PLR0913, PLR0917
     callback_query: CallbackQuery,
     _: Select[Any],
     manager: DialogManager,
     invitation_id_hex: str,
     view_invitation_to_game: FromDishka[ViewIncomingInvitationToGame],
+    retrier: FromDishka[Retrier],
     result_buffer: FromDishka[ResultBuffer],
 ) -> None:
     invitation_id = UUID(hex=invitation_id_hex)
-    await view_invitation_to_game(callback_query.from_user.id, invitation_id)
+    await retrier(
+        view_invitation_to_game, callback_query.from_user.id, invitation_id,
+    )
     view = result_buffer.result
 
     if not isinstance(view, IncomingInvitationToGameView | None):
@@ -92,35 +94,39 @@ async def on_invitation_selected(
     await manager.start(MainDialogState.incoming_invitation_to_game, start_data)
 
 
-async def incoming_invitations_to_game_html(  # noqa: RUF029
+async def incoming_invitations_to_game_text(  # noqa: RUF029
     data: dict[str, Any],
     _: DialogManager,
 ) -> str:
     return f"👥 У вас {len(data["main"]["invitations"])} приглашений к игре"
 
 
+async def incoming_invitation_to_game_text(  # noqa: RUF029
+    data: dict[str, Any],
+    _: DialogManager,
+) -> str:
+    invitation = data["item"]
+
+    if invitation.get("inviting_user_username") is None:
+        return f"От {invitation["inviting_user_id"]}"
+
+    return f"От @{invitation["inviting_user_username"]}"
+
+
 incoming_invitations_to_game_window = Window(
-    FuncText(incoming_invitations_to_game_html),
-    Select(
-        Format("От {item[inviting_user_id]}"),
-        id="n",
-        items=F["main"]["invitations"],
-        item_id_getter=lambda it: it["id_hex"],
-        on_click=on_invitation_selected,
-        when=~F["main"]["need_to_paginate"],
-    ),
+    FuncText(incoming_invitations_to_game_text),
     ScrollingGroup(
         Select(
-            Format("От {item[inviting_user_id]}"),
+            FuncText(incoming_invitation_to_game_text),
             id="n",
             items=F["main"]["invitations"],
             item_id_getter=lambda it: it["id_hex"],
             on_click=on_invitation_selected,
         ),
-        width=4,
-        height=4,
+        width=2,
+        height=2,
+        hide_on_single_page=True,
         id="y",
-        when=F["main"]["need_to_paginate"],
     ),
 
     SwitchTo(

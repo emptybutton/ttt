@@ -22,6 +22,7 @@ from ttt.application.invitation_to_game.game.accpet_invitation_to_game import (
 from ttt.application.invitation_to_game.game.reject_invitation_to_game import (
     RejectInvitationToGame,
 )
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.common.wigets.func_text import FuncText
 from ttt.presentation.aiogram_dialog.common.wigets.hint import hint
@@ -35,6 +36,7 @@ from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 class IncomingInvitationToGameView(EncodableToWindowData):
     id_hex: str
     inviting_user_id: int
+    inviting_user_username: str | None
 
 
 @inject
@@ -43,12 +45,15 @@ async def on_accept_clicked(
     _: Button,
     manager: DialogManager,
     accept_invitation_to_game: FromDishka[AcceptInvitationToGame],
+    retrier: FromDishka[Retrier],
 ) -> None:
     if not isinstance(manager.start_data, dict):
         raise TypeError
 
     invitation_id = UUID(hex=manager.start_data["main"]["id_hex"])
-    await accept_invitation_to_game(callback.from_user.id, invitation_id)
+    await retrier(
+        accept_invitation_to_game, callback.from_user.id, invitation_id,
+    )
 
 
 @inject
@@ -57,12 +62,15 @@ async def on_reject_clicked(
     _: Button,
     manager: DialogManager,
     reject_invitation_to_game: FromDishka[RejectInvitationToGame],
+    retrier: FromDishka[Retrier],
 ) -> None:
     if not isinstance(manager.start_data, dict):
         raise TypeError
 
     invitation_id = UUID(hex=manager.start_data["main"]["id_hex"])
-    await reject_invitation_to_game(callback.from_user.id, invitation_id)
+    await retrier(
+        reject_invitation_to_game, callback.from_user.id, invitation_id,
+    )
 
 
 async def incoming_invitation_to_game_html(  # noqa: RUF029
@@ -73,10 +81,14 @@ async def incoming_invitation_to_game_html(  # noqa: RUF029
         raise TypeError
 
     invitation = manager.start_data["main"]
-    text = Text(
-        "👤 Приглашение к игре от ", Code(invitation["inviting_user_id"]),
-    )
-    return text.as_html()
+
+    if invitation.get("inviting_user_username") is None:
+        text = Text(
+            "👤 Приглашение к игре от ", Code(invitation["inviting_user_id"]),
+        )
+        return text.as_html()
+
+    return f"👤 Приглашение к игре от @{invitation["inviting_user_username"]}"
 
 
 incoming_invitation_to_game_window = Window(

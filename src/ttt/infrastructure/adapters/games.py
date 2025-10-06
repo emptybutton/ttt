@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,21 +14,10 @@ from ttt.infrastructure.sqlalchemy.tables.user import TableUser
 class InPostgresGames(Games):
     _session: AsyncSession
 
-    async def game_with_game_location(
-        self,
-        game_location_user_id: int,
-        /,
-    ) -> Game | None:
-        lock_stmt = (
-            select(TableGame.id)
-            .where(TableUser.game_location_game_id == TableGame.id)
-            .with_for_update()
-        )
-        await self._session.execute(lock_stmt)
-
+    async def current_user_game(self, user_id: int, /) -> Game | None:
         join_condition = (
-            (TableUser.id == game_location_user_id)
-            & (TableUser.game_location_game_id == TableGame.id)
+            (TableUser.id == user_id)
+            & (TableUser.current_game_id == TableGame.id)
         )
         stmt = select(TableGame).join(TableUser, join_condition)
         table_game = await self._session.scalar(stmt)
@@ -36,3 +26,20 @@ class InPostgresGames(Games):
             return None
 
         return table_game.entity()
+
+    async def not_locked_game_with_id(self, game_id: UUID, /) -> Game | None:
+        lock_stmt = (
+            select(1)
+            .select_from(TableGame)
+            .where(TableGame.id == game_id)
+            .with_for_update()
+        )
+        stmt = (
+            select(TableGame)
+            .where(TableGame.id == game_id)
+        )
+
+        await self._session.execute(lock_stmt)
+        table_game = await self._session.scalar(stmt)
+
+        return None if table_game is None else table_game.entity()

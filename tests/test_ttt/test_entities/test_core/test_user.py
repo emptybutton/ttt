@@ -15,14 +15,10 @@ def test_create_user(tracking: Tracking, object_: str) -> None:
             account=Account(0),
             emojis=[],
             rating=1000.,
-            stars_purchases=[],
-            last_games=[],
             selected_emoji_id=None,
-            number_of_wins=0,
-            number_of_draws=0,
-            number_of_defeats=0,
-            game_location=None,
+            current_game_id=None,
             admin_right=None,
+            matchmaking_waiting=None,
         )
 
     if object_ == "tracking":

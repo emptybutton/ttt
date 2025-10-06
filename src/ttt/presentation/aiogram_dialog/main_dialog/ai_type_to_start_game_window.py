@@ -12,6 +12,7 @@ from dishka.integrations.aiogram_dialog import inject
 
 from ttt.application.game.game.start_game_with_ai import StartGameWithAi
 from ttt.entities.core.game.ai import AiType
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 
 
@@ -21,8 +22,11 @@ async def on_game_against_gemini_2_0_flash_clicked(
     _: Button,
     __: DialogManager,
     start_game_with_ai: FromDishka[StartGameWithAi],
+    retrier: FromDishka[Retrier],
 ) -> None:
-    await start_game_with_ai(callback.from_user.id, AiType.gemini_2_0_flash)
+    await retrier(
+        start_game_with_ai, callback.from_user.id, AiType.gemini_2_0_flash,
+    )
 
 
 ai_type_to_start_game_window = Window(

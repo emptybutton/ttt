@@ -15,7 +15,6 @@ from ttt.entities.core.game.game import (
     Game,
     GameAtomic,
     GameState,
-    number_of_unfilled_cells,
 )
 from ttt.entities.core.game.game_result import (
     CancelledGameResult,
@@ -87,11 +86,22 @@ class TableCell(Base[Cell]):
     user_filler_id: Mapped[int | None] = mapped_column(
         BigInteger(),
         ForeignKey("users.id", deferrable=True, initially="DEFERRED"),
-        index=True,
     )
     ai_filler_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("ais.id", deferrable=True, initially="DEFERRED"),
-        index=True,
+    )
+
+    __table_args__ = (
+        Index(
+            "ix_cells_user_filler_id",
+            user_filler_id,
+            postgresql_where=(user_filler_id.is_not(None)),
+        ),
+        Index(
+            "ix_cells_ai_filler_id",
+            ai_filler_id,
+            postgresql_where=(ai_filler_id.is_not(None)),
+        ),
     )
 
     def __entity__(self) -> Cell:
@@ -284,7 +294,6 @@ class TableGame(Base[Game]):
             self._player2(),
             Emoji(self.player2_emoji_str),
             board,
-            number_of_unfilled_cells(board),
             self._result(),
             self.state.entity(),
         )

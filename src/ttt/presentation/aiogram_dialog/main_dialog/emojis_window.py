@@ -17,6 +17,7 @@ from magic_filter import F
 
 from ttt.application.user.emoji_selection.select_emoji import SelectEmoji
 from ttt.application.user.view_user_emojis import ViewUserEmojis
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.common.data import EncodableToWindowData
 from ttt.presentation.aiogram_dialog.main_dialog.common import MainDialogState
 from ttt.presentation.result_buffer import ResultBuffer
@@ -65,9 +66,10 @@ async def emoji_getter(
     event_from_user: User,
     view_user_emojis: FromDishka[ViewUserEmojis],
     result_buffer: FromDishka[ResultBuffer],
+    retrier: FromDishka[Retrier],
     **_: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
-    await view_user_emojis(event_from_user.id)
+    await retrier(view_user_emojis, event_from_user.id)
     view = result_buffer(EmojiMenuView)
 
     return view.window_data()
@@ -80,8 +82,9 @@ async def on_emoji_selected(
     __: DialogManager,
     emoji_str: str,
     select_emoji: FromDishka[SelectEmoji],
+    retrier: FromDishka[Retrier],
 ) -> None:
-    await select_emoji(callback.from_user.id, emoji_str)
+    await retrier(select_emoji, callback.from_user.id, emoji_str)
 
 
 emoji_window = Window(

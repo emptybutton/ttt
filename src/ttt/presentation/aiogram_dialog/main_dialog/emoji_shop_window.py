@@ -13,6 +13,7 @@ from magic_filter import F
 
 from ttt.application.user.emoji_purchase.buy_emoji import BuyEmoji
 from ttt.entities.tools.assertion import not_none
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram.user.parsing import parsed_emoji_str
 from ttt.presentation.aiogram_dialog.common.wigets.hint import hint
 from ttt.presentation.aiogram_dialog.common.wigets.one_time_key import (
@@ -27,10 +28,11 @@ async def handler(
     _: MessageInput,
     __: DialogManager,
     buy_emoji: FromDishka[BuyEmoji],
+    retrier: FromDishka[Retrier],
 ) -> None:
     emoji_str = parsed_emoji_str(message)
 
-    await buy_emoji(not_none(message.from_user).id, emoji_str)
+    await retrier(buy_emoji, not_none(message.from_user).id, emoji_str)
 
 
 emoji_shop_window = Window(

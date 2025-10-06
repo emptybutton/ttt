@@ -15,6 +15,7 @@ from ttt.application.user.authorize_as_admin import AuthorizeAsAdmin
 from ttt.application.user.relinquish_admin_right import RelinquishAdminRight
 from ttt.application.user.view_admin_menu import ViewAdminMenu
 from ttt.entities.tools.assertion import not_none
+from ttt.infrastructure.retrier import Retrier
 from ttt.presentation.aiogram_dialog.admin_dialog.common import (
     AdminDialogState,
     AdminRightName,
@@ -84,10 +85,11 @@ async def main_getter(
     *,
     event_from_user: User,
     view_admin_menu: FromDishka[ViewAdminMenu],
+    retrier: FromDishka[Retrier],
     result_buffer: FromDishka[ResultBuffer],
     **_: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
-    await view_admin_menu(event_from_user.id)
+    await retrier(view_admin_menu, event_from_user.id)
     view: AdminMainMenuView = result_buffer(AdminMainMenuView)  # type: ignore[arg-type]
 
     return view.window_data()
@@ -99,6 +101,7 @@ async def input_admin_token(
     _: MessageInput,
     manager: DialogManager,
     authorize_as_admin: FromDishka[AuthorizeAsAdmin],
+    retrier: FromDishka[Retrier],
 ) -> None:
     admin_token = message.text
 
@@ -111,7 +114,9 @@ async def input_admin_token(
         )
         return
 
-    await authorize_as_admin(not_none(message.from_user).id, admin_token)
+    await retrier(
+        authorize_as_admin, not_none(message.from_user).id, admin_token,
+    )
 
 
 @inject
@@ -120,8 +125,9 @@ async def on_relinquish_admin_right_clicked(
     _: Button,
     __: DialogManager,
     relinquish_admin_right: FromDishka[RelinquishAdminRight],
+    retrier: FromDishka[Retrier],
 ) -> None:
-    await relinquish_admin_right(callback.from_user.id)
+    await retrier(relinquish_admin_right, callback.from_user.id)
 
 
 @FuncText

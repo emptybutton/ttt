@@ -8,30 +8,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: add secrets
-        run: |
-          echo "bot_token: ${{ secrets.BOT_TOKEN }}" > deploy/dev/ttt/secrets.yaml
-          echo "payments_token: ${{ secrets.PAYMENTS_TOKEN }}" >> deploy/dev/ttt/secrets.yaml
-          echo "gemini_api_key: ${{ secrets.GEMINI_API_KEY }}" >> deploy/dev/ttt/secrets.yaml
-          echo "sentry_dsn: ${{ secrets.SENTRY_DSN }}" >> deploy/dev/ttt/secrets.yaml
+      - name: install ruff
+        run: curl -LsSf https://astral.sh/ruff/0.13.0/install.sh | sh
 
       - name: ruff
-        run: docker compose -f deploy/dev/docker-compose.yaml run ttt ruff check src tests
+        run: ruff check src tests
 
   mypy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: add secrets
+      - name: install dependencies
         run: |
-          echo "bot_token: ${{ secrets.BOT_TOKEN }}" > deploy/dev/ttt/secrets.yaml
-          echo "payments_token: ${{ secrets.PAYMENTS_TOKEN }}" >> deploy/dev/ttt/secrets.yaml
-          echo "gemini_api_key: ${{ secrets.GEMINI_API_KEY }}" >> deploy/dev/ttt/secrets.yaml
-          echo "sentry_dsn: ${{ secrets.SENTRY_DSN }}" >> deploy/dev/ttt/secrets.yaml
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv sync
 
       - name: mypy
-        run: docker compose -f deploy/dev/docker-compose.yaml run ttt mypy src tests
+        run: uv run mypy src tests
 
   pytest:
     runs-on: ubuntu-latest
@@ -44,6 +38,7 @@ jobs:
           echo "payments_token: ${{ secrets.PAYMENTS_TOKEN }}" >> deploy/dev/ttt/secrets.yaml
           echo "gemini_api_key: ${{ secrets.GEMINI_API_KEY }}" >> deploy/dev/ttt/secrets.yaml
           echo "sentry_dsn: ${{ secrets.SENTRY_DSN }}" >> deploy/dev/ttt/secrets.yaml
+          echo "sentry_dsn: ${{ secrets.ADMIN_TOKEN }}" >> deploy/dev/ttt/secrets.yaml
 
       - name: pytest
         run: docker compose -f deploy/dev/docker-compose.yaml run ttt pytest tests --cov --cov-report=xml
